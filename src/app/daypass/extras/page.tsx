@@ -2,7 +2,6 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { logo } from "@/public/images.png";
 // Opciones de servicios y precios
 const BUFFET = [
     { key: "basico", nombre: "Buffet Básico", descripcion: "Incluye entrada, plato principal y postre", precio: 350 },
