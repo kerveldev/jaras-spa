@@ -3,7 +3,8 @@ const nextConfig = {
     images: {
         domains: [
             "api.qrserver.com",
-            "upload.wikimedia.org"
+            "upload.wikimedia.org",
+            "cdn-icons-png.flaticon.com"
         ],
     },
 };

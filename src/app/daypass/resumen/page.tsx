@@ -5,7 +5,7 @@ import Image from "next/image";
 
 // Genera un QR falso para demo
 const QRCODE_SRC = "https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=EJEMPLO-CODIGO-QR";
-const MAPA_BOLETO = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Map_symbol_transport_bus.svg/320px-Map_symbol_transport_bus.svg.png";
+const MAPA_BOLETO = "https://cdn-icons-png.flaticon.com/512/61/61450.png";
 
 export default function ConfirmacionReservaPage() {
     return (
