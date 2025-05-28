@@ -13,7 +13,6 @@ export default function Header() {
                 <Link href="/daypass/transporte">Reserva de transporte</Link>
                 <Link href="/daypass/resumen">Confirmación de reserva</Link>
                 <Link href="/daypass/creditos">Masajes y spa</Link>
-                <Link href="/daypass/transporte">Transporte</Link>
             </nav>
             <div>
                 <button className="mr-2 px-4 py-1 border rounded text-black">Iniciar Sesión</button>

@@ -1,7 +1,11 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+    images: {
+        domains: [
+            "api.qrserver.com",
+            "upload.wikimedia.org"
+        ],
+    },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

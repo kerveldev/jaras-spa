@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Image from "next/image";
 
 const HORARIOS = [
     { hora: "6:30 AM", salida: "Plaza del Sol" },
@@ -19,7 +21,6 @@ export default function TransportePage() {
     const [usaTransporte, setUsaTransporte] = useState(true);
     const [horario, setHorario] = useState(HORARIOS[0]);
     const [cantidad, setCantidad] = useState(4); // Puedes tomar este dato de localStorage/contexto
-    const PRECIO_PASE = 700; // Simulación del subtotal (puedes traer de resumen anterior)
     const PRECIO_TRANSPORTE = 120;
     const subtotal = 2800; // Demo
     const totalTransporte = usaTransporte ? cantidad * PRECIO_TRANSPORTE : 0;
@@ -160,11 +161,7 @@ export default function TransportePage() {
                     {/* Mapa (simulado) */}
                     <div className="bg-white rounded border p-4 mb-8">
                         <div className="font-semibold mb-2">Ubicación de puntos de salida</div>
-                        <img
-                            src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=600&q=80"
-                            alt="Mapa"
-                            className="w-full h-48 object-cover rounded"
-                        />
+                        <Image src="/image.png" alt="Mapa" width={100} height={100} className="w-full h-48 object-cover rounded" />
                     </div>
                 </section>
                 {/* Resumen */}

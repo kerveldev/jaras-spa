@@ -1,6 +1,7 @@
 "use client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Image from "next/image";
 
 const QR_IMG = "https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=LJ29384";
 
@@ -87,7 +88,7 @@ export default function LlegadaEstacionPage() {
                         <div className="mb-6">
                             <div className="font-semibold mb-2">Parada Logística Durante el Trayecto</div>
                             <div className="border rounded p-3 bg-white text-xs text-gray-800 mb-2">
-                                <span className="font-bold">Restaurante "El Descanso"</span><br />
+                                <span className="font-bold">Restaurante El Descanso</span><br />
                                 Carretera Tamazula-Guadalajara Km 45<br />
                                 <span className="font-semibold">Duración:</span> 20 minutos<br />
                                 <span className="font-semibold">Aproximadamente a las 7:30 am</span><br />
@@ -127,7 +128,14 @@ export default function LlegadaEstacionPage() {
                             <div className="text-sm text-gray-700 font-semibold mb-2">Reserva #LJ29384 <span className="text-green-700">Confirmado</span></div>
                             <div className="text-center">
                                 <div className="mb-2 font-semibold">Su Código QR</div>
-                                <img src={QR_IMG} alt="Código QR" className="mx-auto mb-2" />
+                                <Image
+                                    src={QR_IMG}
+                                    alt="Código QR"
+                                    width={140}
+                                    height={140}
+                                    className="mx-auto mb-2"
+                                />
+
                                 <div className="text-xs text-gray-500 mb-2">Muestre este código al chofer</div>
                                 <button className="w-full py-2 rounded font-bold text-white bg-black hover:bg-gray-800 mb-2">Descargar Código QR</button>
                                 <button className="w-full py-2 rounded border text-gray-700 bg-gray-100">Enviar por Email</button>
@@ -148,7 +156,7 @@ export default function LlegadaEstacionPage() {
                                 <ul className="text-xs ml-2 text-gray-700">
                                     <li className="font-bold">Terminal Central</li>
                                     <li>⬇</li>
-                                    <li>Parada Logística<br /><span className="text-gray-500">Restaurante "El Descanso"</span></li>
+                                    <li>Parada Logística<br /><span className="text-gray-500">Restaurante El Descanso</span></li>
                                     <li>⬇</li>
                                     <li>Las Jaras <span className="text-gray-500">Tamazula</span></li>
                                 </ul>

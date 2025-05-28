@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Image from "next/image";
+
 // Opciones de servicios y precios
 const BUFFET = [
     { key: "basico", nombre: "Buffet Básico", descripcion: "Incluye entrada, plato principal y postre", precio: 350 },
@@ -34,8 +37,10 @@ export default function ExtrasPage() {
         { tipo: "masaje", nombre: "Masaje Relajante", cantidad: 2, total: 1600 },
     ]);
 
+
     // Función para agregar un servicio a la orden
     function agregarServicio(tipo: "buffet" | "masaje", item: any, cantidad: number) {
+
         if (cantidad < 1) return;
         setOrden((prev) => {
             // Si ya existe, reemplazar la cantidad y total, si no agregarlo
@@ -177,9 +182,11 @@ export default function ExtrasPage() {
                     {/* Masajes */}
                     <section className="flex-1">
                         <h3 className="font-bold mb-2 text-lg">Servicios de Masaje</h3>
-                        <img
-                            src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80"
-                            alt="Spa"
+                        <Image
+                            src="/image.png"
+                            alt="Snpa"
+                            width={400}
+                            height={160}
                             className="rounded-xl w-full h-40 object-cover mb-3"
                         />
                         <p className="mb-4 text-sm text-gray-600">

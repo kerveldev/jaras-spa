@@ -1,6 +1,7 @@
 "use client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Image from "next/image";
 
 // Genera un QR falso para demo
 const QRCODE_SRC = "https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=EJEMPLO-CODIGO-QR";
@@ -47,7 +48,13 @@ export default function ConfirmacionReservaPage() {
                     <div className="bg-white border rounded p-6 flex flex-col items-center">
                         <div className="font-bold text-black mb-2">Boletos de Acceso</div>
                         <div className="mb-2 text-xs text-gray-600">Presenta este código QR en la entrada principal</div>
-                        <img src={QRCODE_SRC} alt="Código QR acceso" className="mb-2" />
+                        <Image
+                            src={QRCODE_SRC}
+                            alt="Código QR acceso"
+                            width={160}
+                            height={160}
+                            className="mb-2"
+                        />
                         <div className="text-xs text-center text-gray-500">
                             Válido para 6 personas (4 adultos, 2 niños)<br />
                             Incluye acceso a todas las instalaciones
@@ -56,7 +63,14 @@ export default function ConfirmacionReservaPage() {
                     <div className="bg-white border rounded p-6 flex flex-col items-center">
                         <div className="font-bold text-black mb-2">Boletos de Autobús</div>
                         <div className="mb-2 text-xs text-gray-600">Presenta este código QR al abordar el autobús</div>
-                        <img src={MAPA_BOLETO} alt="Boleto autobús" className="mb-2 w-40 h-40 object-contain" />
+                        <Image
+                            src={MAPA_BOLETO}
+                            alt="Boleto autobús"
+                            width={160}
+                            height={160}
+                            className="mb-2 w-40 h-40 object-contain"
+                        />
+
                         <div className="text-xs text-center text-gray-500">
                             Ruta: Centro de Guadalajara &rarr; Las Jaras<br />
                             Salida: 9:00 AM · Llegada: 10:30 AM<br />

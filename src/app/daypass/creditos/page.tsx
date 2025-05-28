@@ -125,7 +125,7 @@ export default function CargarCreditosPage() {
                         <div className="mb-6">
                             <div className="font-semibold mb-2">Método de pago</div>
                             <div className="flex gap-6 mb-4">
-                                <label>
+                                <label className="text-black">
                                     <input
                                         type="radio"
                                         name="pago"
@@ -201,7 +201,7 @@ export default function CargarCreditosPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {serviciosSpa.map((s) => (
                             <div key={s.nombre} className="bg-white border rounded-lg p-6 flex flex-col items-start">
-                                <div className="font-bold mb-1">{s.nombre}</div>
+                                <div className="font-bold mb-1 text-black">{s.nombre}</div>
                                 <div className="text-xs text-gray-600 mb-2">{s.desc}</div>
                                 <div className="font-semibold text-sm mb-2">${s.precio} MXN</div>
                                 <div className="text-xs text-gray-500">{s.tiempo}</div>

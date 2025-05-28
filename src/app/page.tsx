@@ -8,7 +8,7 @@ export default function Home() {
         {/* Header */}
         <header className="w-full px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Las Jaras logo" width={44} height={44} />
+            <Image src="/image.png" alt="Las Jaras logo" width={44} height={44} />
             <span className="text-xl font-bold text-[#18668b]">Las Jaras</span>
           </div>
           <nav className="flex gap-6 text-sm">
@@ -22,7 +22,7 @@ export default function Home() {
         {/* Hero Section */}
         <main className="flex flex-col items-center gap-8 mt-12 flex-1">
           <Image
-              src="/logo.png"
+              src="/image.png"
               alt="Las Jaras"
               width={100}
               height={100}
