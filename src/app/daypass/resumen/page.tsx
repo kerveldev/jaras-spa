@@ -91,7 +91,7 @@ export default function ConfirmacionReservaPage() {
 
                 {/* Botones acción */}
                 <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-8">
-                    <button className="bg-black text-white px-6 py-2 rounded font-semibold shadow hover:bg-[#333]">
+                    <button className="bg-black text-white px-6 py-2 rounded shadow hover:bg-[#333]">
                         Descargar Boletos (PDF)
                     </button>
                     <button className="border px-6 py-2 rounded font-semibold shadow hover:bg-gray-100">

@@ -152,9 +152,9 @@ export default function ExtrasPage() {
                                     </div>
                                 </div>
                                 <button
-                                    className={`px-5 py-2 rounded font-semibold shadow ${
+                                    className={`px-5 py-2 rounded shadow ${
                                         cantidadesBuffet[item.key] > 0
-                                            ? "bg-black text-white hover:bg-[#222]"
+                                            ? "bg-black text-white hover:bg-[#222] !important"
                                             : "bg-gray-200 text-gray-400 cursor-not-allowed"
                                     }`}
                                     disabled={cantidadesBuffet[item.key] === 0}
@@ -220,7 +220,7 @@ export default function ExtrasPage() {
                                     </div>
                                 </div>
                                 <button
-                                    className={`px-5 py-2 rounded font-semibold shadow ${
+                                    className={`px-5 py-2 rounded  shadow ${
                                         cantidadesMasaje[item.key] > 0
                                             ? "bg-black text-white hover:bg-[#222]"
                                             : "bg-gray-200 text-gray-400 cursor-not-allowed"
