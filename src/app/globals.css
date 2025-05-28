@@ -24,3 +24,32 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.font-semibold {
+  color: #000 !important;
+}
+
+span {
+  color: #000 !important;
+}
+
+h2 {
+  color: #000 !important;
+}
+
+h3 {
+  color: #000 !important;
+}
+
+h4 {
+  color: #000 !important;
+}
+
+h5 {
+  color: #000 !important;
+}
+
+h1 {
+  color: #000 !important;
+}
+
