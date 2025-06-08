@@ -2,35 +2,51 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import toast, { Toaster } from "react-hot-toast";
 
 interface Visitante {
     nombre: string;
     correo: string;
-    relacion: string;
+    celular: string;
 }
 
-const RELACIONES = [
-    { value: "Tú", label: "Tú" },
-    { value: "Novia", label: "Novia" },
-    { value: "Amigo", label: "Amigo" },
-    { value: "Familiar", label: "Familiar" },
-    { value: "Otro", label: "Otro" },
-];
+const CODIGO_PROMO = "PROMO100";
+const DESCUENTO_PROMO = 100;
+const PRECIO_PASE = 350;
+
+const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function DaypassPage() {
-    const [cantidad, setCantidad] = useState<number>(4);
+    const [cantidad, setCantidad] = useState<number>(1);
     const [visitantes, setVisitantes] = useState<Visitante[]>(
-        Array.from({ length: 4 }, (_, i) => ({
+        Array.from({ length: 1 }, () => ({
             nombre: "",
             correo: "",
-            relacion: RELACIONES[i]?.value || "Otro",
+            celular: "",
+        }))
+    );
+    const [touched, setTouched] = useState<{ nombre: boolean; correo: boolean; celular: boolean }[]>(
+        Array.from({ length: 1 }, () => ({
+            nombre: false,
+            correo: false,
+            celular: false,
         }))
     );
     const [codigoPromo, setCodigoPromo] = useState("");
-    const PRECIO_PASE = 350;
-    const subtotal = cantidad * PRECIO_PASE;
-    const descuento = 0; // Ajusta si implementas descuentos
-    const total = subtotal - descuento;
+    const [promoAplicado, setPromoAplicado] = useState(false);
+    const [msgPromo, setMsgPromo] = useState("");
+
+    // --- Helpers de validación campo a campo ---
+    function validateNombre(nombre: string) {
+        return nombre.trim().length > 0;
+    }
+    function validateCorreo(correo: string, obligatorio: boolean) {
+        if (!correo.trim() && !obligatorio) return true;
+        return regexEmail.test(correo.trim());
+    }
+    function validateCelular(celular: string) {
+        return /^\d{10,}$/.test(celular.trim());
+    }
 
     // Si cambian la cantidad de boletos
     const handleCantidad = (v: number) => {
@@ -42,12 +58,28 @@ export default function DaypassPage() {
                     ...Array.from({ length: v - prev.length }, () => ({
                         nombre: "",
                         correo: "",
-                        relacion: "Otro",
+                        celular: "",
                     })),
                 ];
             }
             return prev.slice(0, v);
         });
+        setTouched((prev) => {
+            if (v > prev.length) {
+                return [
+                    ...prev,
+                    ...Array.from({ length: v - prev.length }, () => ({
+                        nombre: false,
+                        correo: false,
+                        celular: false,
+                    })),
+                ];
+            }
+            return prev.slice(0, v);
+        });
+        setPromoAplicado(false);
+        setMsgPromo("");
+        setCodigoPromo("");
     };
 
     // Cambios por visitante
@@ -63,23 +95,61 @@ export default function DaypassPage() {
         });
     };
 
-    // Validación
-    const puedeContinuar = visitantes.every((v) => v.nombre.trim().length > 0);
+    const handleBlur = (idx: number, campo: keyof Visitante) => {
+        setTouched((prev) => {
+            const copy = [...prev];
+            copy[idx][campo] = true;
+            return copy;
+        });
+    };
+
+    // Validación global para habilitar botón
+    const puedeContinuar = visitantes.every(
+        (v, i) =>
+            validateNombre(v.nombre) &&
+            validateCelular(v.celular) &&
+            validateCorreo(v.correo, i === 0)
+    );
+
+    // Totales y promo
+    const subtotal = cantidad * PRECIO_PASE;
+    const descuento = promoAplicado ? DESCUENTO_PROMO : 0;
+    const total = Math.max(subtotal - descuento, 0);
+
+    // Promo
+    const aplicarPromo = () => {
+        if (codigoPromo.trim().toUpperCase() === CODIGO_PROMO) {
+            setPromoAplicado(true);
+            setMsgPromo(`¡Descuento de $${DESCUENTO_PROMO} aplicado!`);
+            toast.success(`¡Descuento de $${DESCUENTO_PROMO} aplicado!`);
+        } else {
+            setPromoAplicado(false);
+            setMsgPromo("Código promocional no válido.");
+            toast.error("Código promocional no válido.");
+        }
+    };
 
     const handleSiguiente = () => {
-        if (!puedeContinuar) {
-            alert("Completa los nombres de todos los visitantes.");
-            return;
-        }
-        // Guarda temporal para demo (en producción usar contexto, backend, etc)
         localStorage.setItem("visitantes", JSON.stringify(visitantes));
         localStorage.setItem("cantidad", cantidad.toString());
         window.location.href = "/daypass/fecha";
     };
 
+    // --- Añade esta función para reservar el espacio de error (alineación) ---
+    function renderError(message: string, show: boolean) {
+        // Si hay error: texto rojo, si no, espacio reservado (misma altura)
+        return (
+            <div style={{ minHeight: "20px" }}>
+                {show && (
+                    <span className="text-xs text-red-600">{message}</span>
+                )}
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
-            {/* Header Simulado */}
+            <Toaster position="top-center" />
             <Header />
             {/* Breadcrumbs y Progreso */}
             <div className="max-w-5xl w-full mx-auto pt-6 pb-4 px-4">
@@ -90,10 +160,9 @@ export default function DaypassPage() {
                     {[1, 2, 3, 4].map((n, idx) => (
                         <div className="flex items-center" key={n}>
                             <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-black ${
-                                    n === 1
-                                        ? "bg-[#18668b] text-white"
-                                        : "bg-gray-200 text-gray-500"
+                                className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-black ${n === 1
+                                    ? "bg-[#18668b] text-white"
+                                    : "bg-gray-200 text-gray-500"
                                 }`}
                             >
                                 {n}
@@ -136,60 +205,74 @@ export default function DaypassPage() {
                         Por favor, especifica los detalles para cada uno de los {cantidad} pases seleccionados.
                     </p>
                     <form className="space-y-4">
-                        {visitantes.slice(0, cantidad).map((vis, idx) => (
-                            <div
-                                key={idx}
-                                className="bg-white rounded border p-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-end"
-                            >
-                                <div>
-                                    <label className="block text-xs font-medium text-black mb-1 ">
-                                        {`Visitante ${idx + 1} ${idx === 0 ? "(Tú)" : ""}`}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="Nombre"
-                                        value={vis.nombre}
-                                        onChange={(e) =>
-                                            handleVis(idx, "nombre", e.target.value)
-                                        }
-                                        className="border p-2 rounded w-full"
-                                        required
-                                    />
+                        {visitantes.slice(0, cantidad).map((vis, idx) => {
+                            // Detectar errores de validación
+                            const errorNombre = !validateNombre(vis.nombre) && touched[idx]?.nombre;
+                            const errorCorreo = !validateCorreo(vis.correo, idx === 0) && touched[idx]?.correo;
+                            const errorCelular = !validateCelular(vis.celular) && touched[idx]?.celular;
+                            return (
+                                <div
+                                    key={idx}
+                                    className="bg-white rounded border p-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-start"
+                                >
+                                    {/* Nombre */}
+                                    <div className="flex flex-col">
+                                        <label className="block text-xs font-medium text-black mb-1 ">
+                                            {`Visitante ${idx + 1} ${idx === 0 ? "(Tú)" : ""}`}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="Nombre"
+                                            value={vis.nombre}
+                                            onChange={(e) => handleVis(idx, "nombre", e.target.value)}
+                                            onBlur={() => handleBlur(idx, "nombre")}
+                                            className={`border p-2 rounded w-full transition-colors duration-150 ${errorNombre ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
+                                            required
+                                        />
+                                        {renderError("El nombre es obligatorio.", errorNombre)}
+                                    </div>
+                                    {/* Correo */}
+                                    <div className="flex flex-col">
+                                        <label className="block text-xs font-medium text-black mb-1">
+                                            Correo Electrónico {idx === 0 ? <span className="text-[10px]">(Principal)</span> : <span className="text-gray-400">(opcional)</span>}
+                                        </label>
+                                        <input
+                                            type="email"
+                                            placeholder="Correo electrónico"
+                                            value={vis.correo}
+                                            onChange={(e) => handleVis(idx, "correo", e.target.value)}
+                                            onBlur={() => handleBlur(idx, "correo")}
+                                            className={`border p-2 rounded w-full transition-colors duration-150 ${errorCorreo ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
+                                            required={idx === 0}
+                                        />
+                                        {renderError(
+                                            idx === 0
+                                                ? "El correo es obligatorio y debe ser válido."
+                                                : "El correo debe ser válido.",
+                                            errorCorreo
+                                        )}
+                                    </div>
+                                    {/* Celular */}
+                                    <div className="flex flex-col">
+                                        <label className="block text-xs font-medium text-black mb-1">
+                                            Celular WhatsApp
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            inputMode="numeric"
+                                            pattern="\d{10,}"
+                                            placeholder="Ej. 3312345678"
+                                            value={vis.celular}
+                                            onChange={(e) => handleVis(idx, "celular", e.target.value)}
+                                            onBlur={() => handleBlur(idx, "celular")}
+                                            className={`border p-2 rounded w-full transition-colors duration-150 ${errorCelular ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
+                                            required
+                                        />
+                                        {renderError("El celular debe tener al menos 10 dígitos numéricos.", errorCelular)}
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-black mb-1">
-                                        Correo Electrónico {idx === 0 ? <span className="text-[10px]">(Principal)</span> : <span className="text-gray-400">(opcional)</span>}
-                                    </label>
-                                    <input
-                                        type="email"
-                                        placeholder="Correo electrónico"
-                                        value={vis.correo}
-                                        onChange={(e) =>
-                                            handleVis(idx, "correo", e.target.value)
-                                        }
-                                        className="border p-2 rounded w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-black mb-1">
-                                        Relación
-                                    </label>
-                                    <select
-                                        value={vis.relacion}
-                                        onChange={(e) =>
-                                            handleVis(idx, "relacion", e.target.value)
-                                        }
-                                        className="border p-2 rounded w-full"
-                                    >
-                                        {RELACIONES.map((rel) => (
-                                            <option key={rel.value} value={rel.value}>
-                                                {rel.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </form>
                 </section>
                 {/* Resumen */}
@@ -208,26 +291,43 @@ export default function DaypassPage() {
                             <span>Subtotal</span>
                             <span>${subtotal} MXN</span>
                         </div>
+                        {promoAplicado && (
+                            <div className="flex justify-between text-sm text-green-700 font-bold">
+                                <span>Descuento aplicado</span>
+                                <span>-${DESCUENTO_PROMO} MXN</span>
+                            </div>
+                        )}
                         <div className="flex justify-between text-sm">
                             <span className="font-bold text-black">Total</span>
                             <span className="font-bold text-black text-lg">${total} MXN</span>
                         </div>
+                        {/* Código promocional */}
                         <input
                             className="mt-4 w-full border rounded px-2 py-1 text-sm"
                             placeholder="Código promocional"
                             value={codigoPromo}
                             onChange={e => setCodigoPromo(e.target.value)}
+                            disabled={promoAplicado}
                         />
-                        <button className="mt-2 w-full text-xs font-semibold text-black py-2 border border-gray-300 rounded hover:bg-gray-100">
+                        <button
+                            type="button"
+                            className="mt-2 w-full text-xs font-semibold text-black py-2 border border-gray-300 rounded hover:bg-gray-100"
+                            onClick={aplicarPromo}
+                            disabled={promoAplicado}
+                        >
                             Aplicar
                         </button>
+                        {msgPromo && (
+                            <div className={`text-xs mt-2 ${promoAplicado ? "text-green-700" : "text-red-600"}`}>
+                                {msgPromo}
+                            </div>
+                        )}
                         <button
                             onClick={handleSiguiente}
                             disabled={!puedeContinuar}
-                            className={`mt-6 w-full py-2 rounded font-bold text-black text-white ${
-                                puedeContinuar
-                                    ? "bg-[#18668b] hover:bg-[#14526d]"
-                                    : "bg-gray-300 cursor-not-allowed"
+                            className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar
+                                ? "bg-[#18668b] hover:bg-[#14526d]"
+                                : "bg-gray-300 cursor-not-allowed"
                             }`}
                         >
                             Continuar a Selección de Fecha
@@ -245,7 +345,6 @@ export default function DaypassPage() {
                     </div>
                 </aside>
             </main>
-            {/* Footer */}
             <Footer />
         </div>
     );

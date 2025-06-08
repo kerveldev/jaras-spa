@@ -36,7 +36,7 @@ export default function Footer() {
                 </div>
             </div>
             <div className="text-center text-xs text-gray-400 mt-6">
-                © 2023 Las Jaras. Todos los derechos reservados.
+                © {new Date().getFullYear()} Las Jaras. Todos los derechos reservados.
             </div>
         </footer>
     );
