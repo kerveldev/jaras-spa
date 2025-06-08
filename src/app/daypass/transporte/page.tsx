@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Image from "next/image";
@@ -17,14 +17,102 @@ const PUNTOS_SALIDA = [
     { nombre: "Plaza Patria", direccion: "Av. Patria 45, Zapopan" },
 ];
 
+const PRECIO_TRANSPORTE = 120;
+
+function safeParse<T>(item: string | null, def: T): T {
+    try {
+        return item ? JSON.parse(item) : def;
+    } catch {
+        return def;
+    }
+}
+
 export default function TransportePage() {
+    // Recupera datos de localStorage (con SSR-safe fallback)
+    const [cantidad, setCantidad] = useState(1);
+    const [visitantes, setVisitantes] = useState<any[]>([]);
+    const [extras, setExtras] = useState<any[]>([]);
+    const [fecha, setFecha] = useState<string>("");
+    const [hora, setHora] = useState<string>("");
     const [usaTransporte, setUsaTransporte] = useState(true);
     const [horario, setHorario] = useState(HORARIOS[0]);
-    const [cantidad, setCantidad] = useState(4); // Puedes tomar este dato de localStorage/contexto
-    const PRECIO_TRANSPORTE = 120;
-    const subtotal = 2800; // Demo
+    const [promo, setPromo] = useState<{ aplicado: boolean, valor: number }>({ aplicado: false, valor: 0 });
+    const [subtotal, setSubtotal] = useState(0);
+
+    // Cargar datos al montar
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        // Visitantes
+        const visitantesLS = safeParse<any[]>(localStorage.getItem("visitantes"), []);
+        setVisitantes(visitantesLS);
+
+        // Cantidad
+        const cantidadLS = Number(localStorage.getItem("cantidad") || 1);
+        setCantidad(cantidadLS);
+
+        // Extras
+        const extrasLS = safeParse<any[]>(localStorage.getItem("extras_orden"), []);
+        setExtras(extrasLS);
+
+        // Fecha y hora
+        const reservaLS = safeParse<{ date: string, time: string }>(localStorage.getItem("reserva_fecha_hora"), { date: "", time: "" });
+        setFecha(reservaLS.date);
+        setHora(reservaLS.time);
+
+        // Promo
+        const promoAplicada = localStorage.getItem("promo_aplicada") === "1";
+        const promoValor = Number(localStorage.getItem("promo_descuento") || 0);
+        setPromo({ aplicado: promoAplicada, valor: promoValor });
+
+        // Subtotal base: suma de pases de entrada
+        const PRECIO_PASE = 350;
+        const subtotalBase = cantidadLS * PRECIO_PASE;
+        // Extras
+        const extrasTotal = extrasLS.reduce((acc: number, curr: any) => acc + (curr?.total || 0), 0);
+        setSubtotal(subtotalBase + extrasTotal - (promoAplicada ? promoValor : 0));
+    }, []);
+
+    // Actualiza subtotal al cambiar cantidad, extras o promo
+    useEffect(() => {
+        const PRECIO_PASE = 350;
+        const subtotalBase = cantidad * PRECIO_PASE;
+        const extrasTotal = extras.reduce((acc: number, curr: any) => acc + (curr?.total || 0), 0);
+        setSubtotal(subtotalBase + extrasTotal - (promo.aplicado ? promo.valor : 0));
+    }, [cantidad, extras, promo]);
+
+    // Total transporte
     const totalTransporte = usaTransporte ? cantidad * PRECIO_TRANSPORTE : 0;
     const total = subtotal + totalTransporte;
+
+    // Extras string (ejemplo)
+    const extrasResumen = extras
+        .filter((x: any) => x.cantidad > 0)
+        .map((x: any) => `${x.cantidad} x ${x.nombre}`)
+        .join(", ") || "Ninguno";
+
+    // Fecha legible
+    function fechaLegible(fechaStr: string) {
+        if (!fechaStr) return "-";
+        try {
+            return new Date(fechaStr).toLocaleDateString("es-MX", {
+                year: "numeric",
+                month: "long",
+                day: "2-digit"
+            });
+        } catch {
+            return fechaStr;
+        }
+    }
+
+    // Siguiente paso
+    function handleContinuar() {
+        // Guarda elección de transporte
+        localStorage.setItem("transporte_usa", usaTransporte ? "1" : "0");
+        localStorage.setItem("transporte_horario", JSON.stringify(horario));
+        localStorage.setItem("transporte_cantidad", cantidad.toString());
+        window.location.href = "/daypass/resumen";
+    }
 
     return (
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
@@ -118,7 +206,6 @@ export default function TransportePage() {
                                     Cantidad de boletos
                                 </label>
                                 <div className="flex gap-2 mt-2">
-                                    <span className="text-xs">Butto</span>
                                     <input
                                         type="number"
                                         min={1}
@@ -171,23 +258,33 @@ export default function TransportePage() {
                         <div className="text-sm mb-2">
                             <div className="flex justify-between">
                                 <span>Fecha de visita:</span>
-                                <span>15 de Octubre, 2023</span>
+                                <span>{fechaLegible(fecha)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Horario visita:</span>
+                                <span>{hora || "-"}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span>Pases de entrada:</span>
-                                <span>4 adultos</span>
+                                <span>{cantidad} {cantidad === 1 ? "persona" : "personas"}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span>Extras:</span>
-                                <span>Buffet mexicano</span>
+                                <span>{extrasResumen}</span>
                             </div>
+                            {promo.aplicado && (
+                                <div className="flex justify-between text-green-700 font-semibold">
+                                    <span>Cupón aplicado:</span>
+                                    <span>- ${promo.valor}</span>
+                                </div>
+                            )}
                             {usaTransporte && (
                                 <>
                                     <div className="flex justify-between">
                                         <span>Transporte:</span>
                                         <span>
-                      Las Jaras Bus ({cantidad})
-                    </span>
+                                            Las Jaras Bus ({cantidad})
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Horario:</span>
@@ -217,7 +314,7 @@ export default function TransportePage() {
                         </div>
                         <button
                             className="mt-6 w-full py-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition"
-                            onClick={() => window.location.href = "/daypass/resumen"}
+                            onClick={handleContinuar}
                         >
                             Continuar al resumen
                         </button>
