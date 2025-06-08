@@ -1,36 +1,124 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-// --- Utilidades para la demo de calendario ---
+// --- Utilidades para el calendario y horarios ---
 const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
-const diasOctubre = Array.from({ length: 31 }, (_, i) => i + 1);
-
 const horarios = [
     "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
     "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM",
 ];
 
+// Devuelve array de días y el primer día del mes (0=lunes, 6=domingo)
+function getDiasMes(year: number, month: number) {
+    const firstDay = new Date(year, month, 1).getDay(); // 0=domingo
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    // Ajuste para que lunes sea 0 y domingo 6
+    const primerDia = firstDay === 0 ? 6 : firstDay - 1;
+    return {
+        dias: Array.from({ length: lastDate }, (_, i) => i + 1),
+        primerDia,
+    };
+}
+
+// Formatea la fecha correctamente sin perder el día seleccionado
+function formatFechaEs(year: number, month: number, day: number) {
+    const fecha = new Date(`${year}-${(month + 1).toString().padStart(2, "0")}-${day
+        .toString()
+        .padStart(2, "0")}T00:00:00`);
+    // Forzamos la fecha local con el string, así no hay off-by-one
+    return fecha.toLocaleDateString("es-MX", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+    });
+}
+
 export default function FechaVisitaPage() {
-    // Fecha seleccionada: YYYY-MM-DD
-    const [selectedDate, setSelectedDate] = useState<string>("2023-10-20");
-    const [selectedTime, setSelectedTime] = useState<string>("11:00 AM");
+    // Fecha inicial: hoy
+    const today = new Date();
+    const [mes, setMes] = useState(today.getMonth());
+    const [year, setYear] = useState(today.getFullYear());
+    const [selectedDay, setSelectedDay] = useState(today.getDate());
+    const [selectedTime, setSelectedTime] = useState("11:00 AM");
 
-    // Demo: información de visitantes/total (normalmente tomarías esto de contexto, backend o localStorage)
-    const total = 950;
-    const personas = 4;
+    const [visitantes, setVisitantes] = useState<{ nombre: string; correo: string; celular: string }[]>([]);
+    const [cantidad, setCantidad] = useState(1);
+    const [descuento, setDescuento] = useState(0);
+    const [promoDesc, setPromoDesc] = useState<string | null>(null);
 
-    // --- Funciones para simular cambio de mes ---
-    // Demo sólo Octubre 2023, pero puedes expandirlo.
+    useEffect(() => {
+        try {
+            const visitantesLS = localStorage.getItem("visitantes");
+            const cantidadLS = localStorage.getItem("cantidad");
+            setVisitantes(visitantesLS ? JSON.parse(visitantesLS) : []);
+            setCantidad(cantidadLS ? parseInt(cantidadLS) : 1);
 
-    const handleSelectDate = (dia: number) => {
-        setSelectedDate(`2023-10-${dia.toString().padStart(2, "0")}`);
+            // LEE DESCUENTO SI HAY
+            const promo = localStorage.getItem("promoAplicado");
+            const codPromo = localStorage.getItem("codigoPromo");
+            const descPromo = localStorage.getItem("descuentoPromo");
+            if (promo === "1" && descPromo && codPromo) {
+                setDescuento(parseInt(descPromo));
+                setPromoDesc(codPromo);
+            } else {
+                setDescuento(0);
+                setPromoDesc(null);
+            }
+        } catch {
+            setVisitantes([]);
+            setCantidad(1);
+            setDescuento(0);
+            setPromoDesc(null);
+        }
+    }, []);
+
+    // Calendario
+    const { dias, primerDia } = getDiasMes(year, mes);
+
+    // Total con descuento aplicado si hay
+    const PRECIO_PASE = 350;
+    const total = Math.max(cantidad * PRECIO_PASE - descuento, 0);
+    const personas = cantidad;
+
+    // Fecha completa seleccionada (YYYY-MM-DD)
+    const fechaSeleccionada = `${year}-${(mes + 1).toString().padStart(2, "0")}-${selectedDay
+        .toString()
+        .padStart(2, "0")}`;
+    // Muestra el día seleccionado de forma correcta en español
+    const fechaDisplay = formatFechaEs(year, mes, selectedDay);
+
+    // Cambiar mes
+    const handlePrevMonth = () => {
+        if (mes === 0) {
+            setMes(11);
+            setYear(year - 1);
+        } else {
+            setMes(mes - 1);
+        }
+        setSelectedDay(1);
+    };
+    const handleNextMonth = () => {
+        if (mes === 11) {
+            setMes(0);
+            setYear(year + 1);
+        } else {
+            setMes(mes + 1);
+        }
+        setSelectedDay(1);
+    };
+
+    // Guardar fecha/hora y continuar
+    const handleContinuar = () => {
+        localStorage.setItem("fechaVisita", fechaSeleccionada);
+        localStorage.setItem("horaVisita", selectedTime);
+        window.location.href = "/daypass/extras";
     };
 
     return (
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
-            {/* Header Simulado */}
             <Header />
             {/* Progreso */}
             <div className="max-w-5xl w-full mx-auto pt-6 pb-4 px-4">
@@ -69,9 +157,23 @@ export default function FechaVisitaPage() {
                     {/* Calendario */}
                     <div className="bg-white border rounded p-6 mb-6">
                         <div className="flex items-center justify-between mb-2">
-                            <button className="text-xs text-gray-400 cursor-not-allowed">Mes anterior</button>
-                            <span className="font-semibold">Octubre 2023</span>
-                            <button className="text-xs text-gray-400 cursor-not-allowed">Mes siguiente</button>
+                            <button
+                                className="text-xs text-[#18668b] font-bold"
+                                onClick={handlePrevMonth}
+                                type="button"
+                            >
+                                Mes anterior
+                            </button>
+                            <span className="font-semibold capitalize">
+                                {new Date(year, mes).toLocaleDateString("es-MX", { month: "long", year: "numeric" })}
+                            </span>
+                            <button
+                                className="text-xs text-[#18668b] font-bold"
+                                onClick={handleNextMonth}
+                                type="button"
+                            >
+                                Mes siguiente
+                            </button>
                         </div>
                         {/* Días de la semana */}
                         <div className="grid grid-cols-7 text-center text-xs font-semibold mb-1">
@@ -79,19 +181,18 @@ export default function FechaVisitaPage() {
                                 <span key={dia}>{dia}</span>
                             ))}
                         </div>
-                        {/* Días (rellena para que empiece en domingo 1 de octubre, 2023 inicia en domingo) */}
+                        {/* Días (rellena primer día) */}
                         <div className="grid grid-cols-7 gap-1">
-                            {/* Primer día: domingo, así que 6 espacios vacíos antes del 1 */}
-                            {[...Array(6).keys()].map((_, i) => (
+                            {[...Array(primerDia).keys()].map((_, i) => (
                                 <div key={"empty-" + i}></div>
                             ))}
-                            {diasOctubre.map((dia) => {
-                                const fecha = `2023-10-${dia.toString().padStart(2, "0")}`;
-                                const isSelected = selectedDate === fecha;
+                            {dias.map((dia) => {
+                                const isSelected = selectedDay === dia;
                                 return (
                                     <button
                                         key={dia}
-                                        onClick={() => handleSelectDate(dia)}
+                                        type="button"
+                                        onClick={() => setSelectedDay(dia)}
                                         className={`w-9 h-9 rounded flex items-center justify-center border
                       ${
                                             isSelected
@@ -113,6 +214,7 @@ export default function FechaVisitaPage() {
                             {horarios.map((hora) => (
                                 <button
                                     key={hora}
+                                    type="button"
                                     className={`rounded border py-2 font-semibold text-sm
                     ${
                                         selectedTime === hora
@@ -134,35 +236,30 @@ export default function FechaVisitaPage() {
                         <h4 className="font-bold mb-3">Resumen de tu reserva</h4>
                         <div className="flex items-center gap-2 text-sm mb-2">
                             <span>📅</span>
-                            <span>
-                {new Date(selectedDate).toLocaleDateString("es-MX", {
-                    weekday: "long",
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                })}
-              </span>
+                            <span className="capitalize">{fechaDisplay}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm mb-2">
                             <span>⏰</span>
                             <span>{selectedTime}</span>
                         </div>
                         <div className="text-sm text-gray-500 mb-4">
-                            Disponibilidad confirmada para {personas} personas
+                            Disponibilidad confirmada para {personas} persona{personas > 1 && "s"}
                         </div>
                         <div className="text-sm border-t pt-2 mb-2">
                             <div className="flex justify-between">
-                                <span>Adultos (2)</span>
-                                <span>$600.00</span>
+                                <span>Total de pases</span>
+                                <span>{cantidad}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span>Niños (1)</span>
-                                <span>$200.00</span>
+                                <span>Precio por pase</span>
+                                <span>$350.00</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span>Adultos mayores (1)</span>
-                                <span>$150.00</span>
-                            </div>
+                            {promoDesc && (
+                                <div className="flex justify-between text-green-700 font-bold">
+                                    <span>Promo aplicada ({promoDesc})</span>
+                                    <span>- ${descuento} MXN</span>
+                                </div>
+                            )}
                         </div>
                         <div className="flex justify-between font-bold text-base">
                             <span>Total</span>
@@ -170,7 +267,7 @@ export default function FechaVisitaPage() {
                         </div>
                         <button
                             className="mt-6 w-full py-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition"
-                            onClick={() => (window.location.href = "/daypass/extras")}
+                            onClick={handleContinuar}
                         >
                             Continuar a Extras
                         </button>
@@ -188,7 +285,6 @@ export default function FechaVisitaPage() {
                     </div>
                 </aside>
             </main>
-            {/* Footer */}
             <Footer />
         </div>
     );

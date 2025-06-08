@@ -122,12 +122,21 @@ export default function DaypassPage() {
             setPromoAplicado(true);
             setMsgPromo(`¡Descuento de $${DESCUENTO_PROMO} aplicado!`);
             toast.success(`¡Descuento de $${DESCUENTO_PROMO} aplicado!`);
+            // ---> AGREGA ESTO:
+            localStorage.setItem("promoAplicado", "1");
+            localStorage.setItem("codigoPromo", CODIGO_PROMO);
+            localStorage.setItem("descuentoPromo", DESCUENTO_PROMO.toString());
         } else {
             setPromoAplicado(false);
             setMsgPromo("Código promocional no válido.");
             toast.error("Código promocional no válido.");
+            // ---> Asegúrate de limpiar:
+            localStorage.removeItem("promoAplicado");
+            localStorage.removeItem("codigoPromo");
+            localStorage.removeItem("descuentoPromo");
         }
     };
+
 
     const handleSiguiente = () => {
         localStorage.setItem("visitantes", JSON.stringify(visitantes));
