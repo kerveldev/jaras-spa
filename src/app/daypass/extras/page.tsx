@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 
-// Opciones de servicios y precios
 const BUFFET = [
     { key: "basico", nombre: "Buffet Básico", descripcion: "Incluye entrada, plato principal y postre", precio: 350 },
     { key: "premium", nombre: "Buffet Premium", descripcion: "Incluye entrada, plato principal, postre y bebidas ilimitadas", precio: 550 },
@@ -18,32 +16,64 @@ const MASAJES = [
     { key: "parejas", nombre: "Masaje para Parejas", descripcion: "75 minutos de masaje en pareja con champagne", precio: 2000 },
 ];
 
+// Helpers para recuperar del LS si vuelves atrás
+function getDefaultCantidad(key: string, defaultVal: number) {
+    if (typeof window === "undefined") return defaultVal;
+    try {
+        const data = localStorage.getItem("extras_cantidades");
+        if (!data) return defaultVal;
+        const obj = JSON.parse(data);
+        return obj[key] ?? defaultVal;
+    } catch {
+        return defaultVal;
+    }
+}
+
+function getDefaultOrden() {
+    if (typeof window === "undefined") return [];
+    try {
+        const data = localStorage.getItem("extras_orden");
+        if (!data) return [];
+        return JSON.parse(data);
+    } catch {
+        return [];
+    }
+}
+
 export default function ExtrasPage() {
-    // Estado para cantidades seleccionadas
+    // Estado para cantidades seleccionadas (usando LS si existe)
     const [cantidadesBuffet, setCantidadesBuffet] = useState<{ [key: string]: number }>({
-        basico: 4,
-        premium: 0,
-        infantil: 0,
+        basico: getDefaultCantidad("basico", 0),
+        premium: getDefaultCantidad("premium", 0),
+        infantil: getDefaultCantidad("infantil", 0),
     });
     const [cantidadesMasaje, setCantidadesMasaje] = useState<{ [key: string]: number }>({
-        relajante: 2,
-        piedras: 0,
-        parejas: 0,
+        relajante: getDefaultCantidad("relajante", 0),
+        piedras: getDefaultCantidad("piedras", 0),
+        parejas: getDefaultCantidad("parejas", 0),
     });
 
-    // Estado para servicios agregados (resumen del pedido)
-    const [orden, setOrden] = useState<{ tipo: string; nombre: string; cantidad: number; total: number }[]>([
-        { tipo: "buffet", nombre: "Buffet Básico", cantidad: 4, total: 1400 },
-        { tipo: "masaje", nombre: "Masaje Relajante", cantidad: 2, total: 1600 },
-    ]);
+    // Estado para servicios agregados (usando LS si existe)
+    const [orden, setOrden] = useState<{ tipo: string; nombre: string; cantidad: number; total: number }[]>(getDefaultOrden());
 
+    // Si cambian cantidades, limpia el LS para que el usuario no vea basura previa
+    useEffect(() => {
+        // Guarda cantidades en localStorage (mejor práctica: todos juntos)
+        localStorage.setItem(
+            "extras_cantidades",
+            JSON.stringify({ ...cantidadesBuffet, ...cantidadesMasaje })
+        );
+    }, [cantidadesBuffet, cantidadesMasaje]);
+
+    useEffect(() => {
+        // Guarda la orden (el resumen de extras)
+        localStorage.setItem("extras_orden", JSON.stringify(orden));
+    }, [orden]);
 
     // Función para agregar un servicio a la orden
     function agregarServicio(tipo: "buffet" | "masaje", item: any, cantidad: number) {
-
         if (cantidad < 1) return;
         setOrden((prev) => {
-            // Si ya existe, reemplazar la cantidad y total, si no agregarlo
             const idx = prev.findIndex(
                 (el) => el.tipo === tipo && el.nombre === item.nombre
             );
@@ -67,6 +97,12 @@ export default function ExtrasPage() {
 
     // Navegación
     function handleContinuar() {
+        // Además de lo anterior, guarda la orden actual (redundante, pero seguro)
+        localStorage.setItem("extras_orden", JSON.stringify(orden));
+        localStorage.setItem(
+            "extras_cantidades",
+            JSON.stringify({ ...cantidadesBuffet, ...cantidadesMasaje })
+        );
         window.location.href = "/daypass/transporte";
     }
 
@@ -258,12 +294,12 @@ export default function ExtrasPage() {
                             (item) =>
                                 item.cantidad > 0 && (
                                     <li key={item.tipo + item.nombre} className="flex justify-between text-sm py-1">
-                    <span>
-                      {item.cantidad} x {item.nombre}
-                    </span>
                                         <span>
-                      ${item.total} MXN
-                    </span>
+                                            {item.cantidad} x {item.nombre}
+                                        </span>
+                                        <span>
+                                            ${item.total} MXN
+                                        </span>
                                     </li>
                                 )
                         )}
