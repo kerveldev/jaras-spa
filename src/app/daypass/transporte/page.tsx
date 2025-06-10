@@ -17,6 +17,7 @@ const PUNTOS_SALIDA = [
     { nombre: "Plaza Patria", direccion: "Av. Patria 45, Zapopan" },
 ];
 
+const PRECIO_PASE = 350;
 const PRECIO_TRANSPORTE = 120;
 
 function safeParse<T>(item: string | null, def: T): T {
@@ -28,7 +29,6 @@ function safeParse<T>(item: string | null, def: T): T {
 }
 
 export default function TransportePage() {
-    // Recupera datos de localStorage (con SSR-safe fallback)
     const [cantidad, setCantidad] = useState(1);
     const [visitantes, setVisitantes] = useState<any[]>([]);
     const [extras, setExtras] = useState<any[]>([]);
@@ -36,66 +36,59 @@ export default function TransportePage() {
     const [hora, setHora] = useState<string>("");
     const [usaTransporte, setUsaTransporte] = useState(true);
     const [horario, setHorario] = useState(HORARIOS[0]);
-    const [promo, setPromo] = useState<{ aplicado: boolean, valor: number }>({ aplicado: false, valor: 0 });
+    const [promo, setPromo] = useState<{ aplicado: boolean, valor: number, codigo?: string }>({ aplicado: false, valor: 0, codigo: "" });
     const [subtotal, setSubtotal] = useState(0);
 
-    // Cargar datos al montar
     useEffect(() => {
         if (typeof window === "undefined") return;
 
-        // Visitantes
         const visitantesLS = safeParse<any[]>(localStorage.getItem("visitantes"), []);
         setVisitantes(visitantesLS);
 
-        // Cantidad
         const cantidadLS = Number(localStorage.getItem("cantidad") || 1);
         setCantidad(cantidadLS);
 
-        // Extras
         const extrasLS = safeParse<any[]>(localStorage.getItem("extras_orden"), []);
         setExtras(extrasLS);
 
-        // Fecha y hora
-        const reservaLS = safeParse<{ date: string, time: string }>(localStorage.getItem("reserva_fecha_hora"), { date: "", time: "" });
-        setFecha(reservaLS.date);
-        setHora(reservaLS.time);
+        // Fecha/hora
+        const fechaLS = localStorage.getItem("fechaVisita") || "";
+        const horaLS = localStorage.getItem("horaVisita") || "";
+        setFecha(fechaLS);
+        setHora(horaLS);
 
         // Promo
         const promoAplicada = localStorage.getItem("promo_aplicada") === "1";
-        const promoValor = Number(localStorage.getItem("promo_descuento") || 0);
-        setPromo({ aplicado: promoAplicada, valor: promoValor });
+        const promoValor = Number(localStorage.getItem("descuentoPromo") || 0);
+        console.log(promoValor);
+        const promoCodigo = localStorage.getItem("promo_codigo") || "";
+        setPromo({ aplicado: promoAplicada, valor: promoValor, codigo: promoCodigo });
 
-        // Subtotal base: suma de pases de entrada
-        const PRECIO_PASE = 350;
+        // Subtotales
         const subtotalBase = cantidadLS * PRECIO_PASE;
-        // Extras
         const extrasTotal = extrasLS.reduce((acc: number, curr: any) => acc + (curr?.total || 0), 0);
         setSubtotal(subtotalBase + extrasTotal - (promoAplicada ? promoValor : 0));
     }, []);
 
-    // Actualiza subtotal al cambiar cantidad, extras o promo
     useEffect(() => {
-        const PRECIO_PASE = 350;
         const subtotalBase = cantidad * PRECIO_PASE;
         const extrasTotal = extras.reduce((acc: number, curr: any) => acc + (curr?.total || 0), 0);
         setSubtotal(subtotalBase + extrasTotal - (promo.aplicado ? promo.valor : 0));
     }, [cantidad, extras, promo]);
 
-    // Total transporte
     const totalTransporte = usaTransporte ? cantidad * PRECIO_TRANSPORTE : 0;
     const total = subtotal + totalTransporte;
 
-    // Extras string (ejemplo)
-    const extrasResumen = extras
-        .filter((x: any) => x.cantidad > 0)
-        .map((x: any) => `${x.cantidad} x ${x.nombre}`)
-        .join(", ") || "Ninguno";
+    // Extras como lista
+    const extrasList = extras.filter((x: any) => x.cantidad > 0);
 
     // Fecha legible
     function fechaLegible(fechaStr: string) {
         if (!fechaStr) return "-";
         try {
-            return new Date(fechaStr).toLocaleDateString("es-MX", {
+            // <-- AQUÍ EL CAMBIO
+            const safeFecha = fechaStr.includes("T") ? fechaStr : fechaStr + "T12:00:00";
+            return new Date(safeFecha).toLocaleDateString("es-MX", {
                 year: "numeric",
                 month: "long",
                 day: "2-digit"
@@ -105,9 +98,7 @@ export default function TransportePage() {
         }
     }
 
-    // Siguiente paso
     function handleContinuar() {
-        // Guarda elección de transporte
         localStorage.setItem("transporte_usa", usaTransporte ? "1" : "0");
         localStorage.setItem("transporte_horario", JSON.stringify(horario));
         localStorage.setItem("transporte_cantidad", cantidad.toString());
@@ -255,7 +246,7 @@ export default function TransportePage() {
                 <aside className="w-full md:w-80">
                     <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
                         <h4 className="font-bold mb-3">Resumen de reserva</h4>
-                        <div className="text-sm mb-2">
+                        <div className="text-sm mb-2 space-y-2">
                             <div className="flex justify-between">
                                 <span>Fecha de visita:</span>
                                 <span>{fechaLegible(fecha)}</span>
@@ -266,51 +257,51 @@ export default function TransportePage() {
                             </div>
                             <div className="flex justify-between">
                                 <span>Pases de entrada:</span>
-                                <span>{cantidad} {cantidad === 1 ? "persona" : "personas"}</span>
+                                <span>{cantidad} x ${PRECIO_PASE} = ${cantidad * PRECIO_PASE} MXN</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span>Extras:</span>
-                                <span>{extrasResumen}</span>
-                            </div>
+                            {/* PROMO */}
                             {promo.aplicado && (
                                 <div className="flex justify-between text-green-700 font-semibold">
-                                    <span>Cupón aplicado:</span>
-                                    <span>- ${promo.valor}</span>
+                                    <span>Cupón aplicado ({promo.codigo || "PROMO"}):</span>
+                                    <span>- ${promo.valor} MXN</span>
                                 </div>
                             )}
+                            {/* Extras */}
+                            <div className="font-semibold mt-2 mb-1">Extras:</div>
+                            {extrasList.length ? (
+                                <ul className="pl-3 mb-2 list-disc text-black">
+                                    {extrasList.map((x: any, i: number) => (
+                                        <li key={x.nombre + i}>
+                                            {x.cantidad} x {x.nombre} - ${x.total} MXN
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <div className="text-xs text-gray-400 mb-2">Sin servicios adicionales</div>
+                            )}
+                            {/* Subtotal sin transporte */}
+                            <div className="flex justify-between">
+                                <span>Subtotal:</span>
+                                <span>${subtotal} MXN</span>
+                            </div>
+                            {/* Transporte */}
                             {usaTransporte && (
                                 <>
                                     <div className="flex justify-between">
-                                        <span>Transporte:</span>
-                                        <span>
-                                            Las Jaras Bus ({cantidad})
-                                        </span>
+                                        <span>Transporte ({cantidad} x ${PRECIO_TRANSPORTE}):</span>
+                                        <span>${totalTransporte} MXN</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>Horario:</span>
-                                        <span>{horario.hora}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Punto de salida:</span>
-                                        <span>{horario.salida}</span>
+                                        <span>Horario transporte:</span>
+                                        <span>{horario.hora} ({horario.salida})</span>
                                     </div>
                                 </>
                             )}
-                        </div>
-                        <hr className="my-2" />
-                        <div className="flex justify-between text-sm">
-                            <span>Subtotal:</span>
-                            <span>${subtotal} MXN</span>
-                        </div>
-                        {usaTransporte && (
-                            <div className="flex justify-between text-sm">
-                                <span>Transporte ({cantidad} x ${PRECIO_TRANSPORTE}):</span>
-                                <span>${totalTransporte} MXN</span>
+                            {/* TOTAL */}
+                            <div className="flex justify-between font-bold text-lg mt-2">
+                                <span>Total:</span>
+                                <span>${total} MXN</span>
                             </div>
-                        )}
-                        <div className="flex justify-between font-bold text-lg mt-2">
-                            <span>Total:</span>
-                            <span>${total} MXN</span>
                         </div>
                         <button
                             className="mt-6 w-full py-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition"
