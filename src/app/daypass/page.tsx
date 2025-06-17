@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useState} from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import toast, { Toaster } from "react-hot-toast";
+import toast, {Toaster} from "react-hot-toast";
+import {FiPlus, FiTrash2} from "react-icons/fi";
 
 const CODIGO_PROMO = "PROMO100";
 const DESCUENTO_PROMO = 100;
@@ -21,7 +22,7 @@ function getDiasMes(year: number, month: number) {
     const lastDate = new Date(year, month + 1, 0).getDate();
     const primerDia = firstDay === 0 ? 6 : firstDay - 1;
     return {
-        dias: Array.from({ length: lastDate }, (_, i) => i + 1),
+        dias: Array.from({length: lastDate}, (_, i) => i + 1),
         primerDia,
     };
 }
@@ -38,52 +39,37 @@ function formatFechaEs(year: number, month: number, day: number) {
     });
 }
 
-interface Visitante {
-    nombre: string;
-    correo: string;
-    celular: string;
-}
-
 export default function DaypassUnicaPage() {
-    // PASOS: cantidad y datos -> fecha/horario -> resumen
-    const [cantidad, setCantidad] = useState<number>(1);
-    const [visitantes, setVisitantes] = useState<Visitante[]>(
-        Array.from({ length: 1 }, () => ({
-            nombre: "",
-            correo: "",
-            celular: "",
-        }))
-    );
-    const [touched, setTouched] = useState<{ nombre: boolean; correo: boolean; celular: boolean }[]>(
-        Array.from({ length: 1 }, () => ({
-            nombre: false,
-            correo: false,
-            celular: false,
-        }))
-    );
+    const [visitantes, setVisitantes] = useState([
+        {nombre: "", correo: "", celular: ""},
+    ]);
+    const [touched, setTouched] = useState([
+        {nombre: false, correo: false, celular: false},
+    ]);
     const [codigoPromo, setCodigoPromo] = useState("");
     const [promoAplicado, setPromoAplicado] = useState(false);
     const [msgPromo, setMsgPromo] = useState("");
     const [descuento, setDescuento] = useState(0);
 
-    // FECHA
     const today = new Date();
     const [mes, setMes] = useState(today.getMonth());
     const [year, setYear] = useState(today.getFullYear());
     const [selectedDay, setSelectedDay] = useState(today.getDate());
     const [selectedTime, setSelectedTime] = useState("11:00 AM");
 
-    // VALIDACIONES
     function validateNombre(nombre: string) {
         return nombre.trim().length > 0;
     }
+
     function validateCorreo(correo: string, obligatorio: boolean) {
         if (!correo.trim() && !obligatorio) return true;
         return regexEmail.test(correo.trim());
     }
+
     function validateCelular(celular: string) {
         return /^\d{10,}$/.test(celular.trim());
     }
+
     const puedeContinuar =
         visitantes.every(
             (v, i) =>
@@ -94,47 +80,21 @@ export default function DaypassUnicaPage() {
         selectedDay > 0 &&
         selectedTime;
 
-    // Actualizar cantidad de visitantes
-    const handleCantidad = (v: number) => {
-        setCantidad(v);
-        setVisitantes((prev) => {
-            if (v > prev.length) {
-                return [
-                    ...prev,
-                    ...Array.from({ length: v - prev.length }, () => ({
-                        nombre: "",
-                        correo: "",
-                        celular: "",
-                    })),
-                ];
-            }
-            return prev.slice(0, v);
-        });
-        setTouched((prev) => {
-            if (v > prev.length) {
-                return [
-                    ...prev,
-                    ...Array.from({ length: v - prev.length }, () => ({
-                        nombre: false,
-                        correo: false,
-                        celular: false,
-                    })),
-                ];
-            }
-            return prev.slice(0, v);
-        });
-        setPromoAplicado(false);
-        setMsgPromo("");
-        setCodigoPromo("");
-        setDescuento(0);
+    // Agregar visitante
+    const handleAddVisitante = () => {
+        if (visitantes.length >= 10) return;
+        setVisitantes((prev) => [
+            ...prev,
+            {nombre: "", correo: "", celular: ""},
+        ]);
+        setTouched((prev) => [
+            ...prev,
+            {nombre: false, correo: false, celular: false},
+        ]);
     };
 
     // Cambios por visitante
-    const handleVis = (
-        idx: number,
-        campo: keyof Visitante,
-        valor: string
-    ) => {
+    const handleVis = (idx: number, campo: 'nombre' | 'correo' | 'celular', valor: string) => {
         setVisitantes((prev) => {
             const copia = [...prev];
             copia[idx][campo] = valor;
@@ -142,7 +102,7 @@ export default function DaypassUnicaPage() {
         });
     };
 
-    const handleBlur = (idx: number, campo: keyof Visitante) => {
+    const handleBlur = (idx: number, campo: 'nombre' | 'correo' | 'celular') => {
         setTouched((prev) => {
             const copy = [...prev];
             copy[idx][campo] = true;
@@ -150,7 +110,6 @@ export default function DaypassUnicaPage() {
         });
     };
 
-    // Promo
     const aplicarPromo = () => {
         if (codigoPromo.trim().toUpperCase() === CODIGO_PROMO) {
             setPromoAplicado(true);
@@ -171,20 +130,19 @@ export default function DaypassUnicaPage() {
         }
     };
 
-    // Calendario
-    const { dias, primerDia } = getDiasMes(year, mes);
+    const {dias, primerDia} = getDiasMes(year, mes);
     const fechaSeleccionada = `${year}-${(mes + 1).toString().padStart(2, "0")}-${selectedDay
         .toString()
         .padStart(2, "0")}`;
     const fechaDisplay = formatFechaEs(year, mes, selectedDay);
 
-    const subtotal = cantidad * PRECIO_PASE;
+    const subtotal = visitantes.length * PRECIO_PASE;
     const total = Math.max(subtotal - descuento, 0);
 
     // Guardar y continuar
     const handleSiguiente = () => {
         localStorage.setItem("visitantes", JSON.stringify(visitantes));
-        localStorage.setItem("cantidad", cantidad.toString());
+        localStorage.setItem("cantidad", visitantes.length.toString());
         localStorage.setItem("fechaVisita", fechaSeleccionada);
         localStorage.setItem("horaVisita", selectedTime);
         window.location.href = "/daypass/extras";
@@ -194,8 +152,7 @@ export default function DaypassUnicaPage() {
         window.location.href = "/daypass/transporte";
     }
 
-
-    function renderError(message: string, show: boolean) {
+    function renderError(message: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined, show: boolean) {
         return (
             <div style={{ minHeight: "20px" }}>
                 {show && (
@@ -205,7 +162,6 @@ export default function DaypassUnicaPage() {
         );
     }
 
-    // Cambiar mes calendario
     const handlePrevMonth = () => {
         if (mes === 0) {
             setMes(11);
@@ -224,6 +180,12 @@ export default function DaypassUnicaPage() {
         }
         setSelectedDay(1);
     };
+    // Para eliminar visitante
+    const handleRemoveVisitante = (idx: number) => {
+        setVisitantes((prev) => prev.filter((_, i) => i !== idx));
+        setTouched((prev) => prev.filter((_, i) => i !== idx));
+    };
+
 
     return (
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
@@ -231,7 +193,7 @@ export default function DaypassUnicaPage() {
             <Header />
 
             {/* Breadcrumbs y Progreso */}
-            <div className="max-w-5xl w-full mx-auto pt-6 pb-4 px-4">
+            <div className="max-w-xl w-full mx-auto pt-6 pb-4 px-4">
                 <div className="text-xs text-gray-400 mb-4">
                     Inicio &gt; Reservaciones &gt; <span className="text-black">Compra y Fecha de Pases</span>
                 </div>
@@ -259,257 +221,268 @@ export default function DaypassUnicaPage() {
                     </div>
                 </div>
             </div>
+
             {/* Main Content */}
-            <main className="flex flex-col md:flex-row gap-8 max-w-5xl w-full mx-auto px-4 pb-12 flex-1">
-                <section className="flex-1">
-                    {/* Selección cantidad */}
-                    <h2 className="text-xl font-bold text-black mb-2">Selección de Pases</h2>
-                    <div className="mb-6 flex gap-3 items-center">
-                        <label className="font-semibold text-black">Pases de Acceso General</label>
-                        <input
-                            type="number"
-                            min={1}
-                            max={10}
-                            value={cantidad}
-                            onChange={(e) => handleCantidad(Number(e.target.value))}
-                            className="border rounded px-2 py-1 w-20"
-                        />
-                    </div>
-                    {/* Visitantes */}
-                    <h3 className="font-semibold text-black text-base mb-2 mt-8">Detalles de los Visitantes</h3>
-                    <p className="mb-2 text-xs text-gray-500">
-                        Por favor, especifica los detalles para cada uno de los {cantidad} pases seleccionados.
-                    </p>
-                    <form className="space-y-4">
-                        {visitantes.slice(0, cantidad).map((vis, idx) => {
-                            const errorNombre = !validateNombre(vis.nombre) && touched[idx]?.nombre;
-                            const errorCorreo = !validateCorreo(vis.correo, idx === 0) && touched[idx]?.correo;
-                            const errorCelular = !validateCelular(vis.celular) && touched[idx]?.celular;
-                            return (
-                                <div
-                                    key={idx}
-                                    className="bg-white rounded border p-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-start"
-                                >
-                                    {/* Nombre */}
-                                    <div className="flex flex-col">
-                                        <label className="block text-xs font-medium text-black mb-1 ">
-                                            {`Visitante ${idx + 1} ${idx === 0 ? "(Tú)" : ""}`}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            placeholder="Nombre"
-                                            value={vis.nombre}
-                                            onChange={(e) => handleVis(idx, "nombre", e.target.value)}
-                                            onBlur={() => handleBlur(idx, "nombre")}
-                                            className={`border p-2 rounded w-full transition-colors duration-150 ${errorNombre ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
-                                            required
-                                        />
-                                        {renderError("El nombre es obligatorio.", errorNombre)}
-                                    </div>
-                                    {/* Correo */}
-                                    <div className="flex flex-col">
-                                        <label className="block text-xs font-medium text-black mb-1">
-                                            Correo Electrónico {idx === 0 ? <span className="text-[10px]">(Principal)</span> : <span className="text-gray-400">(opcional)</span>}
-                                        </label>
-                                        <input
-                                            type="email"
-                                            placeholder="Correo electrónico"
-                                            value={vis.correo}
-                                            onChange={(e) => handleVis(idx, "correo", e.target.value)}
-                                            onBlur={() => handleBlur(idx, "correo")}
-                                            className={`border p-2 rounded w-full transition-colors duration-150 ${errorCorreo ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
-                                            required={idx === 0}
-                                        />
-                                        {renderError(
-                                            idx === 0
-                                                ? "El correo es obligatorio y debe ser válido."
-                                                : "El correo debe ser válido.",
-                                            errorCorreo
+            <main className="flex flex-col md:flex-row gap-8 max-w-7xl w-full mx-auto px-4 pb-12 flex-1">
+                {/* Card Visitantes */}
+                <section className="flex-1 md:flex md:items-start md:gap-8">
+                    <div className="w-full md:w-2/3">
+                        <form className="space-y-4">
+                            {visitantes.map((vis, idx) => {
+                                const errorNombre = !validateNombre(vis.nombre) && touched[idx]?.nombre;
+                                const errorCorreo = !validateCorreo(vis.correo, idx === 0) && touched[idx]?.correo;
+                                const errorCelular = !validateCelular(vis.celular) && touched[idx]?.celular;
+                                return (
+                                    <div
+                                        key={idx}
+                                        className="bg-white rounded border p-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-start relative"
+                                    >
+                                        {/* Botón eliminar visitante */}
+                                        {visitantes.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveVisitante(idx)}
+                                                className="absolute top-2 right-2 text-red-600 hover:bg-red-100 rounded-full p-1 transition z-10"
+                                                title="Eliminar visitante"
+                                            >
+                                                <FiTrash2 size={18} />
+                                            </button>
+                                        )}
+
+                                        {/* Nombre */}
+                                        <div className="flex flex-col">
+                                            <label className="block text-xs font-medium text-black mb-1 ">
+                                                {`Visitante ${idx + 1} ${idx === 0 ? "(Tú)" : ""}`}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre"
+                                                value={vis.nombre}
+                                                onChange={(e) => handleVis(idx, "nombre", e.target.value)}
+                                                onBlur={() => handleBlur(idx, "nombre")}
+                                                className={`border p-2 rounded w-full transition-colors duration-150 ${errorNombre ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
+                                                required
+                                            />
+                                            {renderError("El nombre es obligatorio.", errorNombre)}
+                                        </div>
+                                        {/* Correo */}
+                                        <div className="flex flex-col">
+                                            <label className="block text-xs font-medium text-black mb-1">
+                                                Correo Electrónico {idx === 0 ? <span className="text-[10px]">(Principal)</span> : <span className="text-gray-400">(opcional)</span>}
+                                            </label>
+                                            <input
+                                                type="email"
+                                                placeholder="Correo electrónico"
+                                                value={vis.correo}
+                                                onChange={(e) => handleVis(idx, "correo", e.target.value)}
+                                                onBlur={() => handleBlur(idx, "correo")}
+                                                className={`border p-2 rounded w-full transition-colors duration-150 ${errorCorreo ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
+                                                required={idx === 0}
+                                            />
+                                            {renderError(
+                                                idx === 0
+                                                    ? "El correo es obligatorio y debe ser válido."
+                                                    : "El correo debe ser válido.",
+                                                errorCorreo
+                                            )}
+                                        </div>
+                                        {/* Celular */}
+                                        <div className="flex flex-col">
+                                            <label className="block text-xs font-medium text-black mb-1">
+                                                Celular WhatsApp
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                inputMode="numeric"
+                                                pattern="\d{10,}"
+                                                placeholder="Ej. 3312345678"
+                                                value={vis.celular}
+                                                onChange={(e) => handleVis(idx, "celular", e.target.value)}
+                                                onBlur={() => handleBlur(idx, "celular")}
+                                                className={`border p-2 rounded w-full transition-colors duration-150 ${errorCelular ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
+                                                required
+                                            />
+                                            {renderError("El celular debe tener al menos 10 dígitos numéricos.", errorCelular)}
+                                        </div>
+                                        {/* Botón agregar visitante */}
+                                        {idx === visitantes.length - 1 && visitantes.length < 10 && (
+                                            <button
+                                                type="button"
+                                                onClick={handleAddVisitante}
+                                                className="absolute top-1/2 right-[-2.6rem] -translate-y-1/2 bg-[#18668b] hover:bg-[#14526d] text-white rounded-full p-2 shadow-lg transition z-10"
+                                                title="Agregar visitante"
+                                            >
+                                                <FiPlus size={22} />
+                                            </button>
                                         )}
                                     </div>
-                                    {/* Celular */}
-                                    <div className="flex flex-col">
-                                        <label className="block text-xs font-medium text-black mb-1">
-                                            Celular WhatsApp
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            inputMode="numeric"
-                                            pattern="\d{10,}"
-                                            placeholder="Ej. 3312345678"
-                                            value={vis.celular}
-                                            onChange={(e) => handleVis(idx, "celular", e.target.value)}
-                                            onBlur={() => handleBlur(idx, "celular")}
-                                            className={`border p-2 rounded w-full transition-colors duration-150 ${errorCelular ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
-                                            required
-                                        />
-                                        {renderError("El celular debe tener al menos 10 dígitos numéricos.", errorCelular)}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </form>
-
-                    {/* Fecha y horario */}
-                    <h3 className="font-semibold text-black text-base mt-10 mb-2">Selecciona la fecha y el horario de tu visita</h3>
-                    {/* Calendario */}
-                    <div className="bg-white border rounded p-6 mb-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <button
-                                className="text-xs text-[#18668b] font-bold"
-                                onClick={handlePrevMonth}
-                                type="button"
-                            >
-                                Mes anterior
-                            </button>
-                            <span className="font-semibold capitalize">
-                {new Date(year, mes).toLocaleDateString("es-MX", { month: "long", year: "numeric" })}
-              </span>
-                            <button
-                                className="text-xs text-[#18668b] font-bold"
-                                onClick={handleNextMonth}
-                                type="button"
-                            >
-                                Mes siguiente
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-7 text-center text-xs font-semibold mb-1">
-                            {diasSemana.map((dia) => (
-                                <span key={dia}>{dia}</span>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-7 gap-1">
-                            {[...Array(primerDia).keys()].map((_, i) => (
-                                <div key={"empty-" + i}></div>
-                            ))}
-                            {dias.map((dia) => {
-                                const isSelected = selectedDay === dia;
-                                return (
-                                    <button
-                                        key={dia}
-                                        type="button"
-                                        onClick={() => setSelectedDay(dia)}
-                                        className={`w-9 h-9 rounded flex items-center justify-center border
-                      ${
-                                            isSelected
-                                                ? "bg-[#18668b] text-white border-[#18668b]"
-                                                : "bg-white hover:bg-gray-100 border-gray-200 text-gray-700"
-                                        }
-                    `}
-                                    >
-                                        {dia}
-                                    </button>
                                 );
                             })}
-                        </div>
-                    </div>
-                    {/* Horarios */}
-                    <div className="mb-6">
-                        <label className="block font-semibold mb-2">Selecciona el horario</label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {horarios.map((hora) => (
-                                <button
-                                    key={hora}
-                                    type="button"
-                                    className={`rounded border py-2 font-semibold text-sm
-                    ${
-                                        selectedTime === hora
-                                            ? "bg-[#18668b] text-white border-[#18668b]"
-                                            : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
-                                    }
-                  `}
-                                    onClick={() => setSelectedTime(hora)}
-                                >
-                                    {hora}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-                {/* Resumen */}
-                <aside className="w-full md:w-80">
-                    <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
-                        <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
-                        <div className="flex items-center gap-2 text-sm mb-2">
-                            <span>📅</span>
-                            <span className="capitalize">{fechaDisplay}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm mb-2">
-                            <span>⏰</span>
-                            <span>{selectedTime}</span>
-                        </div>
-                        <div className="text-sm text-gray-500 mb-4">
-                            Disponibilidad confirmada para {cantidad} persona{cantidad > 1 && "s"}
-                        </div>
-                        <div className="flex justify-between mb-1 text-sm">
-                            <span className="text-black">Pases de Acceso General</span>
-                            <span className="text-black">{cantidad} pases</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span>Precio por pase</span>
-                            <span>${PRECIO_PASE} MXN</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span>Subtotal</span>
-                            <span>${subtotal} MXN</span>
-                        </div>
-                        {promoAplicado && (
-                            <div className="flex justify-between text-sm text-green-700 font-bold">
-                                <span>Descuento aplicado</span>
-                                <span>-${DESCUENTO_PROMO} MXN</span>
-                            </div>
-                        )}
-                        <div className="flex justify-between font-bold text-base">
-                            <span>Total</span>
-                            <span>${total}.00 MXN</span>
-                        </div>
-                        {/* Código promocional */}
-                        <input
-                            className="mt-4 w-full border rounded px-2 py-1 text-sm"
-                            placeholder="Código promocional"
-                            value={codigoPromo}
-                            onChange={e => setCodigoPromo(e.target.value)}
-                            disabled={promoAplicado}
-                        />
-                        <button
-                            type="button"
-                            className="mt-2 w-full text-xs font-semibold text-black py-2 border border-gray-300 rounded hover:bg-gray-100"
-                            onClick={aplicarPromo}
-                            disabled={promoAplicado}
-                        >
-                            Aplicar
-                        </button>
-                        {msgPromo && (
-                            <div className={`text-xs mt-2 ${promoAplicado ? "text-green-700" : "text-red-600"}`}>
-                                {msgPromo}
-                            </div>
-                        )}
+                        </form>
 
-                        <button
-                            onClick={handleContinuar}
-                            disabled={!puedeContinuar}
-                            className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar
-                                ? "bg-[#18668b] hover:bg-[#14526d]"
-                                : "bg-gray-300 cursor-not-allowed"
-                            }`}                        >
-                            Continuar con Transporte
-                        </button>
-                        <button
-                            onClick={handleSiguiente}
-                            disabled={!puedeContinuar}
-                            className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar
-                                ? "bg-[#18668b] hover:bg-[#14526d]"
-                                : "bg-gray-300 cursor-not-allowed"
-                            }`}
-                        >
-                            Continuar a Extras
-                        </button>
-                        <div className="mt-4 text-xs text-gray-500">
-                            Los pases son válidos para la fecha y hora seleccionada.<br />
-                            Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
+                        <h3 className="font-semibold text-black text-base mt-10 mb-2 text-center">
+                            Selecciona la fecha y el horario de tu visita
+                        </h3>
+                        <div className="flex flex-col md:flex-row gap-6 mb-6">
+                            {/* Calendario */}
+                            <div className="w-full md:w-1/2">
+                                <div className="bg-white border rounded p-6">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <button
+                                            className="text-xs text-[#18668b] font-bold"
+                                            onClick={handlePrevMonth}
+                                            type="button"
+                                        >
+                                            Mes anterior
+                                        </button>
+                                        <span className="font-semibold capitalize">
+          {new Date(year, mes).toLocaleDateString("es-MX", { month: "long", year: "numeric" })}
+        </span>
+                                        <button
+                                            className="text-xs text-[#18668b] font-bold"
+                                            onClick={handleNextMonth}
+                                            type="button"
+                                        >
+                                            Mes siguiente
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-7 text-center text-xs font-semibold mb-1">
+                                        {diasSemana.map((dia) => (
+                                            <span key={dia}>{dia}</span>
+                                        ))}
+                                    </div>
+                                    <div className="grid grid-cols-7 gap-1">
+                                        {[...Array(primerDia).keys()].map((_, i) => (
+                                            <div key={"empty-" + i}></div>
+                                        ))}
+                                        {dias.map((dia) => {
+                                            const isSelected = selectedDay === dia;
+                                            return (
+                                                <button
+                                                    key={dia}
+                                                    type="button"
+                                                    onClick={() => setSelectedDay(dia)}
+                                                    className={`w-9 h-9 rounded flex items-center justify-center border
+                ${isSelected
+                                                        ? "bg-[#18668b] text-white border-[#18668b]"
+                                                        : "bg-white hover:bg-gray-100 border-gray-200 text-gray-700"
+                                                    }
+              `}
+                                                >
+                                                    {dia}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Horarios */}
+                            <div className="w-full md:w-1/2">
+                                <div className="grid grid-cols-2 md:grid-cols-2 gap-2">
+                                    {horarios.map((hora) => (
+                                        <button
+                                            key={hora}
+                                            type="button"
+                                            className={`rounded border py-2 font-semibold text-sm w-full
+            ${selectedTime === hora
+                                                ? "bg-[#18668b] text-white border-[#18668b]"
+                                                : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
+                                            }
+          `}
+                                            onClick={() => setSelectedTime(hora)}
+                                        >
+                                            {hora}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </aside>
+                    {/* Card Resumen */}
+                    <aside className="w-full md:w-1/3 md:pl-4 mt-10 md:mt-0">
+                        <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
+                            <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
+                            <div className="flex items-center gap-2 text-sm mb-2">
+                                <span>📅</span>
+                                <span className="capitalize">{fechaDisplay}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm mb-2">
+                                <span>⏰</span>
+                                <span>{selectedTime}</span>
+                            </div>
+                            <div className="text-sm text-gray-500 mb-4">
+                                Disponibilidad confirmada para {visitantes.length} persona{visitantes.length > 1 && "s"}
+                            </div>
+                            <div className="flex justify-between mb-1 text-sm">
+                                <span className="text-black">Pases de Acceso General</span>
+                                <span className="text-black">{visitantes.length} pases</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span>Precio por pase</span>
+                                <span>${PRECIO_PASE} MXN</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span>Subtotal</span>
+                                <span>${subtotal} MXN</span>
+                            </div>
+                            {promoAplicado && (
+                                <div className="flex justify-between text-sm text-green-700 font-bold">
+                                    <span>Descuento aplicado</span>
+                                    <span>-${DESCUENTO_PROMO} MXN</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between font-bold text-base">
+                                <span>Total</span>
+                                <span>${total}.00 MXN</span>
+                            </div>
+                            {/* Código promocional */}
+                            <input
+                                className="mt-4 w-full border rounded px-2 py-1 text-sm"
+                                placeholder="Código promocional"
+                                value={codigoPromo}
+                                onChange={e => setCodigoPromo(e.target.value)}
+                                disabled={promoAplicado}
+                            />
+                            <button
+                                type="button"
+                                className="mt-2 w-full text-xs font-semibold text-black py-2 border border-gray-300 rounded hover:bg-gray-100"
+                                onClick={aplicarPromo}
+                                disabled={promoAplicado}
+                            >
+                                Aplicar
+                            </button>
+                            {msgPromo && (
+                                <div className={`text-xs mt-2 ${promoAplicado ? "text-green-700" : "text-red-600"}`}>
+                                    {msgPromo}
+                                </div>
+                            )}
+                            <button
+                                onClick={handleContinuar}
+                                disabled={!puedeContinuar}
+                                className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar
+                                    ? "bg-[#18668b] hover:bg-[#14526d]"
+                                    : "bg-gray-300 cursor-not-allowed"
+                                }`}
+                            >
+                                Continuar con Transporte
+                            </button>
+                            <button
+                                onClick={handleSiguiente}
+                                disabled={!puedeContinuar}
+                                className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar
+                                    ? "bg-[#18668b] hover:bg-[#14526d]"
+                                    : "bg-gray-300 cursor-not-allowed"
+                                }`}
+                            >
+                                Continuar a Extras
+                            </button>
+                            <div className="mt-4 text-xs text-gray-500">
+                                Los pases son válidos para la fecha y hora seleccionada.<br />
+                                Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
+                            </div>
+                        </div>
+                    </aside>
+                </section>
             </main>
             <Footer />
         </div>
