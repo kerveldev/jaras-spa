@@ -247,37 +247,39 @@ export default function TransportePage() {
                                     Los niños menores de 3 años no pagan boleto de transporte si viajan en el regazo de un adulto.
                                 </div>
                             </div>
+
+                            {/* Información del servicio */}
+                            <div className="mt-8 mb-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <div className="font-semibold mb-2">Puntos de salida</div>
+                                    <ul className="text-xs text-gray-700">
+                                        {PUNTOS_SALIDA.map((p) => (
+                                            <li key={p.nombre}>
+                                                <span className="font-bold">{p.nombre}</span>: {p.direccion}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <div className="font-semibold mb-2">Información adicional</div>
+                                    <ul className="text-xs text-gray-700 list-disc pl-4">
+                                        <li>Duración aproximada del viaje: 45 minutos</li>
+                                        <li>Autobuses con aire acondicionado</li>
+                                        <li>Espacio para equipaje limitado</li>
+                                        <li>Accesible para personas con movilidad reducida</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            {/* Mapa dinámico con Leaflet */}
+                            <div className="bg-white rounded border p-4 mb-8">
+                                <div className="font-semibold mb-2">Ubicación de puntos de salida</div>
+                                <div className="w-full h-52 rounded overflow-hidden">
+                                    <MapLeaflet coords={getCoords(horario.salida)} label={horario.salida} />
+                                </div>
+                            </div>
                         </>
                     )}
-                    {/* Información del servicio */}
-                    <div className="mt-8 mb-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <div className="font-semibold mb-2">Puntos de salida</div>
-                            <ul className="text-xs text-gray-700">
-                                {PUNTOS_SALIDA.map((p) => (
-                                    <li key={p.nombre}>
-                                        <span className="font-bold">{p.nombre}</span>: {p.direccion}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                        <div>
-                            <div className="font-semibold mb-2">Información adicional</div>
-                            <ul className="text-xs text-gray-700 list-disc pl-4">
-                                <li>Duración aproximada del viaje: 45 minutos</li>
-                                <li>Autobuses con aire acondicionado</li>
-                                <li>Espacio para equipaje limitado</li>
-                                <li>Accesible para personas con movilidad reducida</li>
-                            </ul>
-                        </div>
-                    </div>
-                    {/* Mapa dinámico con Leaflet */}
-                    <div className="bg-white rounded border p-4 mb-8">
-                        <div className="font-semibold mb-2">Ubicación de puntos de salida</div>
-                        <div className="w-full h-52 rounded overflow-hidden">
-                            <MapLeaflet coords={getCoords(horario.salida)} label={horario.salida} />
-                        </div>
-                    </div>
+
                 </section>
                 {/* Resumen y pago */}
                 <aside className="w-full md:w-80">
