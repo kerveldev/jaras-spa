@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
+import DetallesReservaAnimado from "@/components/DetallesReservaAnimado";
 
 // --- Leaflet map dinámico ---
 const MapLeaflet = dynamic(() => import("@/components/MapLeaflet"), { ssr: false });
@@ -180,13 +181,17 @@ export default function TransportePage() {
             </div>
             <main className="flex flex-col md:flex-row gap-8 max-w-5xl w-full mx-auto px-4 pb-12 flex-1">
                 <section className="flex-1">
-                    <h2 className="text-2xl font-bold mb-4">Servicio de Transporte</h2>
+                    <h2 className="text-2xl font-bold mb-4">Servicio de transporte</h2>
                     <p className="mb-6 text-gray-700">
                         Selecciona si deseas utilizar nuestro servicio de transporte Las Jaras Bus para llegar cómodamente a nuestras instalaciones. Ofrecemos varias salidas desde la ciudad.
                     </p>
                     {/* Opción de transporte */}
-                    <div className="mb-8 space-y-2">
-                        <label className={`block p-4 border rounded cursor-pointer ${usaTransporte ? "border-black bg-[#f6fafb]" : "bg-white"}`}>
+                    <div className="mb-8 flex flex-col md:flex-row md:gap-4">
+                        <label
+                            className={` mr-2 flex-1 block p-4 border rounded cursor-pointer ${
+                                usaTransporte ? "border-black bg-[#f6fafb]" : "bg-white"
+                            }`}
+                        >
                             <input
                                 type="radio"
                                 checked={usaTransporte}
@@ -194,9 +199,15 @@ export default function TransportePage() {
                                 className="mr-2"
                             />
                             <span className="font-semibold">Sí, quiero utilizar Las Jaras Bus</span>
-                            <div className="text-xs text-gray-600 ml-6">Transporte cómodo y directo a nuestras instalaciones</div>
+                            <div className="text-xs text-gray-600 ml-6">
+                                Transporte cómodo y directo a nuestras instalaciones
+                            </div>
                         </label>
-                        <label className={`block p-4 border rounded cursor-pointer ${!usaTransporte ? "border-black bg-[#f6fafb]" : "bg-white"}`}>
+                        <label
+                            className={`flex-1 block p-4 border rounded cursor-pointer mt-2 md:mt-0 ${
+                                !usaTransporte ? "border-black bg-[#f6fafb]" : "bg-white"
+                            }`}
+                        >
                             <input
                                 type="radio"
                                 checked={!usaTransporte}
@@ -204,9 +215,12 @@ export default function TransportePage() {
                                 className="mr-2"
                             />
                             <span className="font-semibold">No, llegaré por mi cuenta</span>
-                            <div className="text-xs text-gray-600 ml-6">Utilizaré mi propio medio de transporte</div>
+                            <div className="text-xs text-gray-600 ml-6">
+                                Utilizaré mi propio medio de transporte
+                            </div>
                         </label>
                     </div>
+
                     {/* Horarios disponibles */}
                     {usaTransporte && (
                         <>
@@ -263,8 +277,6 @@ export default function TransportePage() {
                                 <div>
                                     <div className="font-semibold mb-2">Información adicional</div>
                                     <ul className="text-xs text-gray-700 list-disc pl-4">
-                                        <li>Duración aproximada del viaje: 45 minutos</li>
-                                        <li>Autobuses con aire acondicionado</li>
                                         <li>Espacio para equipaje limitado</li>
                                         <li>Accesible para personas con movilidad reducida</li>
                                     </ul>
@@ -285,61 +297,20 @@ export default function TransportePage() {
                 <aside className="w-full md:w-80">
                     <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
                         <h4 className="font-bold mb-3">Resumen de reserva</h4>
-                        <div className="text-sm mb-2 space-y-2">
-                            <div className="flex justify-between">
-                                <span>Fecha de visita:</span>
-                                <span>{fechaLegible(fecha)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>Horario visita:</span>
-                                <span>{hora || "-"}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>Pases de entrada:</span>
-                                <span>{cantidad} x ${PRECIO_PASE} = ${cantidad * PRECIO_PASE} MXN</span>
-                            </div>
-                            {promo.aplicado && (
-                                <div className="flex justify-between text-green-700 font-semibold">
-                                    <span>Cupón aplicado ({promo.codigo || "PROMO"}):</span>
-                                    <span>- ${promo.valor} MXN</span>
-                                </div>
-                            )}
-                            <div className="font-semibold mt-2 mb-1">Extras:</div>
-                            {extrasList.length ? (
-                                <ul className="pl-3 mb-2 list-disc text-black">
-                                    {extrasList.map((x: any, i: number) => (
-                                        <li key={x.nombre + i}>
-                                            {x.cantidad} x {x.nombre} - ${x.total} MXN
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <div className="text-xs text-gray-400 mb-2">Sin servicios adicionales</div>
-                            )}
-                            <div className="flex justify-between">
-                                <span>Subtotal:</span>
-                                <span>${subtotal} MXN</span>
-                            </div>
-                            {usaTransporte && (
-                                <>
-                                    <div className="flex justify-between">
-                                        <span>Transporte ({cantidad} x ${PRECIO_TRANSPORTE}):</span>
-                                        <span>${totalTransporte} MXN</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Horario transporte:</span>
-                                        <span>{horario.hora} ({horario.salida})</span>
-                                    </div>
-                                </>
-                            )}
-                            <div className="flex justify-between font-bold text-lg mt-2">
-                                <span>Total:</span>
-                                <span>${total} MXN</span>
-                            </div>
+
+                        {/* Total visible siempre */}
+                        <div className="flex justify-between font-bold text-lg mb-4">
+                            <span>Total:</span>
+                            <span>${total} MXN</span>
                         </div>
-                        {/* Pago tarjeta */}
+
+                        {/* Pago tarjeta visible siempre */}
                         {!paid && (
-                            <form className="border-t pt-4 mt-3 flex flex-col gap-2" onSubmit={handlePay} autoComplete="off">
+                            <form
+                                className="border-t pt-4 mt-3 flex flex-col gap-2"
+                                onSubmit={handlePay}
+                                autoComplete="off"
+                            >
                                 <h5 className="font-semibold mb-2">Paga con tarjeta</h5>
                                 <input
                                     className="border rounded px-2 py-2 text-sm"
@@ -407,6 +378,7 @@ export default function TransportePage() {
                                 ¡Pago realizado con éxito!
                             </div>
                         )}
+
                         <button
                             className={`mt-6 w-full py-2 rounded font-bold text-white ${paid ? "bg-[#18668b] hover:bg-[#14526d]" : "bg-gray-300 cursor-not-allowed"}`}
                             onClick={handleContinuar}
@@ -414,11 +386,31 @@ export default function TransportePage() {
                         >
                             Continuar al resumen
                         </button>
+
+                        {/* Mostrar/Ocultar detalles animados */}
+                        <DetallesReservaAnimado
+                            fecha={fecha}
+                            hora={hora}
+                            cantidad={cantidad}
+                            promo={promo}
+                            extrasList={extrasList}
+                            subtotal={subtotal}
+                            usaTransporte={usaTransporte}
+                            totalTransporte={totalTransporte}
+                            horario={horario}
+                            PRECIO_PASE={PRECIO_PASE}
+                            PRECIO_TRANSPORTE={PRECIO_TRANSPORTE}
+                            fechaLegible={fechaLegible}
+                            total={total}
+                        />
+
                         <div className="text-xs text-gray-500 mt-4 text-center">
                             Pago 100% seguro
                         </div>
                     </div>
                 </aside>
+
+
             </main>
             <Footer />
         </div>
