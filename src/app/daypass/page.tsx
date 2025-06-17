@@ -213,12 +213,6 @@ export default function DaypassUnicaPage() {
                             )}
                         </div>
                     ))}
-                    <div className="flex gap-6 ml-4 text-xs">
-                        <span className="font-bold text-black text-[#18668b]">Pases</span>
-                        <span className="font-bold text-black text-[#18668b]">Fecha</span>
-                        <span className="text-gray-400">Extras</span>
-                        <span className="text-gray-400">Pago</span>
-                    </div>
                 </div>
             </div>
 
