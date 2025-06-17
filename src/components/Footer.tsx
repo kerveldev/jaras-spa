@@ -1,7 +1,7 @@
 export default function Footer() {
     return (
         <footer className="bg-white border-t py-8 mt-auto">
-            <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 px-4 text-xs text-gray-500">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 px-4 text-xs text-gray-500">
                 <div>
                     <div className="font-bold mb-1 text-black">Las Jaras</div>
                     Disfruta de una experiencia única en nuestras instalaciones de spa y recreación, con servicios de primera calidad y un entorno natural incomparable.
