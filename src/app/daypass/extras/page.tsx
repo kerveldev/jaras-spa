@@ -218,13 +218,6 @@ export default function ExtrasPage() {
                     {/* Masajes */}
                     <section className="flex-1">
                         <h3 className="font-bold mb-2 text-lg">Servicios de Masaje</h3>
-                        <Image
-                            src="/image.png"
-                            alt="Snpa"
-                            width={400}
-                            height={160}
-                            className="rounded-xl w-full h-40 object-cover mb-3"
-                        />
                         <p className="mb-4 text-sm text-gray-600">
                             Relájate y rejuvenece con nuestros servicios de masaje profesional. Perfectos para parejas o individuales.
                         </p>
