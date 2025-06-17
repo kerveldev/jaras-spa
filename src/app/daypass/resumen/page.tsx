@@ -60,6 +60,32 @@ export default function ConfirmacionReservaPage() {
             valor: Number(localStorage.getItem("descuentoPromo") || 0),
             codigo: localStorage.getItem("promo_codigo") || "",
         });
+
+        const reservaCompleta = {
+            visitantes: safeParse<any[]>(localStorage.getItem("visitantes"), []),
+            cantidad: Number(localStorage.getItem("cantidad") || 1),
+            fechaVisita: localStorage.getItem("fechaVisita") || "",
+            horaVisita: localStorage.getItem("horaVisita") || "",
+            transporte: {
+                usa: localStorage.getItem("transporte_usa") === "1",
+                horario: safeParse<any>(localStorage.getItem("transporte_horario"), null),
+                cantidad: Number(localStorage.getItem("transporte_cantidad") || 1),
+            },
+            extras: safeParse<any[]>(localStorage.getItem("extras_orden"), []),
+            promo: {
+                aplicado: localStorage.getItem("promo_aplicada") === "1",
+                valor: Number(localStorage.getItem("descuentoPromo") || 0),
+                codigo: localStorage.getItem("promo_codigo") || "",
+            },
+            totales: {
+                totalPases: Number(localStorage.getItem("cantidad") || 1),
+                totalExtras: safeParse<any[]>(localStorage.getItem("extras_orden"), []).reduce((acc, curr) => acc + (curr?.total || 0), 0),
+                totalBase: Number(localStorage.getItem("cantidad") || 1) * 350,
+                totalPromo: localStorage.getItem("promo_aplicada") === "1" ? Number(localStorage.getItem("descuentoPromo") || 0) : 0,
+                totalTransporte: (localStorage.getItem("transporte_usa") === "1" ? Number(localStorage.getItem("cantidad") || 1) * 120 : 0),
+            }
+        };
+        console.log("RESERVA COMPLETA:", reservaCompleta);
     }, []);
 
     // Totales y textos

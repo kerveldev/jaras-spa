@@ -4,19 +4,48 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import toast, { Toaster } from "react-hot-toast";
 
-interface Visitante {
-    nombre: string;
-    correo: string;
-    celular: string;
-}
-
 const CODIGO_PROMO = "PROMO100";
 const DESCUENTO_PROMO = 100;
 const PRECIO_PASE = 350;
 
 const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function DaypassPage() {
+const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const horarios = [
+    "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
+    "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM",
+];
+
+function getDiasMes(year: number, month: number) {
+    const firstDay = new Date(year, month, 1).getDay(); // 0=domingo
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    const primerDia = firstDay === 0 ? 6 : firstDay - 1;
+    return {
+        dias: Array.from({ length: lastDate }, (_, i) => i + 1),
+        primerDia,
+    };
+}
+
+function formatFechaEs(year: number, month: number, day: number) {
+    const fecha = new Date(`${year}-${(month + 1).toString().padStart(2, "0")}-${day
+        .toString()
+        .padStart(2, "0")}T12:00:00`);
+    return fecha.toLocaleDateString("es-MX", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+    });
+}
+
+interface Visitante {
+    nombre: string;
+    correo: string;
+    celular: string;
+}
+
+export default function DaypassUnicaPage() {
+    // PASOS: cantidad y datos -> fecha/horario -> resumen
     const [cantidad, setCantidad] = useState<number>(1);
     const [visitantes, setVisitantes] = useState<Visitante[]>(
         Array.from({ length: 1 }, () => ({
@@ -35,8 +64,16 @@ export default function DaypassPage() {
     const [codigoPromo, setCodigoPromo] = useState("");
     const [promoAplicado, setPromoAplicado] = useState(false);
     const [msgPromo, setMsgPromo] = useState("");
+    const [descuento, setDescuento] = useState(0);
 
-    // --- Helpers de validación campo a campo ---
+    // FECHA
+    const today = new Date();
+    const [mes, setMes] = useState(today.getMonth());
+    const [year, setYear] = useState(today.getFullYear());
+    const [selectedDay, setSelectedDay] = useState(today.getDate());
+    const [selectedTime, setSelectedTime] = useState("11:00 AM");
+
+    // VALIDACIONES
     function validateNombre(nombre: string) {
         return nombre.trim().length > 0;
     }
@@ -47,8 +84,17 @@ export default function DaypassPage() {
     function validateCelular(celular: string) {
         return /^\d{10,}$/.test(celular.trim());
     }
+    const puedeContinuar =
+        visitantes.every(
+            (v, i) =>
+                validateNombre(v.nombre) &&
+                validateCelular(v.celular) &&
+                validateCorreo(v.correo, i === 0)
+        ) &&
+        selectedDay > 0 &&
+        selectedTime;
 
-    // Si cambian la cantidad de boletos
+    // Actualizar cantidad de visitantes
     const handleCantidad = (v: number) => {
         setCantidad(v);
         setVisitantes((prev) => {
@@ -80,6 +126,7 @@ export default function DaypassPage() {
         setPromoAplicado(false);
         setMsgPromo("");
         setCodigoPromo("");
+        setDescuento(0);
     };
 
     // Cambios por visitante
@@ -103,49 +150,52 @@ export default function DaypassPage() {
         });
     };
 
-    // Validación global para habilitar botón
-    const puedeContinuar = visitantes.every(
-        (v, i) =>
-            validateNombre(v.nombre) &&
-            validateCelular(v.celular) &&
-            validateCorreo(v.correo, i === 0)
-    );
-
-    // Totales y promo
-    const subtotal = cantidad * PRECIO_PASE;
-    const descuento = promoAplicado ? DESCUENTO_PROMO : 0;
-    const total = Math.max(subtotal - descuento, 0);
-
     // Promo
     const aplicarPromo = () => {
         if (codigoPromo.trim().toUpperCase() === CODIGO_PROMO) {
             setPromoAplicado(true);
             setMsgPromo(`¡Descuento de $${DESCUENTO_PROMO} aplicado!`);
+            setDescuento(DESCUENTO_PROMO);
             toast.success(`¡Descuento de $${DESCUENTO_PROMO} aplicado!`);
-            // GUARDAR ESTOS EN LOCALSTORAGE
             localStorage.setItem("promo_aplicada", "1");
-            localStorage.setItem("promo_descuento", DESCUENTO_PROMO.toString());
+            localStorage.setItem("descuentoPromo", DESCUENTO_PROMO.toString());
             localStorage.setItem("promo_codigo", codigoPromo.trim().toUpperCase());
         } else {
             setPromoAplicado(false);
             setMsgPromo("Código promocional no válido.");
+            setDescuento(0);
             toast.error("Código promocional no válido.");
-            // Si el código es inválido, borra los datos:
             localStorage.removeItem("promo_aplicada");
-            localStorage.removeItem("promo_descuento");
+            localStorage.removeItem("descuentoPromo");
             localStorage.removeItem("promo_codigo");
         }
     };
 
+    // Calendario
+    const { dias, primerDia } = getDiasMes(year, mes);
+    const fechaSeleccionada = `${year}-${(mes + 1).toString().padStart(2, "0")}-${selectedDay
+        .toString()
+        .padStart(2, "0")}`;
+    const fechaDisplay = formatFechaEs(year, mes, selectedDay);
+
+    const subtotal = cantidad * PRECIO_PASE;
+    const total = Math.max(subtotal - descuento, 0);
+
+    // Guardar y continuar
     const handleSiguiente = () => {
         localStorage.setItem("visitantes", JSON.stringify(visitantes));
         localStorage.setItem("cantidad", cantidad.toString());
-        window.location.href = "/daypass/fecha";
+        localStorage.setItem("fechaVisita", fechaSeleccionada);
+        localStorage.setItem("horaVisita", selectedTime);
+        window.location.href = "/daypass/extras";
     };
 
-    // --- Añade esta función para reservar el espacio de error (alineación) ---
+    function handleContinuar() {
+        window.location.href = "/daypass/transporte";
+    }
+
+
     function renderError(message: string, show: boolean) {
-        // Si hay error: texto rojo, si no, espacio reservado (misma altura)
         return (
             <div style={{ minHeight: "20px" }}>
                 {show && (
@@ -155,20 +205,41 @@ export default function DaypassPage() {
         );
     }
 
+    // Cambiar mes calendario
+    const handlePrevMonth = () => {
+        if (mes === 0) {
+            setMes(11);
+            setYear(year - 1);
+        } else {
+            setMes(mes - 1);
+        }
+        setSelectedDay(1);
+    };
+    const handleNextMonth = () => {
+        if (mes === 11) {
+            setMes(0);
+            setYear(year + 1);
+        } else {
+            setMes(mes + 1);
+        }
+        setSelectedDay(1);
+    };
+
     return (
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
             <Toaster position="top-center" />
             <Header />
+
             {/* Breadcrumbs y Progreso */}
             <div className="max-w-5xl w-full mx-auto pt-6 pb-4 px-4">
                 <div className="text-xs text-gray-400 mb-4">
-                    Inicio &gt; Reservaciones &gt; <span className="text-black">Compra de Pases</span>
+                    Inicio &gt; Reservaciones &gt; <span className="text-black">Compra y Fecha de Pases</span>
                 </div>
                 <div className="flex items-center gap-2 mb-8">
                     {[1, 2, 3, 4].map((n, idx) => (
                         <div className="flex items-center" key={n}>
                             <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-black ${n === 1
+                                className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-black ${n === 1 || n === 2
                                     ? "bg-[#18668b] text-white"
                                     : "bg-gray-200 text-gray-500"
                                 }`}
@@ -181,21 +252,18 @@ export default function DaypassPage() {
                         </div>
                     ))}
                     <div className="flex gap-6 ml-4 text-xs">
-                        <span className="font-bold text-black text-[#18668b]">Selección de Pases</span>
-                        <span className="text-gray-400">Selección de Fecha</span>
+                        <span className="font-bold text-black text-[#18668b]">Pases</span>
+                        <span className="font-bold text-black text-[#18668b]">Fecha</span>
+                        <span className="text-gray-400">Extras</span>
                         <span className="text-gray-400">Pago</span>
-                        <span className="text-gray-400">Confirmación</span>
                     </div>
                 </div>
             </div>
             {/* Main Content */}
             <main className="flex flex-col md:flex-row gap-8 max-w-5xl w-full mx-auto px-4 pb-12 flex-1">
                 <section className="flex-1">
-                    <h2 className="text-xl font-bold text-black mb-2">Selección de Pases</h2>
-                    <p className="mb-4 text-gray-600 text-sm">
-                        Selecciona la cantidad de pases que necesitas para tu grupo. Cada pase da acceso completo a todas nuestras instalaciones.
-                    </p>
                     {/* Selección cantidad */}
+                    <h2 className="text-xl font-bold text-black mb-2">Selección de Pases</h2>
                     <div className="mb-6 flex gap-3 items-center">
                         <label className="font-semibold text-black">Pases de Acceso General</label>
                         <input
@@ -214,7 +282,6 @@ export default function DaypassPage() {
                     </p>
                     <form className="space-y-4">
                         {visitantes.slice(0, cantidad).map((vis, idx) => {
-                            // Detectar errores de validación
                             const errorNombre = !validateNombre(vis.nombre) && touched[idx]?.nombre;
                             const errorCorreo = !validateCorreo(vis.correo, idx === 0) && touched[idx]?.correo;
                             const errorCelular = !validateCelular(vis.celular) && touched[idx]?.celular;
@@ -282,11 +349,98 @@ export default function DaypassPage() {
                             );
                         })}
                     </form>
+
+                    {/* Fecha y horario */}
+                    <h3 className="font-semibold text-black text-base mt-10 mb-2">Selecciona la fecha y el horario de tu visita</h3>
+                    {/* Calendario */}
+                    <div className="bg-white border rounded p-6 mb-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <button
+                                className="text-xs text-[#18668b] font-bold"
+                                onClick={handlePrevMonth}
+                                type="button"
+                            >
+                                Mes anterior
+                            </button>
+                            <span className="font-semibold capitalize">
+                {new Date(year, mes).toLocaleDateString("es-MX", { month: "long", year: "numeric" })}
+              </span>
+                            <button
+                                className="text-xs text-[#18668b] font-bold"
+                                onClick={handleNextMonth}
+                                type="button"
+                            >
+                                Mes siguiente
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-7 text-center text-xs font-semibold mb-1">
+                            {diasSemana.map((dia) => (
+                                <span key={dia}>{dia}</span>
+                            ))}
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                            {[...Array(primerDia).keys()].map((_, i) => (
+                                <div key={"empty-" + i}></div>
+                            ))}
+                            {dias.map((dia) => {
+                                const isSelected = selectedDay === dia;
+                                return (
+                                    <button
+                                        key={dia}
+                                        type="button"
+                                        onClick={() => setSelectedDay(dia)}
+                                        className={`w-9 h-9 rounded flex items-center justify-center border
+                      ${
+                                            isSelected
+                                                ? "bg-[#18668b] text-white border-[#18668b]"
+                                                : "bg-white hover:bg-gray-100 border-gray-200 text-gray-700"
+                                        }
+                    `}
+                                    >
+                                        {dia}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    {/* Horarios */}
+                    <div className="mb-6">
+                        <label className="block font-semibold mb-2">Selecciona el horario</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {horarios.map((hora) => (
+                                <button
+                                    key={hora}
+                                    type="button"
+                                    className={`rounded border py-2 font-semibold text-sm
+                    ${
+                                        selectedTime === hora
+                                            ? "bg-[#18668b] text-white border-[#18668b]"
+                                            : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
+                                    }
+                  `}
+                                    onClick={() => setSelectedTime(hora)}
+                                >
+                                    {hora}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </section>
                 {/* Resumen */}
                 <aside className="w-full md:w-80">
                     <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
-                        <h4 className="font-bold text-black mb-3">Resumen de Compra</h4>
+                        <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
+                        <div className="flex items-center gap-2 text-sm mb-2">
+                            <span>📅</span>
+                            <span className="capitalize">{fechaDisplay}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm mb-2">
+                            <span>⏰</span>
+                            <span>{selectedTime}</span>
+                        </div>
+                        <div className="text-sm text-gray-500 mb-4">
+                            Disponibilidad confirmada para {cantidad} persona{cantidad > 1 && "s"}
+                        </div>
                         <div className="flex justify-between mb-1 text-sm">
                             <span className="text-black">Pases de Acceso General</span>
                             <span className="text-black">{cantidad} pases</span>
@@ -305,9 +459,9 @@ export default function DaypassPage() {
                                 <span>-${DESCUENTO_PROMO} MXN</span>
                             </div>
                         )}
-                        <div className="flex justify-between text-sm">
-                            <span className="font-bold text-black">Total</span>
-                            <span className="font-bold text-black text-lg">${total} MXN</span>
+                        <div className="flex justify-between font-bold text-base">
+                            <span>Total</span>
+                            <span>${total}.00 MXN</span>
                         </div>
                         {/* Código promocional */}
                         <input
@@ -330,6 +484,16 @@ export default function DaypassPage() {
                                 {msgPromo}
                             </div>
                         )}
+
+                        <button
+                            onClick={handleContinuar}
+                            disabled={!puedeContinuar}
+                            className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar
+                                ? "bg-[#18668b] hover:bg-[#14526d]"
+                                : "bg-gray-300 cursor-not-allowed"
+                            }`}                        >
+                            Continuar con Transporte
+                        </button>
                         <button
                             onClick={handleSiguiente}
                             disabled={!puedeContinuar}
@@ -338,16 +502,10 @@ export default function DaypassPage() {
                                 : "bg-gray-300 cursor-not-allowed"
                             }`}
                         >
-                            Continuar a Selección de Fecha
-                        </button>
-                        <button
-                            disabled
-                            className="mt-2 w-full py-2 rounded border text-gray-500 bg-gray-100"
-                        >
-                            Guardar y Continuar Después
+                            Continuar a Extras
                         </button>
                         <div className="mt-4 text-xs text-gray-500">
-                            Los pases son válidos para la fecha que selecciones en el siguiente paso.<br />
+                            Los pases son válidos para la fecha y hora seleccionada.<br />
                             Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
                         </div>
                     </div>

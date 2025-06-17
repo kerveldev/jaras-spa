@@ -1,9 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import Image from "next/image";
+import dynamic from "next/dynamic";
+import "leaflet/dist/leaflet.css";
+
+// --- Leaflet map dinámico ---
+const MapLeaflet = dynamic(() => import("@/components/MapLeaflet"), { ssr: false });
+
+// ----------- DATOS -----------
 
 const HORARIOS = [
     { hora: "6:30 AM", salida: "Plaza del Sol" },
@@ -17,14 +22,34 @@ const PUNTOS_SALIDA = [
     { nombre: "Plaza Patria", direccion: "Av. Patria 45, Zapopan" },
 ];
 
+// Coordenadas directas por punto de salida
+const PUNTOS_COORDS: Record<string, [number, number]> = {
+    "Plaza del Sol": [20.6481, -103.4167],
+    "Plaza Patria": [20.7084, -103.3965]
+};
+
 const PRECIO_PASE = 350;
 const PRECIO_TRANSPORTE = 120;
 
+// ----------- FUNCIONES UTILES -----------
 function safeParse<T>(item: string | null, def: T): T {
     try {
         return item ? JSON.parse(item) : def;
     } catch {
         return def;
+    }
+}
+function fechaLegible(fechaStr: string) {
+    if (!fechaStr) return "-";
+    try {
+        const safeFecha = fechaStr.includes("T") ? fechaStr : fechaStr + "T12:00:00";
+        return new Date(safeFecha).toLocaleDateString("es-MX", {
+            year: "numeric",
+            month: "long",
+            day: "2-digit"
+        });
+    } catch {
+        return fechaStr;
     }
 }
 
@@ -39,34 +64,25 @@ export default function TransportePage() {
     const [promo, setPromo] = useState<{ aplicado: boolean, valor: number, codigo?: string }>({ aplicado: false, valor: 0, codigo: "" });
     const [subtotal, setSubtotal] = useState(0);
 
+    // Tarjeta
+    const [card, setCard] = useState({ num: "", exp: "", cvc: "", name: "" });
+    const [isPaying, setIsPaying] = useState(false);
+    const [paid, setPaid] = useState(false);
+
     useEffect(() => {
         if (typeof window === "undefined") return;
-
-        const visitantesLS = safeParse<any[]>(localStorage.getItem("visitantes"), []);
-        setVisitantes(visitantesLS);
-
-        const cantidadLS = Number(localStorage.getItem("cantidad") || 1);
-        setCantidad(cantidadLS);
-
-        const extrasLS = safeParse<any[]>(localStorage.getItem("extras_orden"), []);
-        setExtras(extrasLS);
-
-        // Fecha/hora
-        const fechaLS = localStorage.getItem("fechaVisita") || "";
-        const horaLS = localStorage.getItem("horaVisita") || "";
-        setFecha(fechaLS);
-        setHora(horaLS);
-
-        // Promo
+        setVisitantes(safeParse<any[]>(localStorage.getItem("visitantes"), []));
+        setCantidad(Number(localStorage.getItem("cantidad") || 1));
+        setExtras(safeParse<any[]>(localStorage.getItem("extras_orden"), []));
+        setFecha(localStorage.getItem("fechaVisita") || "");
+        setHora(localStorage.getItem("horaVisita") || "");
         const promoAplicada = localStorage.getItem("promo_aplicada") === "1";
-        const promoValor = Number(localStorage.getItem("descuentoPromo") || 0);
-        console.log(promoValor);
+        const promoValor = Number(localStorage.getItem("promo_descuento") || 0);
         const promoCodigo = localStorage.getItem("promo_codigo") || "";
         setPromo({ aplicado: promoAplicada, valor: promoValor, codigo: promoCodigo });
-
         // Subtotales
-        const subtotalBase = cantidadLS * PRECIO_PASE;
-        const extrasTotal = extrasLS.reduce((acc: number, curr: any) => acc + (curr?.total || 0), 0);
+        const subtotalBase = Number(localStorage.getItem("cantidad") || 1) * PRECIO_PASE;
+        const extrasTotal = safeParse<any[]>(localStorage.getItem("extras_orden"), []).reduce((acc: number, curr: any) => acc + (curr?.total || 0), 0);
         setSubtotal(subtotalBase + extrasTotal - (promoAplicada ? promoValor : 0));
     }, []);
 
@@ -78,25 +94,40 @@ export default function TransportePage() {
 
     const totalTransporte = usaTransporte ? cantidad * PRECIO_TRANSPORTE : 0;
     const total = subtotal + totalTransporte;
-
-    // Extras como lista
     const extrasList = extras.filter((x: any) => x.cantidad > 0);
 
-    // Fecha legible
-    function fechaLegible(fechaStr: string) {
-        if (!fechaStr) return "-";
-        try {
-            // <-- AQUÍ EL CAMBIO
-            const safeFecha = fechaStr.includes("T") ? fechaStr : fechaStr + "T12:00:00";
-            return new Date(safeFecha).toLocaleDateString("es-MX", {
-                year: "numeric",
-                month: "long",
-                day: "2-digit"
-            });
-        } catch {
-            return fechaStr;
+    // ------ MANEJO DE FORMULARIO DE PAGO ------
+    function handleExpChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const value = e.target.value.replace(/[^\d]/g, "");
+        if (value.length === 0) return setCard({ ...card, exp: "" });
+        if (value.length <= 2) {
+            let month = value;
+            if (parseInt(month) > 12) month = "12";
+            if (month.length === 2 && value.length === 2) month += "/";
+            setCard({ ...card, exp: month });
+            return;
         }
+        let month = value.slice(0, 2);
+        const year = value.slice(2, 4);
+        if (parseInt(month) > 12) month = "12";
+        const exp = month + "/" + year;
+        setCard({ ...card, exp });
     }
+    function isExpValid(exp: string) {
+        const match = /^(\d{2})\/(\d{2})$/.exec(exp);
+        if (!match) return false;
+        const mm = parseInt(match[1], 10);
+        const aa = parseInt(match[2], 10);
+        return mm >= 1 && mm <= 12 && aa >= 0 && aa <= 99;
+    }
+    const handlePay = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsPaying(true);
+        setTimeout(() => {
+            setIsPaying(false);
+            setPaid(true);
+        }, 1800);
+    };
 
     function handleContinuar() {
         localStorage.setItem("transporte_usa", usaTransporte ? "1" : "0");
@@ -105,10 +136,18 @@ export default function TransportePage() {
         window.location.href = "/daypass/resumen";
     }
 
+    function getCoords(salida: string): [number, number] {
+        const coords = PUNTOS_COORDS[salida];
+        if (Array.isArray(coords) && coords.length === 2) {
+            return coords as [number, number];
+        }
+        // Fallback seguro (Plaza del Sol)
+        return [20.6481, -103.4167];
+    }
+
     return (
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
             <Header />
-
             {/* Breadcrumbs y Progreso */}
             <div className="max-w-5xl w-full mx-auto pt-6 pb-4 px-4">
                 <div className="text-xs text-gray-400 mb-4">
@@ -139,7 +178,6 @@ export default function TransportePage() {
                     </div>
                 </div>
             </div>
-
             <main className="flex flex-col md:flex-row gap-8 max-w-5xl w-full mx-auto px-4 pb-12 flex-1">
                 <section className="flex-1">
                     <h2 className="text-2xl font-bold mb-4">Servicio de Transporte</h2>
@@ -169,7 +207,6 @@ export default function TransportePage() {
                             <div className="text-xs text-gray-600 ml-6">Utilizaré mi propio medio de transporte</div>
                         </label>
                     </div>
-
                     {/* Horarios disponibles */}
                     {usaTransporte && (
                         <>
@@ -212,7 +249,6 @@ export default function TransportePage() {
                             </div>
                         </>
                     )}
-
                     {/* Información del servicio */}
                     <div className="mt-8 mb-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
@@ -235,14 +271,15 @@ export default function TransportePage() {
                             </ul>
                         </div>
                     </div>
-
-                    {/* Mapa (simulado) */}
+                    {/* Mapa dinámico con Leaflet */}
                     <div className="bg-white rounded border p-4 mb-8">
                         <div className="font-semibold mb-2">Ubicación de puntos de salida</div>
-                        <Image src="/image.png" alt="Mapa" width={100} height={100} className="w-full h-48 object-cover rounded" />
+                        <div className="w-full h-52 rounded overflow-hidden">
+                            <MapLeaflet coords={getCoords(horario.salida)} label={horario.salida} />
+                        </div>
                     </div>
                 </section>
-                {/* Resumen */}
+                {/* Resumen y pago */}
                 <aside className="w-full md:w-80">
                     <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
                         <h4 className="font-bold mb-3">Resumen de reserva</h4>
@@ -259,14 +296,12 @@ export default function TransportePage() {
                                 <span>Pases de entrada:</span>
                                 <span>{cantidad} x ${PRECIO_PASE} = ${cantidad * PRECIO_PASE} MXN</span>
                             </div>
-                            {/* PROMO */}
                             {promo.aplicado && (
                                 <div className="flex justify-between text-green-700 font-semibold">
                                     <span>Cupón aplicado ({promo.codigo || "PROMO"}):</span>
                                     <span>- ${promo.valor} MXN</span>
                                 </div>
                             )}
-                            {/* Extras */}
                             <div className="font-semibold mt-2 mb-1">Extras:</div>
                             {extrasList.length ? (
                                 <ul className="pl-3 mb-2 list-disc text-black">
@@ -279,12 +314,10 @@ export default function TransportePage() {
                             ) : (
                                 <div className="text-xs text-gray-400 mb-2">Sin servicios adicionales</div>
                             )}
-                            {/* Subtotal sin transporte */}
                             <div className="flex justify-between">
                                 <span>Subtotal:</span>
                                 <span>${subtotal} MXN</span>
                             </div>
-                            {/* Transporte */}
                             {usaTransporte && (
                                 <>
                                     <div className="flex justify-between">
@@ -297,15 +330,85 @@ export default function TransportePage() {
                                     </div>
                                 </>
                             )}
-                            {/* TOTAL */}
                             <div className="flex justify-between font-bold text-lg mt-2">
                                 <span>Total:</span>
                                 <span>${total} MXN</span>
                             </div>
                         </div>
+                        {/* Pago tarjeta */}
+                        {!paid && (
+                            <form className="border-t pt-4 mt-3 flex flex-col gap-2" onSubmit={handlePay} autoComplete="off">
+                                <h5 className="font-semibold mb-2">Paga con tarjeta</h5>
+                                <input
+                                    className="border rounded px-2 py-2 text-sm"
+                                    placeholder="Nombre en la tarjeta"
+                                    type="text"
+                                    required
+                                    value={card.name}
+                                    disabled={isPaying}
+                                    onChange={e => setCard({ ...card, name: e.target.value })}
+                                />
+                                <input
+                                    className="border rounded px-2 py-2 text-sm"
+                                    placeholder="Número de tarjeta"
+                                    maxLength={16}
+                                    type="text"
+                                    inputMode="numeric"
+                                    required
+                                    value={card.num}
+                                    disabled={isPaying}
+                                    onChange={e => setCard({ ...card, num: e.target.value.replace(/\D/g, "") })}
+                                />
+                                    <input
+                                        className="border rounded px-2 py-2 text-sm w-2/3"
+                                        placeholder="MM/AA"
+                                        maxLength={5}
+                                        type="text"
+                                        required
+                                        value={card.exp}
+                                        disabled={isPaying}
+                                        onChange={handleExpChange}
+                                        style={{
+                                            borderColor:
+                                                card.exp.length === 5 && !isExpValid(card.exp)
+                                                    ? "#f87171"
+                                                    : undefined,
+                                        }}
+                                    />
+                                    <input
+                                        className="border rounded px-2 py-2 text-sm w-1/3"
+                                        placeholder="CVC"
+                                        maxLength={4}
+                                        type="text"
+                                        required
+                                        value={card.cvc}
+                                        disabled={isPaying}
+                                        onChange={e => setCard({ ...card, cvc: e.target.value.replace(/\D/g, "") })}
+                                    />
+                                {card.exp.length === 5 && !isExpValid(card.exp) && (
+                                    <span className="text-xs text-red-600">Fecha inválida</span>
+                                )}
+                                <button
+                                    type="submit"
+                                    className="w-full py-2 mt-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition"
+                                    disabled={isPaying}
+                                >
+                                    {isPaying ? "Procesando..." : "Pagar con tarjeta"}
+                                </button>
+                                <div className="text-xs text-gray-400 mt-1">
+                                    * Simulación, no se procesa pago real.
+                                </div>
+                            </form>
+                        )}
+                        {paid && (
+                            <div className="mt-4 text-green-700 text-center font-bold">
+                                ¡Pago realizado con éxito!
+                            </div>
+                        )}
                         <button
-                            className="mt-6 w-full py-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition"
+                            className={`mt-6 w-full py-2 rounded font-bold text-white ${paid ? "bg-[#18668b] hover:bg-[#14526d]" : "bg-gray-300 cursor-not-allowed"}`}
                             onClick={handleContinuar}
+                            disabled={!paid}
                         >
                             Continuar al resumen
                         </button>
