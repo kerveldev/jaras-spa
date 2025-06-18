@@ -5,12 +5,12 @@ import Footer from "@/components/Footer";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import DetallesReservaAnimado from "@/components/DetallesReservaAnimado";
+import toast from "react-hot-toast";
 
 // --- Leaflet map dinámico ---
 const MapLeaflet = dynamic(() => import("@/components/MapLeaflet"), { ssr: false });
 
 // ----------- DATOS -----------
-
 const HORARIOS = [
     { hora: "6:30 AM", salida: "Plaza del Sol" },
     { hora: "8:00 AM", salida: "Plaza del Sol" },
@@ -23,8 +23,7 @@ const PUNTOS_SALIDA = [
     { nombre: "Plaza Patria", direccion: "Av. Patria 45, Zapopan" },
 ];
 
-// Coordenadas directas por punto de salida
-const PUNTOS_COORDS: Record<string, [number, number]> = {
+const PUNTOS_COORDS = {
     "Plaza del Sol": [20.6481, -103.4167],
     "Plaza Patria": [20.7084, -103.3965]
 };
@@ -33,14 +32,14 @@ const PRECIO_PASE = 350;
 const PRECIO_TRANSPORTE = 120;
 
 // ----------- FUNCIONES UTILES -----------
-function safeParse<T>(item: string | null, def: T): T {
+function safeParse(item: string | null, def: never[]) {
     try {
         return item ? JSON.parse(item) : def;
     } catch {
         return def;
     }
 }
-function fechaLegible(fechaStr: string) {
+function fechaLegible(fechaStr: string | string[]) {
     if (!fechaStr) return "-";
     try {
         const safeFecha = fechaStr.includes("T") ? fechaStr : fechaStr + "T12:00:00";
@@ -56,25 +55,28 @@ function fechaLegible(fechaStr: string) {
 
 export default function TransportePage() {
     const [cantidad, setCantidad] = useState(1);
-    const [visitantes, setVisitantes] = useState<any[]>([]);
-    const [extras, setExtras] = useState<any[]>([]);
-    const [fecha, setFecha] = useState<string>("");
-    const [hora, setHora] = useState<string>("");
+    const [visitantes, setVisitantes] = useState([]);
+    const [extras, setExtras] = useState([]);
+    const [fecha, setFecha] = useState("");
+    const [hora, setHora] = useState("");
     const [usaTransporte, setUsaTransporte] = useState(true);
     const [horario, setHorario] = useState(HORARIOS[0]);
-    const [promo, setPromo] = useState<{ aplicado: boolean, valor: number, codigo?: string }>({ aplicado: false, valor: 0, codigo: "" });
+    const [promo, setPromo] = useState({ aplicado: false, valor: 0, codigo: "" });
     const [subtotal, setSubtotal] = useState(0);
 
-    // Tarjeta
+    // Pago
     const [card, setCard] = useState({ num: "", exp: "", cvc: "", name: "" });
     const [isPaying, setIsPaying] = useState(false);
     const [paid, setPaid] = useState(false);
 
+    // NUEVO: Método de pago
+    const [metodoPago, setMetodoPago] = useState("tarjeta"); // "tarjeta" o "efectivo"
+
     useEffect(() => {
         if (typeof window === "undefined") return;
-        setVisitantes(safeParse<any[]>(localStorage.getItem("visitantes"), []));
+        setVisitantes(safeParse(localStorage.getItem("visitantes"), []));
         setCantidad(Number(localStorage.getItem("cantidad") || 1));
-        setExtras(safeParse<any[]>(localStorage.getItem("extras_orden"), []));
+        setExtras(safeParse(localStorage.getItem("extras_orden"), []));
         setFecha(localStorage.getItem("fechaVisita") || "");
         setHora(localStorage.getItem("horaVisita") || "");
         const promoAplicada = localStorage.getItem("promo_aplicada") === "1";
@@ -83,22 +85,22 @@ export default function TransportePage() {
         setPromo({ aplicado: promoAplicada, valor: promoValor, codigo: promoCodigo });
         // Subtotales
         const subtotalBase = Number(localStorage.getItem("cantidad") || 1) * PRECIO_PASE;
-        const extrasTotal = safeParse<any[]>(localStorage.getItem("extras_orden"), []).reduce((acc: number, curr: any) => acc + (curr?.total || 0), 0);
+        const extrasTotal = safeParse(localStorage.getItem("extras_orden"), []).reduce((acc, curr) => acc + (curr?.total || 0), 0);
         setSubtotal(subtotalBase + extrasTotal - (promoAplicada ? promoValor : 0));
     }, []);
 
     useEffect(() => {
         const subtotalBase = cantidad * PRECIO_PASE;
-        const extrasTotal = extras.reduce((acc: number, curr: any) => acc + (curr?.total || 0), 0);
+        const extrasTotal = extras.reduce((acc, curr) => acc + (curr?.total || 0), 0);
         setSubtotal(subtotalBase + extrasTotal - (promo.aplicado ? promo.valor : 0));
     }, [cantidad, extras, promo]);
 
     const totalTransporte = usaTransporte ? cantidad * PRECIO_TRANSPORTE : 0;
     const total = subtotal + totalTransporte;
-    const extrasList = extras.filter((x: any) => x.cantidad > 0);
+    const extrasList = extras.filter((x) => x.cantidad > 0);
 
     // ------ MANEJO DE FORMULARIO DE PAGO ------
-    function handleExpChange(e: React.ChangeEvent<HTMLInputElement>) {
+    function handleExpChange(e) {
         const value = e.target.value.replace(/[^\d]/g, "");
         if (value.length === 0) return setCard({ ...card, exp: "" });
         if (value.length <= 2) {
@@ -114,14 +116,14 @@ export default function TransportePage() {
         const exp = month + "/" + year;
         setCard({ ...card, exp });
     }
-    function isExpValid(exp: string) {
+    function isExpValid(exp) {
         const match = /^(\d{2})\/(\d{2})$/.exec(exp);
         if (!match) return false;
         const mm = parseInt(match[1], 10);
         const aa = parseInt(match[2], 10);
         return mm >= 1 && mm <= 12 && aa >= 0 && aa <= 99;
     }
-    const handlePay = (e: React.FormEvent) => {
+    const handlePay = (e) => {
         e.preventDefault();
         setIsPaying(true);
         setTimeout(() => {
@@ -130,17 +132,77 @@ export default function TransportePage() {
         }, 1800);
     };
 
-    function handleContinuar() {
+
+    async function handleContinuar() {
         localStorage.setItem("transporte_usa", usaTransporte ? "1" : "0");
         localStorage.setItem("transporte_horario", JSON.stringify(horario));
         localStorage.setItem("transporte_cantidad", cantidad.toString());
-        window.location.href = "/daypass/resumen";
+
+        const datos = {
+            fecha,
+            fechaLegible: fechaLegible(fecha),
+            hora,
+            cantidad,
+            visitantes,
+            extras,
+            promo,
+            subtotal,
+            usaTransporte,
+            horario,
+            totalTransporte,
+            total,
+            metodoPago,
+            ...(metodoPago === "tarjeta"
+                    ? {
+                        datosTarjeta: {
+                            nombre: card.name,
+                            numero: card.num,
+                            exp: card.exp,
+                            cvc: card.cvc,
+                            paid,
+                        }
+                    }
+                    : {
+                        datosEfectivo: {
+                            mensaje: "El usuario pagará en efectivo en taquilla",
+                        }
+                    }
+            )
+        };
+
+        console.log("🟢 DATOS DE RESERVA AL CONTINUAR:", datos);
+
+        // try {
+            // const response = await fetch("http://127.0.0.1:8000/api/reservas", {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify(datos),
+            // });
+            //
+            //
+            // const result = await response.json();
+            //
+            // console.log("🟢 RESERVA RESPUESTA:", result);
+
+            // if (result.ok) {
+                toast.success("Reserva creada con éxito. Se enviará un correo electrónico con los accesos.");
+                // Le damos un pequeño delay para que se vea el toast antes de redirigir
+                setTimeout(() => {
+                    window.location.href = "/daypass/resumen";
+                }, 2000);
+        //     } else {
+        //         toast.error("Error al crear la reserva, intenta de nuevo.");
+        //     }
+        // } catch (error) {
+        //     console.error("Error al enviar la reserva:", error);
+        //     toast.error("Error de conexión, intenta más tarde.");
+        // }
     }
 
-    function getCoords(salida: string): [number, number] {
+    function getCoords(salida) {
         const coords = PUNTOS_COORDS[salida];
         if (Array.isArray(coords) && coords.length === 2) {
-            return coords as [number, number];
+            return coords;
         }
         // Fallback seguro (Plaza del Sol)
         return [20.6481, -103.4167];
@@ -149,8 +211,7 @@ export default function TransportePage() {
     return (
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
             <Header />
-            {/* Breadcrumbs y Progreso */}
-            <main className="flex flex-col md:flex-row gap-8 max-w-7xl w-full mx-auto px-4 pb-12 flex-1  pt-12">
+            <main className="flex flex-col md:flex-row gap-8 max-w-7xl w-full mx-auto px-4 pb-12 flex-1 pt-12">
                 <section className="flex-1">
                     <h2 className="text-2xl font-bold mb-4">Servicio de transporte</h2>
                     <p className="mb-6 text-gray-700">
@@ -159,7 +220,7 @@ export default function TransportePage() {
                     {/* Opción de transporte */}
                     <div className="mb-8 flex flex-col md:flex-row md:gap-4">
                         <label
-                            className={` mr-2 flex-1 block p-4 border rounded cursor-pointer ${
+                            className={`mr-2 flex-1 block p-4 border rounded cursor-pointer ${
                                 usaTransporte ? "border-black bg-[#f6fafb]" : "bg-white"
                             }`}
                         >
@@ -198,14 +259,13 @@ export default function TransportePage() {
                             <hr className="mb-6" />
                             <label className="block font-semibold mb-2">Horarios disponibles</label>
                             <div className="flex flex-col md:flex-row gap-6 mb-6 items-start">
-                                {/* Horarios */}
                                 <div className="w-full md:w-3/4">
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                                         {HORARIOS.map((h) => (
                                             <button
                                                 key={h.hora + h.salida}
                                                 className={`rounded border py-2 font-semibold text-sm w-full
-            ${
+                ${
                                                     horario.hora === h.hora && horario.salida === h.salida
                                                         ? "bg-[#18668b] text-white border-[#18668b]"
                                                         : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
@@ -236,7 +296,6 @@ export default function TransportePage() {
                                 </div>
                             </div>
 
-
                             {/* Información del servicio */}
                             <div className="mt-8 mb-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div>
@@ -266,21 +325,51 @@ export default function TransportePage() {
                             </div>
                         </>
                     )}
-
                 </section>
                 {/* Resumen y pago */}
                 <aside className="w-full md:w-80">
                     <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
                         <h4 className="font-bold mb-3">Resumen de reserva</h4>
-
                         {/* Total visible siempre */}
                         <div className="flex justify-between font-bold text-lg mb-4">
                             <span>Total:</span>
                             <span>${total} MXN</span>
                         </div>
 
-                        {/* Pago tarjeta visible siempre */}
-                        {!paid && (
+                        {/* NUEVO: Método de pago */}
+                        <div className="flex gap-3 mb-4">
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="radio"
+                                    className="mr-2"
+                                    name="metodoPago"
+                                    value="tarjeta"
+                                    checked={metodoPago === "tarjeta"}
+                                    onChange={() => {
+                                        setMetodoPago("tarjeta");
+                                        setPaid(false);
+                                    }}
+                                />
+                                <span>Tarjeta</span>
+                            </label>
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="radio"
+                                    className="mr-2"
+                                    name="metodoPago"
+                                    value="efectivo"
+                                    checked={metodoPago === "efectivo"}
+                                    onChange={() => {
+                                        setMetodoPago("efectivo");
+                                        setPaid(true); // Efectivo se considera "pagado"
+                                    }}
+                                />
+                                <span>Efectivo</span>
+                            </label>
+                        </div>
+
+                        {/* Pago tarjeta visible solo si es tarjeta */}
+                        {!paid && metodoPago === "tarjeta" && (
                             <form
                                 className="border-t pt-4 mt-3 flex flex-col gap-2"
                                 onSubmit={handlePay}
@@ -351,18 +440,30 @@ export default function TransportePage() {
                                 </div>
                             </form>
                         )}
-                        {paid && (
+                        {/* Pago realizado */}
+                        {paid && metodoPago === "tarjeta" && (
                             <div className="mt-4 text-green-700 text-center font-bold">
                                 ¡Pago realizado con éxito!
                             </div>
                         )}
+                        {paid && metodoPago === "efectivo" && (
+                            <div className="mt-4 text-yellow-700 text-center font-bold">
+                                Presenta este resumen y paga en taquilla.
+                            </div>
+                        )}
 
                         <button
-                            className={`mt-6 w-full py-2 rounded font-bold text-white ${paid ? "bg-[#18668b] hover:bg-[#14526d]" : "bg-gray-300 cursor-not-allowed"}`}
+                            className={`mt-6 w-full py-2 rounded font-bold text-white ${
+                                paid
+                                    ? "bg-[#18668b] hover:bg-[#14526d]"
+                                    : "bg-gray-300 cursor-not-allowed"
+                            }`}
                             onClick={handleContinuar}
                             disabled={!paid}
                         >
-                            Continuar al resumen
+                            {metodoPago === "efectivo"
+                                ? "Finalizar y ver resumen para pago en efectivo"
+                                : "Continuar al resumen"}
                         </button>
 
                         {/* Mostrar/Ocultar detalles animados */}
@@ -387,8 +488,6 @@ export default function TransportePage() {
                         </div>
                     </div>
                 </aside>
-
-
             </main>
             <Footer />
         </div>

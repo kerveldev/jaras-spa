@@ -126,6 +126,20 @@ export default function ConfirmacionReservaPage() {
                     </div>
                 </div>
 
+
+                {/* Confirmación de reserva y PDF */}
+                <section className="flex justify-center items-center py-16">
+                    <div className="bg-white border rounded p-8 max-w-md w-full text-center">
+                        <div className="font-bold text-black text-lg mb-4">¡Reserva completada!</div>
+                        <div className="text-gray-600 mb-2">
+                            Recibirás un <span className="font-semibold">PDF con tus accesos</span> y toda la información de tu reserva en tu correo electrónico.
+                        </div>
+                        <div className="text-gray-500 text-xs">
+                            Revisa tu bandeja de entrada y, si no lo encuentras, verifica en la carpeta de spam o promociones.
+                        </div>
+                    </div>
+                </section>
+
                 {/* Detalles de la reserva */}
                 <section className="bg-white border rounded mb-10 p-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2 text-sm font-semibold">
@@ -149,45 +163,47 @@ export default function ConfirmacionReservaPage() {
                 </section>
 
                 {/* Boletos de acceso y autobús */}
-                <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                    <div className="bg-white border rounded p-6 flex flex-col items-center">
-                        <div className="font-bold text-black mb-2">Boletos de Acceso</div>
-                        <div className="mb-2 text-xs text-gray-600">Presenta este código QR en la entrada principal</div>
-                        <Image
-                            src={qrURL}
-                            alt="Código QR acceso"
-                            width={160}
-                            height={160}
-                            className="mb-2"
-                        />
-                        <div className="text-xs text-center text-gray-500">
-                            Válido para {tipoBoletos}<br />
-                            Incluye acceso a todas las instalaciones
-                        </div>
-                    </div>
-                    <div className="bg-white border rounded p-6 flex flex-col items-center">
-                        <div className="font-bold text-black mb-2">Boletos de Autobús</div>
-                        <div className="mb-2 text-xs text-gray-600">Presenta este código QR al abordar el autobús</div>
-                        <Image
-                            src={qrURLMapa}
-                            alt="Boleto autobús"
-                            width={160}
-                            height={160}
-                            className="mb-2 w-40 h-40 object-contain"
-                        />
-                        {usaTransporte ? (
-                            <div className="text-xs text-center text-gray-500">
-                                Ruta: {horarioTexto}<br />
-                                Asientos: General <br />
-                                {totalPases} reservados
-                            </div>
-                        ) : (
-                            <div className="text-xs text-center text-gray-400">
-                                No reservaste autobús
-                            </div>
-                        )}
-                    </div>
-                </section>
+                {/*<section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">*/}
+                {/*    <div className="bg-white border rounded p-6 flex flex-col items-center">*/}
+                {/*        <div className="font-bold text-black mb-2">Boletos de Acceso</div>*/}
+                {/*        <div className="mb-2 text-xs text-gray-600">Presenta este código QR en la entrada principal</div>*/}
+                {/*        <Image*/}
+                {/*            src={qrURL}*/}
+                {/*            alt="Código QR acceso"*/}
+                {/*            width={160}*/}
+                {/*            height={160}*/}
+                {/*            className="mb-2"*/}
+                {/*        />*/}
+                {/*        <div className="text-xs text-center text-gray-500">*/}
+                {/*            Válido para {tipoBoletos}<br />*/}
+                {/*            Incluye acceso a todas las instalaciones*/}
+                {/*        </div>*/}
+                {/*    </div>*/}
+                {/*    <div className="bg-white border rounded p-6 flex flex-col items-center">*/}
+                {/*        <div className="font-bold text-black mb-2">Boletos de Autobús</div>*/}
+                {/*        <div className="mb-2 text-xs text-gray-600">Presenta este código QR al abordar el autobús</div>*/}
+                {/*        <Image*/}
+                {/*            src={qrURLMapa}*/}
+                {/*            alt="Boleto autobús"*/}
+                {/*            width={160}*/}
+                {/*            height={160}*/}
+                {/*            className="mb-2 w-40 h-40 object-contain"*/}
+                {/*        />*/}
+                {/*        {usaTransporte ? (*/}
+                {/*            <div className="text-xs text-center text-gray-500">*/}
+                {/*                Ruta: {horarioTexto}<br />*/}
+                {/*                Asientos: General <br />*/}
+                {/*                {totalPases} reservados*/}
+                {/*            </div>*/}
+                {/*        ) : (*/}
+                {/*            <div className="text-xs text-center text-gray-400">*/}
+                {/*                No reservaste autobús*/}
+                {/*            </div>*/}
+                {/*        )}*/}
+                {/*    </div>*/}
+                {/*</section>*/}
+
+
 
                 {/* Detalles y extras */}
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10 text-sm">
@@ -241,18 +257,7 @@ export default function ConfirmacionReservaPage() {
                     </div>
                 </section>
 
-                {/* Botones acción */}
-                <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-8">
-                    <button className="bg-black text-white px-6 py-2 rounded shadow hover:bg-[#333]">
-                        Descargar Boletos (PDF)
-                    </button>
-                    <button className="border px-6 py-2 rounded font-semibold shadow hover:bg-gray-100">
-                        Enviar por Email
-                    </button>
-                    <button className="border px-6 py-2 rounded font-semibold shadow hover:bg-gray-100">
-                        Imprimir Boletos
-                    </button>
-                </div>
+
 
                 {/* Progreso de reserva */}
                 <section className="mt-12 mb-6">
