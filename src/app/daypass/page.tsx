@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import toast, {Toaster} from "react-hot-toast";
 import {FiPlus, FiTrash2} from "react-icons/fi";
+import Stepper from "@/components/Stepper";
 
 const CODIGO_PROMO = "PROMO100";
 const DESCUENTO_PROMO = 100;
@@ -191,33 +192,12 @@ export default function DaypassUnicaPage() {
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
             <Toaster position="top-center" />
             <Header />
-
-            {/* Breadcrumbs y Progreso */}
-            <div className="max-w-xl w-full mx-auto pt-6 pb-4 px-4">
-                <div className="text-xs text-gray-400 mb-4">
-                    Inicio &gt; Reservaciones &gt; <span className="text-black">Compra y Fecha de Pases</span>
-                </div>
-                <div className="flex items-center gap-2 mb-8">
-                    {[1, 2, 3, 4].map((n, idx) => (
-                        <div className="flex items-center" key={n}>
-                            <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-black ${n === 1 || n === 2
-                                    ? "bg-[#18668b] text-white"
-                                    : "bg-gray-200 text-gray-500"
-                                }`}
-                            >
-                                {n}
-                            </div>
-                            {idx !== 3 && (
-                                <div className="w-10 h-1 bg-gray-200 mx-1 rounded" />
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
+            <h1 className="text-2xl font-bold text-center mb-8 text-[#18668b]  pt-12">
+                Completa tu Reservación y Agenda tu Visita
+            </h1>
 
             {/* Main Content */}
-            <main className="flex flex-col md:flex-row gap-8 max-w-7xl w-full mx-auto px-4 pb-12 flex-1">
+            <main className="flex flex-col md:flex-row gap-8 max-w-7xl w-full mx-auto px-4 pb-12 flex-1 ">
                 {/* Card Visitantes */}
                 <section className="flex-1 md:flex md:items-start md:gap-8">
                     <div className="w-full md:w-2/3">
