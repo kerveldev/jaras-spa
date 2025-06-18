@@ -150,36 +150,7 @@ export default function TransportePage() {
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
             <Header />
             {/* Breadcrumbs y Progreso */}
-            <div className="max-w-5xl w-full mx-auto pt-6 pb-4 px-4">
-                <div className="text-xs text-gray-400 mb-4">
-                    Inicio &gt; Selección de Fecha &gt; Extras &gt; <span className="text-black">Transporte</span>
-                </div>
-                <div className="flex items-center gap-2 mb-8">
-                    {[1, 2, 3, 4].map((n, idx) => (
-                        <div className="flex items-center" key={n}>
-                            <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${
-                                    n === 4
-                                        ? "bg-[#18668b] text-white"
-                                        : "bg-gray-200 text-gray-500"
-                                }`}
-                            >
-                                {n}
-                            </div>
-                            {idx !== 3 && (
-                                <div className="w-10 h-1 bg-gray-200 mx-1 rounded" />
-                            )}
-                        </div>
-                    ))}
-                    <div className="flex gap-6 ml-4 text-xs">
-                        <span className="text-gray-400">Pases</span>
-                        <span className="text-gray-400">Fecha</span>
-                        <span className="text-gray-400">Extras</span>
-                        <span className="font-bold text-[#18668b]">Transporte</span>
-                    </div>
-                </div>
-            </div>
-            <main className="flex flex-col md:flex-row gap-8 max-w-5xl w-full mx-auto px-4 pb-12 flex-1">
+            <main className="flex flex-col md:flex-row gap-8 max-w-7xl w-full mx-auto px-4 pb-12 flex-1  pt-12">
                 <section className="flex-1">
                     <h2 className="text-2xl font-bold mb-4">Servicio de transporte</h2>
                     <p className="mb-6 text-gray-700">
@@ -226,41 +197,45 @@ export default function TransportePage() {
                         <>
                             <hr className="mb-6" />
                             <label className="block font-semibold mb-2">Horarios disponibles</label>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
-                                {HORARIOS.map((h) => (
-                                    <button
-                                        key={h.hora + h.salida}
-                                        className={`rounded border py-2 font-semibold text-sm ${
-                                            horario.hora === h.hora && horario.salida === h.salida
-                                                ? "bg-[#18668b] text-white border-[#18668b]"
-                                                : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
-                                        }`}
-                                        onClick={() => setHorario(h)}
-                                    >
-                                        {h.hora} <br />
-                                        <span className="text-xs font-normal">{h.salida}</span>
-                                    </button>
-                                ))}
-                            </div>
-                            {/* Cantidad de boletos */}
-                            <div className="mb-3">
-                                <label className="font-semibold text-sm">
-                                    Cantidad de boletos
-                                </label>
-                                <div className="flex gap-2 mt-2">
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        max={10}
-                                        value={cantidad}
-                                        onChange={e => setCantidad(Number(e.target.value))}
-                                        className="border rounded px-2 py-1 w-20"
-                                    />
+                            <div className="flex flex-col md:flex-row gap-6 mb-6 items-start">
+                                {/* Horarios */}
+                                <div className="w-full md:w-3/4">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        {HORARIOS.map((h) => (
+                                            <button
+                                                key={h.hora + h.salida}
+                                                className={`rounded border py-2 font-semibold text-sm w-full
+            ${
+                                                    horario.hora === h.hora && horario.salida === h.salida
+                                                        ? "bg-[#18668b] text-white border-[#18668b]"
+                                                        : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
+                                                }`}
+                                                onClick={() => setHorario(h)}
+                                            >
+                                                {h.hora} <br />
+                                                <span className="text-xs font-normal">{h.salida}</span>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div className="text-xs text-gray-500 mt-2">
-                                    Los niños menores de 3 años no pagan boleto de transporte si viajan en el regazo de un adulto.
+                                {/* Cantidad de boletos */}
+                                <div className="w-full md:w-1/4">
+                                    <label className="font-semibold text-sm block mb-2 md:mb-0">
+                                        Cantidad de boletos
+                                    </label>
+                                    <div className="flex gap-2 mb-1">
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            max={10}
+                                            value={cantidad}
+                                            onChange={e => setCantidad(Number(e.target.value))}
+                                            className="border rounded px-2 py-1 w-20"
+                                        />
+                                    </div>
                                 </div>
                             </div>
+
 
                             {/* Información del servicio */}
                             <div className="mt-8 mb-6 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -332,6 +307,7 @@ export default function TransportePage() {
                                     disabled={isPaying}
                                     onChange={e => setCard({ ...card, num: e.target.value.replace(/\D/g, "") })}
                                 />
+                                <div className="flex gap-x-3">
                                     <input
                                         className="border rounded px-2 py-2 text-sm w-2/3"
                                         placeholder="MM/AA"
@@ -358,9 +334,11 @@ export default function TransportePage() {
                                         disabled={isPaying}
                                         onChange={e => setCard({ ...card, cvc: e.target.value.replace(/\D/g, "") })}
                                     />
+                                </div>
                                 {card.exp.length === 5 && !isExpValid(card.exp) && (
                                     <span className="text-xs text-red-600">Fecha inválida</span>
                                 )}
+
                                 <button
                                     type="submit"
                                     className="w-full py-2 mt-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition"
