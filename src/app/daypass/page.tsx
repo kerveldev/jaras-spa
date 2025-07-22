@@ -6,6 +6,31 @@ import toast, {Toaster} from "react-hot-toast";
 import {FiPlus, FiTrash2} from "react-icons/fi";
 import Stepper from "@/components/Stepper";
 
+type TipoVisitante =
+    | "General"
+    | "Grupos"
+    | "INAPAM"
+    | "Convenios"
+    | "Locales"
+    | "Discapacidad";
+
+function getPrecioPorTipoYFecha(tipo: TipoVisitante, fecha: Date): number {
+    const diaSemana = fecha.getDay(); // 0 = domingo, 6 = sábado
+    const esFinSemana = diaSemana === 5 || diaSemana === 6 || diaSemana === 0;
+
+    const precios: Record<TipoVisitante, { semana: number; finde: number }> = {
+        General: { semana: 350, finde: 420 },
+        Grupos: { semana: 325, finde: 390 },
+        INAPAM: { semana: 300, finde: 360 },
+        Convenios: { semana: 300, finde: 360 },
+        Locales: { semana: 250, finde: 300 },
+        Discapacidad: { semana: 250, finde: 300 },
+    };
+
+    const precio = precios[tipo];
+    return esFinSemana ? precio.finde : precio.semana;
+}
+
 const CODIGO_PROMO = "PROMO100";
 const DESCUENTO_PROMO = 100;
 const PRECIO_PASE = 350;
@@ -42,7 +67,7 @@ function formatFechaEs(year: number, month: number, day: number) {
 
 export default function DaypassUnicaPage() {
     const [visitantes, setVisitantes] = useState([
-        {nombre: "", correo: "", celular: ""},
+        { nombre: "", correo: "", celular: "", tipo: "General" as TipoVisitante },
     ]);
     const [touched, setTouched] = useState([
         {nombre: false, correo: false, celular: false},
@@ -84,24 +109,56 @@ export default function DaypassUnicaPage() {
     // Agregar visitante
     const handleAddVisitante = () => {
         if (visitantes.length >= 10) return;
+
         setVisitantes((prev) => [
             ...prev,
-            {nombre: "", correo: "", celular: ""},
+            {
+                nombre: "",
+                correo: "",
+                celular: "",
+                tipo: "General", // 👈 Puedes cambiarlo a otro valor válido si lo deseas
+            },
         ]);
+
         setTouched((prev) => [
             ...prev,
-            {nombre: false, correo: false, celular: false},
+            { nombre: false, correo: false, celular: false },
         ]);
     };
 
+
     // Cambios por visitante
-    const handleVis = (idx: number, campo: 'nombre' | 'correo' | 'celular', valor: string) => {
+    const handleVis = (
+        idx: number,
+        campo: keyof typeof visitantes[0],
+        valor: string
+    ) => {
         setVisitantes((prev) => {
             const copia = [...prev];
-            copia[idx][campo] = valor;
+
+            if (campo === "tipo") {
+                // Solo asignar si es un valor válido
+                const posiblesTipos: TipoVisitante[] = [
+                    "General",
+                    "Grupos",
+                    "INAPAM",
+                    "Convenios",
+                    "Locales",
+                    "Discapacidad",
+                ];
+
+                if (posiblesTipos.includes(valor as TipoVisitante)) {
+                    copia[idx][campo] = valor as TipoVisitante;
+                }
+            } else {
+                // El resto de campos son string
+                copia[idx][campo] = valor;
+            }
+
             return copia;
         });
     };
+
 
     const handleBlur = (idx: number, campo: 'nombre' | 'correo' | 'celular') => {
         setTouched((prev) => {
@@ -137,7 +194,9 @@ export default function DaypassUnicaPage() {
         .padStart(2, "0")}`;
     const fechaDisplay = formatFechaEs(year, mes, selectedDay);
 
-    const subtotal = visitantes.length * PRECIO_PASE;
+    const fechaVisita = new Date(year, mes, selectedDay);
+    const precios = visitantes.map((v) => getPrecioPorTipoYFecha(v.tipo, fechaVisita));
+    const subtotal = precios.reduce((sum, precio) => sum + precio, 0);
     const total = Math.max(subtotal - descuento, 0);
 
     // Guardar y continuar
@@ -223,61 +282,93 @@ export default function DaypassUnicaPage() {
                                             </button>
                                         )}
 
-                                        {/* Nombre */}
-                                        <div className="flex flex-col">
-                                            <label className="block text-xs font-medium text-black mb-1 ">
-                                                {`Visitante ${idx + 1} ${idx === 0 ? "(Tú)" : ""}`}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                placeholder="Nombre"
-                                                value={vis.nombre}
-                                                onChange={(e) => handleVis(idx, "nombre", e.target.value)}
-                                                onBlur={() => handleBlur(idx, "nombre")}
-                                                className={`border p-2 rounded w-full transition-colors duration-150 ${errorNombre ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
-                                                required
-                                            />
-                                            {renderError("El nombre es obligatorio.", errorNombre)}
+                                        <div className="flex flex-row gap-4 w-full">
+                                            {/* Tipo de visitante */}
+                                            <div className="flex flex-col flex-1 min-w-[150px]">
+                                                <label className="block text-xs font-medium text-black mb-1">Tipo de visitante</label>
+                                                <select
+                                                    className={`border p-2 rounded w-full ${vis.tipo === "" ? "text-gray-400" : "text-black"}`}
+                                                    value={vis.tipo}
+                                                    onChange={(e) => handleVis(idx, "tipo", e.target.value as TipoVisitante)}
+                                                >
+                                                    <option value="" disabled>Selecciona un tipo</option>
+                                                    <option value="General">General</option>
+                                                    <option value="Grupos">Grupos</option>
+                                                    <option value="INAPAM">INAPAM</option>
+                                                    <option value="Convenios">Convenios</option>
+                                                    <option value="Locales">Locales</option>
+                                                    <option value="Discapacidad">Personas con discapacidad</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Nombre */}
+                                            <div className="flex flex-col flex-1 min-w-[200px]">
+                                                <label className="block text-xs font-medium text-black mb-1">
+                                                    {`Visitante ${idx + 1} ${idx === 0 ? "(Tú)" : ""}`}
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nombre"
+                                                    value={vis.nombre}
+                                                    onChange={(e) => handleVis(idx, "nombre", e.target.value)}
+                                                    onBlur={() => handleBlur(idx, "nombre")}
+                                                    className={`border p-2 rounded w-full transition-colors duration-150 ${
+                                                        errorNombre ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"
+                                                    }`}
+                                                    required
+                                                />
+                                                {renderError("El nombre es obligatorio.", errorNombre)}
+                                            </div>
+
+                                            {/* Correo */}
+                                            <div className="flex flex-col flex-1 min-w-[250px]">
+                                                <label className="block text-xs font-medium text-black mb-1">
+                                                    Correo Electrónico{" "}
+                                                    {idx === 0 ? (
+                                                        <span className="text-[10px]">(Principal)</span>
+                                                    ) : (
+                                                        <span className="text-gray-400 text-[10px]">(opcional)</span>
+                                                    )}
+                                                </label>
+                                                <input
+                                                    type="email"
+                                                    placeholder="Correo electrónico"
+                                                    value={vis.correo}
+                                                    onChange={(e) => handleVis(idx, "correo", e.target.value)}
+                                                    onBlur={() => handleBlur(idx, "correo")}
+                                                    className={`border p-2 rounded w-full transition-colors duration-150 ${
+                                                        errorCorreo ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"
+                                                    }`}
+                                                    required={idx === 0}
+                                                />
+                                                {renderError(
+                                                    idx === 0
+                                                        ? "El correo es obligatorio y debe ser válido."
+                                                        : "El correo debe ser válido.",
+                                                    errorCorreo
+                                                )}
+                                            </div>
+
+                                            {/* Celular */}
+                                            <div className="flex flex-col flex-1 min-w-[180px]">
+                                                <label className="block text-xs font-medium text-black mb-1">Celular WhatsApp</label>
+                                                <input
+                                                    type="tel"
+                                                    inputMode="numeric"
+                                                    pattern="\d{10,}"
+                                                    placeholder="Ej. 3312345678"
+                                                    value={vis.celular}
+                                                    onChange={(e) => handleVis(idx, "celular", e.target.value)}
+                                                    onBlur={() => handleBlur(idx, "celular")}
+                                                    className={`border p-2 rounded w-full transition-colors duration-150 ${
+                                                        errorCelular ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"
+                                                    }`}
+                                                    required
+                                                />
+                                                {renderError("El celular debe tener al menos 10 dígitos numéricos.", errorCelular)}
+                                            </div>
                                         </div>
-                                        {/* Correo */}
-                                        <div className="flex flex-col">
-                                            <label className="block text-xs font-medium text-black mb-1">
-                                                Correo Electrónico {idx === 0 ? <span className="text-[10px]">(Principal)</span> : <span className="text-gray-400">(opcional)</span>}
-                                            </label>
-                                            <input
-                                                type="email"
-                                                placeholder="Correo electrónico"
-                                                value={vis.correo}
-                                                onChange={(e) => handleVis(idx, "correo", e.target.value)}
-                                                onBlur={() => handleBlur(idx, "correo")}
-                                                className={`border p-2 rounded w-full transition-colors duration-150 ${errorCorreo ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
-                                                required={idx === 0}
-                                            />
-                                            {renderError(
-                                                idx === 0
-                                                    ? "El correo es obligatorio y debe ser válido."
-                                                    : "El correo debe ser válido.",
-                                                errorCorreo
-                                            )}
-                                        </div>
-                                        {/* Celular */}
-                                        <div className="flex flex-col">
-                                            <label className="block text-xs font-medium text-black mb-1">
-                                                Celular WhatsApp
-                                            </label>
-                                            <input
-                                                type="tel"
-                                                inputMode="numeric"
-                                                pattern="\d{10,}"
-                                                placeholder="Ej. 3312345678"
-                                                value={vis.celular}
-                                                onChange={(e) => handleVis(idx, "celular", e.target.value)}
-                                                onBlur={() => handleBlur(idx, "celular")}
-                                                className={`border p-2 rounded w-full transition-colors duration-150 ${errorCelular ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
-                                                required
-                                            />
-                                            {renderError("El celular debe tener al menos 10 dígitos numéricos.", errorCelular)}
-                                        </div>
+
                                         {/* Botón agregar visitante */}
                                         {idx === visitantes.length - 1 && visitantes.length < 10 && (
                                             <button
@@ -387,13 +478,13 @@ export default function DaypassUnicaPage() {
                             <div className="text-sm text-gray-500 mb-4">
                                 Disponibilidad confirmada para {visitantes.length} persona{visitantes.length > 1 && "s"}
                             </div>
-                            <div className="flex justify-between mb-1 text-sm">
-                                <span className="text-black">Pases de Acceso General</span>
-                                <span className="text-black">{visitantes.length} pases</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span>Precio por pase</span>
-                                <span>${PRECIO_PASE} MXN</span>
+                            <div className="text-sm mb-2">
+                                {visitantes.map((v, i) => (
+                                    <div key={i} className="flex justify-between">
+                                        <span className="text-black">{v.tipo}</span>
+                                        <span className="text-black">${getPrecioPorTipoYFecha(v.tipo, fechaVisita)} MXN</span>
+                                    </div>
+                                ))}
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span>Subtotal</span>
