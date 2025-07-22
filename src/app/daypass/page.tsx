@@ -268,26 +268,15 @@ export default function DaypassUnicaPage() {
                                 return (
                                     <div
                                         key={idx}
-                                        className="bg-white rounded border p-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-start relative"
+                                        className="bg-white rounded border p-4 grid grid-cols-1 gap-3 items-start relative"
                                     >
-                                        {/* Botón eliminar visitante */}
-                                        {visitantes.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveVisitante(idx)}
-                                                className="absolute top-2 right-2 text-red-600 hover:bg-red-100 rounded-full p-1 transition z-10"
-                                                title="Eliminar visitante"
-                                            >
-                                                <FiTrash2 size={18} />
-                                            </button>
-                                        )}
 
-                                        <div className="flex flex-row gap-4 w-full">
+                                        <div className="flex flex-col gap-4 md:flex-row w-full flex-wrap">
                                             {/* Tipo de visitante */}
                                             <div className="flex flex-col flex-1 min-w-[150px]">
                                                 <label className="block text-xs font-medium text-black mb-1">Tipo de visitante</label>
                                                 <select
-                                                    className={`border p-2 rounded w-full ${vis.tipo === "" ? "text-gray-400" : "text-black"}`}
+                                                    className="border p-2 rounded w-full text-black"
                                                     value={vis.tipo}
                                                     onChange={(e) => handleVis(idx, "tipo", e.target.value as TipoVisitante)}
                                                 >
@@ -302,7 +291,7 @@ export default function DaypassUnicaPage() {
                                             </div>
 
                                             {/* Nombre */}
-                                            <div className="flex flex-col flex-1 min-w-[200px]">
+                                            <div className="flex flex-col flex-1 min-w-[150px]">
                                                 <label className="block text-xs font-medium text-black mb-1">
                                                     {`Visitante ${idx + 1} ${idx === 0 ? "(Tú)" : ""}`}
                                                 </label>
@@ -321,7 +310,7 @@ export default function DaypassUnicaPage() {
                                             </div>
 
                                             {/* Correo */}
-                                            <div className="flex flex-col flex-1 min-w-[250px]">
+                                            <div className="flex flex-col flex-1 min-w-[150px]">
                                                 <label className="block text-xs font-medium text-black mb-1">
                                                     Correo Electrónico{" "}
                                                     {idx === 0 ? (
@@ -350,7 +339,7 @@ export default function DaypassUnicaPage() {
                                             </div>
 
                                             {/* Celular */}
-                                            <div className="flex flex-col flex-1 min-w-[180px]">
+                                            <div className="flex flex-col flex-1 min-w-[150px]">
                                                 <label className="block text-xs font-medium text-black mb-1">Celular WhatsApp</label>
                                                 <input
                                                     type="tel"
@@ -369,17 +358,30 @@ export default function DaypassUnicaPage() {
                                             </div>
                                         </div>
 
-                                        {/* Botón agregar visitante */}
-                                        {idx === visitantes.length - 1 && visitantes.length < 10 && (
-                                            <button
-                                                type="button"
-                                                onClick={handleAddVisitante}
-                                                className="absolute top-1/2 right-[-2.6rem] -translate-y-1/2 bg-[#18668b] hover:bg-[#14526d] text-white rounded-full p-2 shadow-lg transition z-10"
-                                                title="Agregar visitante"
-                                            >
-                                                <FiPlus size={22} />
-                                            </button>
-                                        )}
+                                        {/* Botones de acciones */}
+                                        <div className="flex gap-3 mt-4 justify-end">
+                                            {visitantes.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveVisitante(idx)}
+                                                    className="text-red-600 hover:bg-red-100 rounded-full p-2 transition"
+                                                    title="Eliminar visitante"
+                                                >
+                                                    <FiTrash2 size={18} />
+                                                </button>
+                                            )}
+
+                                            {idx === visitantes.length - 1 && visitantes.length < 10 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddVisitante}
+                                                    className="bg-[#18668b] hover:bg-[#14526d] text-white rounded-full p-2 shadow transition"
+                                                    title="Agregar visitante"
+                                                >
+                                                    <FiPlus size={22} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })}
