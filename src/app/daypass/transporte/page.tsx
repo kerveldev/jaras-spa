@@ -23,10 +23,11 @@ const PUNTOS_SALIDA = [
     { nombre: "Plaza Patria", direccion: "Av. Patria 45, Zapopan" },
 ];
 
-const PUNTOS_COORDS = {
+const PUNTOS_COORDS: Record<string, number[]> = {
     "Plaza del Sol": [20.6481, -103.4167],
-    "Plaza Patria": [20.7084, -103.3965]
+    "Plaza Patria": [20.7079, -103.3915],
 };
+
 
 const PRECIO_PASE = 350;
 const PRECIO_TRANSPORTE = 120;
@@ -39,24 +40,34 @@ function safeParse(item: string | null, def: never[]) {
         return def;
     }
 }
+
 function fechaLegible(fechaStr: string | string[]) {
-    if (!fechaStr) return "-";
+    if (!fechaStr || (Array.isArray(fechaStr) && fechaStr.length === 0)) return "-";
+
+    // Si es array, usamos el primer valor
+    const fecha = Array.isArray(fechaStr) ? fechaStr[0] : fechaStr;
+
     try {
-        const safeFecha = fechaStr.includes("T") ? fechaStr : fechaStr + "T12:00:00";
+        const safeFecha = fecha.includes("T") ? fecha : fecha + "T12:00:00";
         return new Date(safeFecha).toLocaleDateString("es-MX", {
             year: "numeric",
             month: "long",
-            day: "2-digit"
+            day: "2-digit",
+            weekday: "long"
         });
     } catch {
-        return fechaStr;
+        return fecha;
     }
 }
 
 export default function TransportePage() {
+    type Extra = {
+        total: number;
+        cantidad: number;
+    };
     const [cantidad, setCantidad] = useState(1);
     const [visitantes, setVisitantes] = useState([]);
-    const [extras, setExtras] = useState([]);
+    const [extras, setExtras] = useState<Extra[]>([]);
     const [fecha, setFecha] = useState("");
     const [hora, setHora] = useState("");
     const [usaTransporte, setUsaTransporte] = useState(true);
@@ -85,7 +96,7 @@ export default function TransportePage() {
         setPromo({ aplicado: promoAplicada, valor: promoValor, codigo: promoCodigo });
         // Subtotales
         const subtotalBase = Number(localStorage.getItem("cantidad") || 1) * PRECIO_PASE;
-        const extrasTotal = safeParse(localStorage.getItem("extras_orden"), []).reduce((acc, curr) => acc + (curr?.total || 0), 0);
+        const extrasTotal = safeParse(localStorage.getItem("extras_orden"), []).reduce((acc: any, curr: { total: any; }) => acc + (curr?.total || 0), 0);
         setSubtotal(subtotalBase + extrasTotal - (promoAplicada ? promoValor : 0));
     }, []);
 
@@ -100,7 +111,7 @@ export default function TransportePage() {
     const extrasList = extras.filter((x) => x.cantidad > 0);
 
     // ------ MANEJO DE FORMULARIO DE PAGO ------
-    function handleExpChange(e) {
+    function handleExpChange(e: { target: { value: string; }; }) {
         const value = e.target.value.replace(/[^\d]/g, "");
         if (value.length === 0) return setCard({ ...card, exp: "" });
         if (value.length <= 2) {
@@ -116,14 +127,14 @@ export default function TransportePage() {
         const exp = month + "/" + year;
         setCard({ ...card, exp });
     }
-    function isExpValid(exp) {
+    function isExpValid(exp: string) {
         const match = /^(\d{2})\/(\d{2})$/.exec(exp);
         if (!match) return false;
         const mm = parseInt(match[1], 10);
         const aa = parseInt(match[2], 10);
         return mm >= 1 && mm <= 12 && aa >= 0 && aa <= 99;
     }
-    const handlePay = (e) => {
+    const handlePay = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         setIsPaying(true);
         setTimeout(() => {
@@ -199,7 +210,7 @@ export default function TransportePage() {
         // }
     }
 
-    function getCoords(salida) {
+    function getCoords(salida: string) {
         const coords = PUNTOS_COORDS[salida];
         if (Array.isArray(coords) && coords.length === 2) {
             return coords;

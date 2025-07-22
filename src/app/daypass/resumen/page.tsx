@@ -20,10 +20,15 @@ function safeParse<T>(item: string | null, def: T): T {
 }
 
 // Formatea fecha a texto en español
-function fechaLegible(fechaStr: string) {
-    if (!fechaStr) return "-";
+// Formatea fecha a texto en español
+function fechaLegible(fechaStr: string | string[]) {
+    if (!fechaStr || (Array.isArray(fechaStr) && fechaStr.length === 0)) return "-";
+
+    // Si es array, usamos el primer valor
+    const fecha = Array.isArray(fechaStr) ? fechaStr[0] : fechaStr;
+
     try {
-        const safeFecha = fechaStr.includes("T") ? fechaStr : fechaStr + "T12:00:00";
+        const safeFecha = fecha.includes("T") ? fecha : fecha + "T12:00:00";
         return new Date(safeFecha).toLocaleDateString("es-MX", {
             year: "numeric",
             month: "long",
@@ -31,9 +36,10 @@ function fechaLegible(fechaStr: string) {
             weekday: "long"
         });
     } catch {
-        return fechaStr;
+        return fecha;
     }
 }
+
 
 export default function ConfirmacionReservaPage() {
     // Estados para info real
