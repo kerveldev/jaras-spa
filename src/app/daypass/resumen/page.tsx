@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Image from "next/image";
@@ -42,6 +43,7 @@ function fechaLegible(fechaStr: string | string[]) {
 
 
 export default function ConfirmacionReservaPage() {
+    const router = useRouter();
     // Estados para info real
     const [visitantes, setVisitantes] = useState<any[]>([]);
     const [cantidad, setCantidad] = useState(1);
@@ -51,47 +53,23 @@ export default function ConfirmacionReservaPage() {
     const [usaTransporte, setUsaTransporte] = useState(true);
     const [extras, setExtras] = useState<any[]>([]);
     const [promo, setPromo] = useState<{ aplicado: boolean, valor: number, codigo?: string }>({ aplicado: false, valor: 0, codigo: "" });
+    const [totalFinal, setTotalFinal] = useState<number>(0);
 
     useEffect(() => {
-        // Cargar info de localStorage
-        setVisitantes(safeParse<any[]>(localStorage.getItem("visitantes"), []));
-        setCantidad(Number(localStorage.getItem("cantidad") || 1));
-        setFecha(localStorage.getItem("fechaVisita") || "");
-        setHora(localStorage.getItem("horaVisita") || "");
-        setHorarioTransporte(safeParse<any>(localStorage.getItem("transporte_horario"), null));
-        setUsaTransporte(localStorage.getItem("transporte_usa") === "1");
-        setExtras(safeParse<any[]>(localStorage.getItem("extras_orden"), []));
-        setPromo({
-            aplicado: localStorage.getItem("promo_aplicada") === "1",
-            valor: Number(localStorage.getItem("descuentoPromo") || 0),
-            codigo: localStorage.getItem("promo_codigo") || "",
-        });
-
-        const reservaCompleta = {
-            visitantes: safeParse<any[]>(localStorage.getItem("visitantes"), []),
-            cantidad: Number(localStorage.getItem("cantidad") || 1),
-            fechaVisita: localStorage.getItem("fechaVisita") || "",
-            horaVisita: localStorage.getItem("horaVisita") || "",
-            transporte: {
-                usa: localStorage.getItem("transporte_usa") === "1",
-                horario: safeParse<any>(localStorage.getItem("transporte_horario"), null),
-                cantidad: Number(localStorage.getItem("transporte_cantidad") || 1),
-            },
-            extras: safeParse<any[]>(localStorage.getItem("extras_orden"), []),
-            promo: {
-                aplicado: localStorage.getItem("promo_aplicada") === "1",
-                valor: Number(localStorage.getItem("descuentoPromo") || 0),
-                codigo: localStorage.getItem("promo_codigo") || "",
-            },
-            totales: {
-                totalPases: Number(localStorage.getItem("cantidad") || 1),
-                totalExtras: safeParse<any[]>(localStorage.getItem("extras_orden"), []).reduce((acc, curr) => acc + (curr?.total || 0), 0),
-                totalBase: Number(localStorage.getItem("cantidad") || 1) * 350,
-                totalPromo: localStorage.getItem("promo_aplicada") === "1" ? Number(localStorage.getItem("descuentoPromo") || 0) : 0,
-                totalTransporte: (localStorage.getItem("transporte_usa") === "1" ? Number(localStorage.getItem("cantidad") || 1) * 120 : 0),
-            }
-        };
-        console.log("RESERVA COMPLETA:", reservaCompleta);
+        // Lee todo el objeto reserva guardado por la otra página
+        const reserva = safeParse<any>(localStorage.getItem("reserva_data"), null);
+        if (reserva) {
+            setVisitantes(reserva.visitantes || []);
+            setCantidad(reserva.visitantes?.length || 1);
+            setFecha(reserva.fechaVisita || "");
+            setHora(reserva.horaVisita || "");
+            setHorarioTransporte(reserva.transporte?.horario || null);
+            setUsaTransporte(reserva.transporte?.usa ?? true);
+            setExtras(reserva.extras || []);
+            setPromo(reserva.promo || { aplicado: false, valor: 0, codigo: "" });
+            setTotalFinal(reserva.total || 0);
+            console.log("Datos de reserva recuperados del localStorage:", reserva);
+        }
     }, []);
 
     // Totales y textos
@@ -101,7 +79,8 @@ export default function ConfirmacionReservaPage() {
     const totalBase = totalPases * PRECIO_PASE;
     const totalPromo = promo.aplicado ? promo.valor : 0;
     const totalTransporte = usaTransporte ? totalPases * PRECIO_TRANSPORTE : 0;
-    const totalFinal = totalBase + totalExtras + totalTransporte - totalPromo;
+    // Usar totalFinal del objeto reserva_data si está disponible
+    const total = totalFinal || (totalBase + totalExtras + totalTransporte - totalPromo);
 
     // Para generar QR con datos reales (puedes usar un ID único si tienes uno)
     const qrData = `LJ-RESERVA|${fecha}|${hora}|${totalPases}`;
@@ -148,7 +127,7 @@ export default function ConfirmacionReservaPage() {
 
                 {/* Detalles de la reserva */}
                 <section className="bg-white border rounded mb-10 p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2 text-sm font-semibold">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2 text-sm font-semibold">
                         <div>
                             <div className="text-gray-500 font-normal">Fecha de Visita</div>
                             <div>{fechaLegible(fecha)}</div>
@@ -160,10 +139,6 @@ export default function ConfirmacionReservaPage() {
                         <div>
                             <div className="text-gray-500 font-normal">Hora de Llegada</div>
                             <div>{hora || "-"}</div>
-                        </div>
-                        <div className="text-right md:text-left mt-2 md:mt-0">
-                            <div className="text-xs text-gray-500">Confirmación</div>
-                            <div className="font-bold text-black">#{qrData}</div>
                         </div>
                     </div>
                 </section>
@@ -212,44 +187,30 @@ export default function ConfirmacionReservaPage() {
 
 
                 {/* Detalles y extras */}
-                <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10 text-sm">
-                    <div className="bg-white border rounded p-4 flex flex-col justify-center">
-                        <div className="font-bold text-black mb-2 flex items-center gap-2">⭐ Resumen de Orden</div>
-                        <div className="mb-2 text-black">
+                <section className="flex flex-col md:flex-row gap-6 md:gap-8 mb-10 text-sm justify-center items-stretch">
+                    <div className="bg-white border rounded-lg shadow-md p-6 flex-1 min-w-[280px] max-w-md flex flex-col justify-center items-center">
+                        <div className="font-bold text-black mb-4 text-lg flex items-center gap-2">⭐ Resumen de Orden</div>
+                        <div className="mb-1 text-black">
                             Pases de entrada: {totalPases} x ${PRECIO_PASE} = <b>${totalBase} MXN</b>
                         </div>
                         {promo.aplicado && (
-                            <div className="mb-2 text-green-700 font-bold">
+                            <div className="mb-1 text-green-700 font-bold">
                                 Descuento ({promo.codigo || "PROMO"}): -${promo.valor} MXN
                             </div>
                         )}
-                        <div className="mb-2 text-black">
+                        <div className="mb-1 text-black">
                             {usaTransporte ? (
                                 <>
                                     Transporte: {totalPases} x ${PRECIO_TRANSPORTE} = <b>${totalTransporte} MXN</b>
                                 </>
                             ) : "Sin transporte"}
                         </div>
-                        <div className="font-bold text-black mt-3">
-                            Total: ${totalFinal} MXN
+                        <div className="font-bold text-black mt-2 text-base">
+                            Total: ${total} MXN
                         </div>
                     </div>
-                    <div className="bg-white border rounded p-4 flex flex-col justify-center">
-                        <div className="font-bold text-black mb-2 flex items-center gap-2">⭐ Extras Adquiridos</div>
-                        {extrasList.length ? (
-                            <ul className="list-disc ml-5">
-                                {extrasList.map((x: any, i: number) => (
-                                    <li className="text-black" key={x.nombre + i}>
-                                        {x.cantidad} x {x.nombre} - ${x.total} MXN
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <div className="text-xs text-gray-400">Sin servicios adicionales</div>
-                        )}
-                    </div>
-                    <div className="bg-white border rounded p-4 flex flex-col justify-center">
-                        <div className="font-bold text-black mb-2 flex items-center gap-2">📩 Contacto</div>
+                    <div className="bg-white border rounded-lg shadow-md p-6 flex-1 min-w-[280px] max-w-md flex flex-col justify-center items-center text-center">
+                        <div className="font-bold text-black mb-4 text-lg flex items-center gap-2 justify-center">📩 Contacto</div>
                         {visitantes.length > 0 && (
                             <>
                                 <div className="mb-1 text-black">Nombre: {visitantes[0]?.nombre}</div>
@@ -257,28 +218,22 @@ export default function ConfirmacionReservaPage() {
                                 <div className="mb-1 text-black">Celular: {visitantes[0]?.celular}</div>
                             </>
                         )}
-                        <div className="mt-2 text-xs text-gray-400">
+                        <div className="mt-1 text-xs text-gray-400">
                             Recibirás un correo de confirmación y tu código de acceso.
                         </div>
                     </div>
                 </section>
-
-
-
-                {/* Progreso de reserva */}
-                <section className="mt-12 mb-6">
-                    <div className="font-bold text-black mb-2 text-center">Tu proceso de reserva</div>
-                    <div className="flex justify-center gap-2 items-center">
-                        {["Compra de Boletos", "Selección de Fecha", "Compra de Extras", "Reserva de Transporte", "Resumen de Orden"].map((step, idx, arr) => (
-                            <div className="flex items-center" key={step}>
-                                <span className="text-xs">{step}</span>
-                                {idx < arr.length - 1 && (
-                                    <div className="w-8 h-1 bg-gray-400 mx-2 rounded"></div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                <div className="flex justify-center my-8">
+                    <button
+                        className="bg-[#18668b] hover:bg-[#14526d] text-white font-bold px-6 py-3 rounded-lg shadow transition"
+                        onClick={() => {
+                            localStorage.clear();
+                            router.push("/daypass");
+                        }}
+                    >
+                        Crear nueva venta
+                    </button>
+                </div>
             </main>
             <Footer />
         </div>

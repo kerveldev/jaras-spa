@@ -1,5 +1,8 @@
+// Tipo explícito para archivos INE
 "use client";
-import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useState} from "react";
+
+type IneFiles = { frente: File | null, reverso: File | null };
+import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import toast, {Toaster} from "react-hot-toast";
@@ -41,12 +44,19 @@ function formatFechaEs(year: number, month: number, day: number) {
 }
 
 export default function DaypassUnicaPage() {
+    useEffect(() => {
+        localStorage.clear();
+    }, []);
     const [visitantes, setVisitantes] = useState([
         {nombre: "", correo: "", celular: ""},
     ]);
     const [touched, setTouched] = useState([
         {nombre: false, correo: false, celular: false},
     ]);
+    // Estado para archivos INE por visitante
+    const [ineFiles, setIneFiles] = useState<IneFiles[]>(
+        visitantes.map(() => ({ frente: null, reverso: null }))
+    );
     const [codigoPromo, setCodigoPromo] = useState("");
     const [promoAplicado, setPromoAplicado] = useState(false);
     const [msgPromo, setMsgPromo] = useState("");
@@ -91,6 +101,10 @@ export default function DaypassUnicaPage() {
         setTouched((prev) => [
             ...prev,
             {nombre: false, correo: false, celular: false},
+        ]);
+        setIneFiles((prev) => [
+            ...prev,
+            { frente: null, reverso: null }
         ]);
     };
 
@@ -150,7 +164,38 @@ export default function DaypassUnicaPage() {
     };
 
     function handleContinuar() {
-        window.location.href = "/daypass/transporte";
+        window.location.href = "/daypass/resumen";
+    }
+
+    // Métodos de pago y simulación de pago
+    const [metodoPago, setMetodoPago] = useState("efectivo");
+    const [paid, setPaid] = useState(true);
+    const [card, setCard] = useState({ name: "", num: "", exp: "", cvc: "" });
+    const [isPaying, setIsPaying] = useState(false);
+
+    function isExpValid(exp: string) {
+        // MM/AA
+        if (!/^\d{2}\/\d{2}$/.test(exp)) return false;
+        const [mm, aa] = exp.split("/").map(Number);
+        if (mm < 1 || mm > 12) return false;
+        return true;
+    }
+
+    function handleExpChange(e: { target: { value: string; }; }) {
+        let value = e.target.value.replace(/\D/g, "");
+        if (value.length > 4) value = value.slice(0, 4);
+        if (value.length > 2) value = value.slice(0, 2) + "/" + value.slice(2);
+        setCard(card => ({ ...card, exp: value }));
+    }
+
+    function handlePay(e: { preventDefault: () => void; }) {
+        e.preventDefault();
+        if (!isExpValid(card.exp)) return;
+        setIsPaying(true);
+        setTimeout(() => {
+            setPaid(true);
+            setIsPaying(false);
+        }, 1500);
     }
 
     function renderError(message: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined, show: boolean) {
@@ -185,6 +230,35 @@ export default function DaypassUnicaPage() {
     const handleRemoveVisitante = (idx: number) => {
         setVisitantes((prev) => prev.filter((_, i) => i !== idx));
         setTouched((prev) => prev.filter((_, i) => i !== idx));
+        setIneFiles((prev) => prev.filter((_, i) => i !== idx));
+    };
+    // Puede finalizar en efectivo
+    const puedeFinalizarEfectivo =
+      validateNombre(visitantes[0]?.nombre) &&
+      validateCelular(visitantes[0]?.celular) &&
+      validateCorreo(visitantes[0]?.correo, true) &&
+      ineFiles[0]?.frente &&
+      ineFiles[0]?.reverso;
+
+    // Guardar automáticamente visitantes, total, fechaVisita y horaVisita en localStorage
+    useEffect(() => {
+        const data = {
+            visitantes,
+            total,
+            fechaVisita: fechaSeleccionada,
+            horaVisita: selectedTime,
+        };
+        localStorage.setItem("reserva_data", JSON.stringify(data));
+        console.log("Datos de la reserva guardados en localStorage:", data);
+    }, [visitantes, total, fechaSeleccionada, selectedTime]);
+
+    // Handler para cambios de archivo INE
+    const handleIneFileChange = (idx: number, tipo: 'frente' | 'reverso', file: File | null) => {
+        setIneFiles((prev) => {
+            const copia = [...prev];
+            copia[idx][tipo] = file;
+            return copia;
+        });
     };
 
 
@@ -278,6 +352,45 @@ export default function DaypassUnicaPage() {
                                             />
                                             {renderError("El celular debe tener al menos 10 dígitos numéricos.", errorCelular)}
                                         </div>
+                                        {/* INE SOLO PARA PRIMER VISITANTE */}
+                                        {idx === 0 && (
+                                            <>
+                                                {/* INE Frente */}
+                                                <div className="flex flex-col mt-2">
+                                                    <label className="block text-xs font-medium text-black mb-1">
+                                                        INE Frente (Imagen o PDF)
+                                                    </label>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*,.pdf"
+                                                        onChange={e =>
+                                                            handleIneFileChange(idx, 'frente', e.target.files ? e.target.files[0] : null)
+                                                        }
+                                                        className="border p-1 rounded text-xs"
+                                                    />
+                                                    {ineFiles[idx]?.frente && (
+                                                        <span className="text-xs text-green-600">Archivo listo: {ineFiles[idx].frente.name}</span>
+                                                    )}
+                                                </div>
+                                                {/* INE Reverso */}
+                                                <div className="flex flex-col mt-2">
+                                                    <label className="block text-xs font-medium text-black mb-1">
+                                                        INE Reverso (Imagen o PDF)
+                                                    </label>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*,.pdf"
+                                                        onChange={e =>
+                                                            handleIneFileChange(idx, 'reverso', e.target.files ? e.target.files[0] : null)
+                                                        }
+                                                        className="border p-1 rounded text-xs"
+                                                    />
+                                                    {ineFiles[idx]?.reverso && (
+                                                        <span className="text-xs text-green-600">Archivo listo: {ineFiles[idx].reverso.name}</span>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
                                         {/* Botón agregar visitante */}
                                         {idx === visitantes.length - 1 && visitantes.length < 10 && (
                                             <button
@@ -430,6 +543,7 @@ export default function DaypassUnicaPage() {
                                     {msgPromo}
                                 </div>
                             )}
+                            {/*
                             <button
                                 onClick={handleContinuar}
                                 disabled={!puedeContinuar}
@@ -440,16 +554,154 @@ export default function DaypassUnicaPage() {
                             >
                                 Continuar con Transporte
                             </button>
-                            {/*<button*/}
-                            {/*    onClick={handleSiguiente}*/}
-                            {/*    disabled={!puedeContinuar}*/}
-                            {/*    className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar*/}
-                            {/*        ? "bg-[#18668b] hover:bg-[#14526d]"*/}
-                            {/*        : "bg-gray-300 cursor-not-allowed"*/}
-                            {/*    }`}*/}
-                            {/*>*/}
-                            {/*    Continuar a Extras*/}
-                            {/*</button>*/}
+                            */}
+
+                            <h4 className="font-bold mb-3">Resumen de reserva</h4>
+                            {/* Total visible siempre */}
+                            <div className="flex justify-between font-bold text-lg mb-4">
+                                <span>Total:</span>
+                                <span>${total} MXN</span>
+                            </div>
+
+                            {/* NUEVO: Método de pago */}
+                            <div className="flex gap-3 mb-4">
+                                <label className="flex items-center cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        className="mr-2"
+                                        name="metodoPago"
+                                        value="efectivo"
+                                        checked={metodoPago === "efectivo"}
+                                        onChange={() => {
+                                            setMetodoPago("efectivo");
+                                            setPaid(true); // Efectivo se considera "pagado"
+                                        }}
+                                    />
+                                    <span>Efectivo</span>
+                                </label>
+                                <label className="flex items-center cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        className="mr-2"
+                                        name="metodoPago"
+                                        value="tarjeta"
+                                        checked={metodoPago === "tarjeta"}
+                                        onChange={() => {
+                                            setMetodoPago("tarjeta");
+                                            setPaid(false);
+                                        }}
+                                    />
+                                    <span>Tarjeta</span>
+                                </label>
+                            </div>
+
+                            {/* Pago tarjeta visible solo si es tarjeta */}
+                            {!paid && metodoPago === "tarjeta" && (
+                                <form
+                                    className="border-t pt-4 mt-3 flex flex-col gap-2"
+                                    onSubmit={handlePay}
+                                    autoComplete="off"
+                                >
+                                    <h5 className="font-semibold mb-2">Paga con tarjeta</h5>
+                                    <input
+                                        className="border rounded px-2 py-2 text-sm"
+                                        placeholder="Nombre en la tarjeta"
+                                        type="text"
+                                        required
+                                        value={card.name}
+                                        disabled={isPaying}
+                                        onChange={e => setCard({ ...card, name: e.target.value })}
+                                    />
+                                    <input
+                                        className="border rounded px-2 py-2 text-sm"
+                                        placeholder="Número de tarjeta"
+                                        maxLength={16}
+                                        type="text"
+                                        inputMode="numeric"
+                                        required
+                                        value={card.num}
+                                        disabled={isPaying}
+                                        onChange={e => setCard({ ...card, num: e.target.value.replace(/\D/g, "") })}
+                                    />
+                                    <div className="flex gap-x-3">
+                                        <input
+                                            className="border rounded px-2 py-2 text-sm w-2/3"
+                                            placeholder="MM/AA"
+                                            maxLength={5}
+                                            type="text"
+                                            required
+                                            value={card.exp}
+                                            disabled={isPaying}
+                                            onChange={handleExpChange}
+                                            style={{
+                                                borderColor:
+                                                    card.exp.length === 5 && !isExpValid(card.exp)
+                                                        ? "#f87171"
+                                                        : undefined,
+                                            }}
+                                        />
+                                        <input
+                                            className="border rounded px-2 py-2 text-sm w-1/3"
+                                            placeholder="CVC"
+                                            maxLength={4}
+                                            type="text"
+                                            required
+                                            value={card.cvc}
+                                            disabled={isPaying}
+                                            onChange={e => setCard({ ...card, cvc: e.target.value.replace(/\D/g, "") })}
+                                        />
+                                    </div>
+                                    {card.exp.length === 5 && !isExpValid(card.exp) && (
+                                        <span className="text-xs text-red-600">Fecha inválida</span>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        className="w-full py-2 mt-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition"
+                                        disabled={isPaying}
+                                    >
+                                        {isPaying ? "Procesando..." : "Pagar con tarjeta"}
+                                    </button>
+                                    <div className="text-xs text-gray-400 mt-1">
+                                        * Simulación, no se procesa pago real.
+                                    </div>
+                                </form>
+                            )}
+                            {/* Pago realizado */}
+                            {paid && metodoPago === "tarjeta" && (
+                                <div className="mt-4 text-green-700 text-center font-bold">
+                                    ¡Pago realizado con éxito!
+                                </div>
+                            )}
+                            {paid && metodoPago === "efectivo" && (
+                                <div className="mt-4 text-yellow-700 text-center font-bold">
+                                    Presenta este resumen y paga en taquilla.
+                                </div>
+                            )}
+
+                            <button
+                              className={`mt-6 w-full py-2 rounded font-bold text-white ${
+                                (metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid)
+                                  ? "bg-[#18668b] hover:bg-[#14526d]"
+                                  : "bg-gray-300 cursor-not-allowed"
+                              }`}
+                              onClick={handleContinuar}
+                              disabled={metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid}
+                            >
+                              {metodoPago === "efectivo"
+                                ? "Finalizar y ver resumen para pago en efectivo"
+                                : "Continuar al resumen"}
+                            </button>
+                            {/*<button
+                                onClick={handleSiguiente}
+                                disabled={!puedeContinuar}
+                                className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar
+                                    ? "bg-[#18668b] hover:bg-[#14526d]"
+                                    : "bg-gray-300 cursor-not-allowed"
+                                }`}
+                            >
+                                Continuar a Extras
+                            </button>*/}
                             <div className="mt-4 text-xs text-gray-500">
                                 Los pases son válidos para la fecha y hora seleccionada.<br />
                                 Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
