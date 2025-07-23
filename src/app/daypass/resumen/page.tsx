@@ -127,19 +127,27 @@ export default function ConfirmacionReservaPage() {
 
                 {/* Detalles de la reserva */}
                 <section className="bg-white border rounded mb-10 p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2 text-sm font-semibold">
-                        <div>
-                            <div className="text-gray-500 font-normal">Fecha de Visita</div>
-                            <div>{fechaLegible(fecha)}</div>
-                        </div>
-                        <div>
-                            <div className="text-gray-500 font-normal">Visitantes</div>
-                            <div>{nombresVisitantes}</div>
-                        </div>
-                        <div>
-                            <div className="text-gray-500 font-normal">Hora de Llegada</div>
-                            <div>{hora || "-"}</div>
-                        </div>
+                    <div className="w-full overflow-x-auto">
+                        <table className="w-full text-xs border border-gray-200 rounded">
+                            <thead>
+                                <tr className="bg-gray-100">
+                                    <th className="py-2 px-2 text-left text-black font-bold">#</th>
+                                    <th className="py-2 px-2 text-left text-black font-bold">Fecha de Visita</th>
+                                    <th className="py-2 px-2 text-left text-black font-bold">Nombre</th>
+                                    <th className="py-2 px-2 text-left text-black font-bold">Hora de Llegada</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {visitantes.filter(v => v.nombre || v.correo || v.celular).map((v, idx) => (
+                                    <tr key={idx} className="border-t border-gray-100 text-black">
+                                        <td className="py-2 px-2">{idx + 1}</td>
+                                        <td className="py-2 px-2">{fechaLegible(fecha)}</td>
+                                        <td className="py-2 px-2">{v.nombre || "-"}</td>
+                                        <td className="py-2 px-2">{hora || "-"}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </section>
 
