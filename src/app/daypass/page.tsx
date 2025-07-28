@@ -13,12 +13,40 @@ const CODIGO_PROMO = "PROMO100";
 const DESCUENTO_PROMO = 100;
 const PRECIO_PASE = 350;
 
+function getPrecioPase(fecha: string, categoria: string = "general") {
+    // Obtén el día de la semana: 0=Domingo, 1=Lunes, ..., 6=Sábado
+    const diaSemana = new Date(fecha).getDay();
+    // Lunes a Jueves: 1-4, Viernes a Domingo: 0, 5, 6
+    if ([1, 2, 3, 4].includes(diaSemana)) {
+        // Lunes a Jueves
+        switch (categoria) {
+            case "general": return 350;
+            case "grupos": return 325;
+            case "inapam": return 300;
+            case "convenios": return 300;
+            case "locales": return 250;
+            case "discapacidad": return 250;
+            default: return 350;
+        }
+    } else {
+        // Viernes a Domingo
+        switch (categoria) {
+            case "general": return 420;
+            case "grupos": return 390;
+            case "inapam": return 360;
+            case "convenios": return 360;
+            case "locales": return 300;
+            case "discapacidad": return 300;
+            default: return 420;
+        }
+    }
+}
+
 const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const horarios = [
-    "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
-    "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM",
+    "10:00 AM", "01:00 PM", "04:00 PM"
 ];
 
 function getDiasMes(year: number, month: number) {
@@ -151,7 +179,7 @@ export default function DaypassUnicaPage() {
         .padStart(2, "0")}`;
     const fechaDisplay = formatFechaEs(year, mes, selectedDay);
 
-    const subtotal = visitantes.length * PRECIO_PASE;
+    const subtotal = visitantes.length * getPrecioPase(fechaSeleccionada, "general");
     const total = Math.max(subtotal - descuento, 0);
 
     // Guardar y continuar
