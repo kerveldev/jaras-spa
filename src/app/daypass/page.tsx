@@ -182,6 +182,57 @@ export default function DaypassUnicaPage() {
     const subtotal = visitantes.length * getPrecioPase(fechaSeleccionada, "general");
     const total = Math.max(subtotal - descuento, 0);
 
+    // Prepara los datos del formulario para enviar por correo electrónico
+    function prepararDatosParaCorreo() {
+        const data = {
+            visitantes: visitantes.map((v, idx) => ({
+                nombre: v.nombre,
+                correo: v.correo,
+                celular: v.celular,
+                ine_frente: idx === 0 && ineFiles[idx]?.frente ? ineFiles[idx].frente.name : undefined,
+                ine_reverso: idx === 0 && ineFiles[idx]?.reverso ? ineFiles[idx].reverso.name : undefined,
+            })),
+            fecha: fechaSeleccionada,
+            fechaDisplay: fechaDisplay,
+            horario: selectedTime,
+            cantidad: visitantes.length,
+            subtotal,
+            descuento,
+            total,
+            promoAplicado,
+            codigoPromo,
+            metodoPago,
+        };
+        return data;
+    }
+
+    // Genera el cuerpo del correo electrónico en texto plano
+    function generarCuerpoCorreo(data: ReturnType<typeof prepararDatosParaCorreo>) {
+        const visitantesTxt = data.visitantes.map((v, idx) =>
+            `Visitante ${idx + 1}:\n- Nombre: ${v.nombre}\n- Correo: ${v.correo}\n- Celular: ${v.celular}\n`
+            + (idx === 0 ? `- INE Frente: ${v.ine_frente || "No adjunto"}\n- INE Reverso: ${v.ine_reverso || "No adjunto"}\n` : "")
+        ).join('\n');
+
+        return `
+Reserva de DayPass
+
+Fecha de visita: ${data.fechaDisplay}
+Hora de llegada: ${data.horario}
+Cantidad de personas: ${data.cantidad}
+
+${visitantesTxt}
+
+Subtotal: $${data.subtotal} MXN
+${data.promoAplicado ? `Descuento aplicado: -$${data.descuento} MXN\n` : ""}
+Total a pagar: $${data.total} MXN
+
+Método de pago: ${data.metodoPago === "tarjeta" ? "Tarjeta" : "Efectivo"}
+${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
+
+¡Gracias por reservar!
+        `.trim();
+    }
+
     // Guardar y continuar
     const handleSiguiente = () => {
         localStorage.setItem("visitantes", JSON.stringify(visitantes));
@@ -191,8 +242,57 @@ export default function DaypassUnicaPage() {
         window.location.href = "/daypass/extras";
     };
 
-    function handleContinuar() {
-        window.location.href = "/daypass/resumen";
+    async function handleContinuar() {
+        const datos = prepararDatosParaCorreo();
+
+        // Armado exacto de FormData
+        const formData = new FormData();
+
+        // Visitor principal
+        const principal = datos.visitantes[0];
+        formData.append("visitor[name]", principal.nombre);
+        formData.append("visitor[email]", principal.correo);
+        formData.append("visitor[phone]", principal.celular);
+        formData.append("visitor[type]", "general");
+
+        // INE archivos (si existen)
+        if (ineFiles[0]?.frente) formData.append("idcard_front", ineFiles[0].frente, ineFiles[0].frente.name);
+        if (ineFiles[0]?.reverso) formData.append("idcard_back", ineFiles[0].reverso, ineFiles[0].reverso.name);
+
+        // Fecha y hora combinada
+        const fechaHora = datos.fecha + " " + (datos.horario || "11:00 AM");
+        formData.append("reservation_at", fechaHora);
+
+        // Totales
+        formData.append("totals[total]", String(datos.total));
+
+        // Promo como JSON vacío o valor real si existe
+        formData.append("promo", datos.promoAplicado ? JSON.stringify({ code: datos.codigoPromo }) : "[]");
+
+        // Todos los visitantes
+        datos.visitantes.forEach((v, idx) => {
+            formData.append(`visitors[${idx}][name]`, v.nombre);
+            formData.append(`visitors[${idx}][email]`, v.correo);
+            formData.append(`visitors[${idx}][phone]`, v.celular);
+            formData.append(`visitors[${idx}][type]`, "general");
+        });
+
+        try {
+            const response = await fetch("/api/reservations", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error("Error en el envío de la reservación");
+            }
+
+            alert("¡Reservación enviada correctamente!");
+            window.location.href = "/daypass/resumen";
+        } catch (error) {
+            alert("Ocurrió un error al enviar la reservación. Intenta de nuevo.");
+            console.error(error);
+        }
     }
 
     // Métodos de pago y simulación de pago
