@@ -96,6 +96,8 @@ export default function DaypassUnicaPage() {
     const [selectedDay, setSelectedDay] = useState(today.getDate());
     const [selectedTime, setSelectedTime] = useState("11:00 AM");
 
+    
+
     function validateNombre(nombre: string) {
         return nombre.trim().length > 0;
     }
@@ -326,11 +328,13 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         }, 1500);
     }
 
-    function renderError(message: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined, show: boolean) {
+    function renderError(message: ReactNode, show: boolean) {
         return (
             <div style={{ minHeight: "20px" }}>
                 {show && (
-                    <span className="text-xs text-red-600">{message}</span>
+                    <span className="text-xs text-red-700 font-bold">
+                        {message}
+                    </span>
                 )}
             </div>
         );
@@ -388,234 +392,483 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
             return copia;
         });
     };
+    
+    const [paso, setPaso] = useState(1);
+    const pasos = [
+        { label: "Huéspedes", paso: 1 },
+        { label: "Fecha y Tiempo", paso: 2 },
+        { label: "Verificar", paso: 3 },
+        
+    ];
 
+    const imagenes = [
+        "/assets/img-4.webp",      // Paso 1
+        "/assets/img-5.webp",        // Paso 2
+        "/image.png",   // Paso 3
+    ];
+    const [adultos, setAdultos] = useState(1);
+    const [ninos, setNinos] = useState(0);
+
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+
+    const prevMonth = mes === 0 ? 11 : mes - 1;
+    const prevYear = mes === 0 ? year - 1 : year;
+    const lastDayPrevMonth = new Date(prevYear, prevMonth + 1, 0); // último día del mes anterior
+    lastDayPrevMonth.setHours(0,0,0,0);
+
+    const puedeIrMesAnterior = lastDayPrevMonth >= hoy;
 
     return (
+        
+
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
             <Toaster position="top-center" />
-            <Header />
-            <h1 className="text-2xl font-bold text-center mb-8 text-[#18668b]  pt-12">
+            {/* <Header /> */}
+
+            
+
+            {/* <h1 className="text-2xl font-bold text-center mb-8 text-[#18668b] pt-12">
                 Completa tu Reservación y Agenda tu Visita
-            </h1>
-
-            {/* Main Content */}
-            <main className="flex flex-col md:flex-row gap-8 max-w-7xl w-full mx-auto px-4 pb-12 flex-1 ">
-                {/* Card Visitantes */}
-                <section className="flex-1 md:flex md:items-start md:gap-8">
-                    <div className="w-full md:w-2/3">
-                        <form className="space-y-4">
-                            {visitantes.map((vis, idx) => {
-                                const errorNombre = !validateNombre(vis.nombre) && touched[idx]?.nombre;
-                                const errorCorreo = !validateCorreo(vis.correo, idx === 0) && touched[idx]?.correo;
-                                const errorCelular = !validateCelular(vis.celular) && touched[idx]?.celular;
-                                return (
-                                    <div
-                                        key={idx}
-                                        className="bg-white rounded border p-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-start relative"
-                                    >
-                                        {/* Botón eliminar visitante */}
-                                        {visitantes.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveVisitante(idx)}
-                                                className="absolute top-2 right-2 text-red-600 hover:bg-red-100 rounded-full p-1 transition z-10"
-                                                title="Eliminar visitante"
-                                            >
-                                                <FiTrash2 size={18} />
-                                            </button>
-                                        )}
-
-                                        {/* Nombre */}
-                                        <div className="flex flex-col">
-                                            <label className="block text-xs font-medium text-black mb-1 ">
-                                                {`Visitante ${idx + 1} ${idx === 0 ? "(Tú)" : ""}`}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                placeholder="Nombre"
-                                                value={vis.nombre}
-                                                onChange={(e) => handleVis(idx, "nombre", e.target.value)}
-                                                onBlur={() => handleBlur(idx, "nombre")}
-                                                className={`border p-2 rounded w-full transition-colors duration-150 ${errorNombre ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
-                                                required
-                                            />
-                                            {renderError("El nombre es obligatorio.", errorNombre)}
-                                        </div>
-                                        {/* Correo */}
-                                        <div className="flex flex-col">
-                                            <label className="block text-xs font-medium text-black mb-1">
-                                                Correo Electrónico {idx === 0 ? <span className="text-[10px]">(Principal)</span> : <span className="text-gray-400">(opcional)</span>}
-                                            </label>
-                                            <input
-                                                type="email"
-                                                placeholder="Correo electrónico"
-                                                value={vis.correo}
-                                                onChange={(e) => handleVis(idx, "correo", e.target.value)}
-                                                onBlur={() => handleBlur(idx, "correo")}
-                                                className={`border p-2 rounded w-full transition-colors duration-150 ${errorCorreo ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
-                                                required={idx === 0}
-                                            />
-                                            {renderError(
-                                                idx === 0
-                                                    ? "El correo es obligatorio y debe ser válido."
-                                                    : "El correo debe ser válido.",
-                                                errorCorreo
-                                            )}
-                                        </div>
-                                        {/* Celular */}
-                                        <div className="flex flex-col">
-                                            <label className="block text-xs font-medium text-black mb-1">
-                                                Celular WhatsApp
-                                            </label>
-                                            <input
-                                                type="tel"
-                                                inputMode="numeric"
-                                                pattern="\d{10,}"
-                                                placeholder="Ej. 3312345678"
-                                                value={vis.celular}
-                                                onChange={(e) => handleVis(idx, "celular", e.target.value)}
-                                                onBlur={() => handleBlur(idx, "celular")}
-                                                className={`border p-2 rounded w-full transition-colors duration-150 ${errorCelular ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
-                                                required
-                                            />
-                                            {renderError("El celular debe tener al menos 10 dígitos numéricos.", errorCelular)}
-                                        </div>
-                                        {/* INE SOLO PARA PRIMER VISITANTE */}
-                                        {idx === 0 && (
-                                            <>
-                                                {/* INE Frente */}
-                                                <div className="flex flex-col mt-2">
-                                                    <label className="block text-xs font-medium text-black mb-1">
-                                                        INE Frente (Imagen o PDF)
-                                                    </label>
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*,.pdf"
-                                                        onChange={e =>
-                                                            handleIneFileChange(idx, 'frente', e.target.files ? e.target.files[0] : null)
-                                                        }
-                                                        className="border p-1 rounded text-xs"
-                                                    />
-                                                    {ineFiles[idx]?.frente && (
-                                                        <span className="text-xs text-green-600">Archivo listo: {ineFiles[idx].frente.name}</span>
-                                                    )}
-                                                </div>
-                                                {/* INE Reverso */}
-                                                <div className="flex flex-col mt-2">
-                                                    <label className="block text-xs font-medium text-black mb-1">
-                                                        INE Reverso (Imagen o PDF)
-                                                    </label>
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*,.pdf"
-                                                        onChange={e =>
-                                                            handleIneFileChange(idx, 'reverso', e.target.files ? e.target.files[0] : null)
-                                                        }
-                                                        className="border p-1 rounded text-xs"
-                                                    />
-                                                    {ineFiles[idx]?.reverso && (
-                                                        <span className="text-xs text-green-600">Archivo listo: {ineFiles[idx].reverso.name}</span>
-                                                    )}
-                                                </div>
-                                            </>
-                                        )}
-                                        {/* Botón agregar visitante */}
-                                        {idx === visitantes.length - 1 && visitantes.length < 10 && (
-                                            <button
-                                                type="button"
-                                                onClick={handleAddVisitante}
-                                                className="absolute top-1/2 right-[-2.6rem] -translate-y-1/2 bg-[#18668b] hover:bg-[#14526d] text-white rounded-full p-2 shadow-lg transition z-10"
-                                                title="Agregar visitante"
-                                            >
-                                                <FiPlus size={22} />
-                                            </button>
-                                        )}
+            </h1> */}
+            <main className="flex flex-row w-full min-h-[calc(100vh-120px)] max-w-none">
+                
+            <section className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12">
+                 {/* Stepper visual */}
+            <div className="flex items-center justify-center gap-6 mt-0 mb-auto">
+              {paso > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setPaso(paso - 1)}
+                  className="mr-4 flex items-center justify-center text-[#18668b] hover:text-[#14526d] transition"
+                  title="Regresar al paso anterior"
+                >
+                  <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              )}
+              {pasos.map((step, idx) => {
+                const completado = paso > step.paso;
+                const activo = paso === step.paso;
+                return (
+                  <div key={step.label} className="flex flex-col items-center min-w-[90px]">
+                    <span
+                      className={`text-sm font-semibold pb-1 transition
+                        ${activo || completado
+                          ? "text-[#18668b]"
+                          : "text-gray-400"
+                        }`}
+                    >
+                      {step.label}
+                    </span>
+                    <div
+                      className={`w-full h-1 mt-1 rounded
+                        ${activo || completado
+                          ? "bg-[#18668b]"
+                          : "bg-gray-200"
+                        }`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+                {/* paso 1: Huéspedes */}
+                {paso === 1 && (
+                    <>
+                        <div className="text-gray-700 text-5xl font-bold mb-6 ">
+                            ¿Cuántos visitantes son?
+                        </div>
+                        <p className="mb-20 text-gray-600 text-2xl">
+                        El precio varía según el horario. Niños menores de 13 años entran gratis.
+                        </p>
+                        <div className="space-y-6 mb-0 mt-auto">
+                            {/* Adultos */}
+                            <div className="flex items-center justify-between bg-white rounded shadow p-5 mb-10 ">
+                                <span className="font-semibold text-lg">Adultos 14 +</span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        className="px-3 py-1 rounded text-xl font-bold bg-gray-200 hover:bg-[#302f2f] text-black hover:text-white"
+                                        onClick={() => {
+                                            if (adultos > 1) {
+                                                setAdultos(adultos - 1);
+                                                setVisitantes((prev) => {
+                                                    const nuevo = prev.slice(0, prev.length - 1);
+                                                    // Siempre deja al menos un visitante
+                                                    return nuevo.length === 0 ? [{ nombre: "", correo: "", celular: "" }] : nuevo;
+                                                });
+                                                setTouched((prev) => {
+                                                    const nuevo = prev.slice(0, prev.length - 1);
+                                                    return nuevo.length === 0 ? [{ nombre: false, correo: false, celular: false }] : nuevo;
+                                                });
+                                                setIneFiles((prev) => {
+                                                    const nuevo = prev.slice(0, prev.length - 1);
+                                                    return nuevo.length === 0 ? [{ frente: null, reverso: null }] : nuevo;
+                                                });
+                                                // Si al bajar adultos hay más niños que el nuevo máximo, ajusta niños
+                                                if (ninos > (adultos - 1) * 2) setNinos((adultos - 1) * 2);
+                                            }
+                                        }}
+                                        disabled={adultos <= 1}
+                                    >-</button>
+                                    <span className="text-xl font-bold">{adultos}</span>
+                                    <button
+                                        type="button"
+                                        className="px-3 py-1 rounded text-xl font-bold bg-gray-200 hover:bg-[#302f2f] text-black hover:text-white"
+                                        onClick={() => {
+                                            if (adultos < 14) {
+                                                setAdultos(adultos + 1);
+                                                setVisitantes((prev) => [...prev, { nombre: "", correo: "", celular: "" }]);
+                                                setTouched((prev) => [...prev, { nombre: false, correo: false, celular: false }]);
+                                                setIneFiles((prev) => [...prev, { frente: null, reverso: null }]);
+                                            }
+                                        }}
+                                        disabled={adultos >= 14}
+                                    >+</button>
+                                </div>
+                            </div>
+                            {/* Niños */}
+                            <div className="flex items-center justify-between bg-white rounded shadow p-5 ">
+                                    <span className="font-semibold text-lg">Niños 2 - 13</span>
+                                    <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        className="px-3 py-1 rounded text-xl font-bold bg-gray-200 hover:bg-[#302f2f] text-black hover:text-white"
+                                        onClick={() => setNinos(Math.max(0, ninos - 1))}
+                                        disabled={ninos <= 0}
+                                    >-</button>
+                                    <span className="text-xl font-bold">{ninos}</span>
+                                    <button
+                                        type="button"
+                                        className="px-3 py-1 rounded text-xl font-bold bg-gray-200 hover:bg-[#302f2f] text-black hover:text-white"
+                                        onClick={() => setNinos(ninos < adultos * 2 ? ninos + 1 : ninos)}
+                                        disabled={ninos >= adultos * 2}
+                                    >+</button>
                                     </div>
+                                </div>
+                        </div>
+                        {ninos > 0 && (
+                        <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-22 text-sm text-gray-700 mt-4">
+                            Los niños de 2 a 13 años deben estar acompañados por un adulto. No incluye bebida ni bata. Niños menores de 8 años deben usar flotadores.
+                        </div>
+                        )}
+                         {adultos >= 14 && (
+                        <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-43 text-sm text-gray-700 mt-25">
+                           Si desea reservar para más de 14 adultos, póngase en contacto con nuestro <a href="#" className="text-blue-700"> Servicio de Atención al Cliente</a> para consultar la disponibilidad.
+                        </div>
+                        )}
+                        <button
+                        className="w-full py-7 rounded font-bold text-white bg-gradient-to-r bg-[#62a7c7] hover:bg-[#14526d] mt-50"
+                        onClick={() => setPaso(2)}
+                        >
+                        Continuar
+                        </button>
+                    </>
+                )}
+        
+
+                {/* Paso 2: Fecha y horario */}
+                {paso === 2 && (
+                <>
+                    <div className=" text-gray-700 text-4xl font-bold mb-6 mt-10">
+                        Selecciona la fecha y el horario de tu visita
+                    </div>
+                     <p className=" mb-20 text-gray-600 text-2xl">
+                        Estamos abiertos todos los días del año.
+                        </p>
+
+                    <div className="flex flex-col md:flex-row gap-6 -mb-10 ">
+                      {/* Calendario*/}
+                        <div className="w-full max-w-4xl mx-auto p-0">
+                        <div className="bg-white border rounded-lg p-10 shadow-md">
+                            {/* Navegación */}
+                            <div className="flex items-center justify-between mb-6">
+                            <button
+                                className={`text-sm font-bold hover:underline ${
+                                puedeIrMesAnterior
+                                    ? "text-[#688b18] cursor-pointer"
+                                    : "text-gray-400 cursor-not-allowed"
+                                }`}
+                                onClick={handlePrevMonth}
+                                type="button"
+                                disabled={!puedeIrMesAnterior}
+                            >
+                                ← Mes anterior
+                            </button>
+                            <span className="text-lg font-bold capitalize">
+                                {new Date(year, mes).toLocaleDateString("es-MX", {
+                                month: "long",
+                                year: "numeric",
+                                })}
+                            </span>
+                            <button
+                                className="text-sm text-[#18668b] font-bold hover:underline"
+                                onClick={handleNextMonth}
+                                type="button"
+                            >
+                                Mes siguiente →
+                            </button>
+                            </div>
+
+                            {/* Días de la semana */}
+                            <div className="grid grid-cols-7 text-center text-sm font-semibold mb-2">
+                            {diasSemana.map((dia) => (
+                                <span key={dia} className="text-gray-600">{dia}</span>
+                            ))}
+                            </div>
+
+                            {/* Días del mes */}
+                            <div className="grid grid-cols-7 gap-2">
+                            {[...Array(primerDia).keys()].map((_, i) => (
+                                <div key={"empty-" + i}></div>
+                            ))}
+                            {dias.map((dia) => {
+                                // Calcula la fecha completa del día actual en el mes
+                                const fechaBtn = new Date(year, mes, dia);
+                                const hoy = new Date();
+                                hoy.setHours(0,0,0,0); // Ignora la hora
+
+                                const isSelected = selectedDay === dia;
+                                const isDisabled = fechaBtn < hoy;
+
+                                return (
+                                    <button
+                                        key={dia}
+                                        type="button"
+                                        onClick={() => !isDisabled && setSelectedDay(dia)}
+                                        disabled={isDisabled}
+                                        className={`w-12 h-12 text-base rounded-full border flex items-center justify-center transition
+                                            ${isSelected
+                                                ? "bg-[#18668b] text-white border-[#18668b]"
+                                                : isDisabled
+                                                    ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                                    : "bg-white hover:bg-gray-100 border-gray-300 text-gray-700"
+                                            }
+                                        `}
+                                    >
+                                        {dia}
+                                    </button>
                                 );
                             })}
-                        </form>
-
-                        <h3 className="font-semibold text-black text-base mt-10 mb-2 text-center">
-                            Selecciona la fecha y el horario de tu visita
-                        </h3>
-                        <div className="flex flex-col md:flex-row gap-6 mb-6">
-                            {/* Calendario */}
-                            <div className="w-full md:w-1/2">
-                                <div className="bg-white border rounded p-6">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <button
-                                            className="text-xs text-[#18668b] font-bold"
-                                            onClick={handlePrevMonth}
-                                            type="button"
-                                        >
-                                            Mes anterior
-                                        </button>
-                                        <span className="font-semibold capitalize">
-          {new Date(year, mes).toLocaleDateString("es-MX", { month: "long", year: "numeric" })}
-        </span>
-                                        <button
-                                            className="text-xs text-[#18668b] font-bold"
-                                            onClick={handleNextMonth}
-                                            type="button"
-                                        >
-                                            Mes siguiente
-                                        </button>
-                                    </div>
-                                    <div className="grid grid-cols-7 text-center text-xs font-semibold mb-1">
-                                        {diasSemana.map((dia) => (
-                                            <span key={dia}>{dia}</span>
-                                        ))}
-                                    </div>
-                                    <div className="grid grid-cols-7 gap-1">
-                                        {[...Array(primerDia).keys()].map((_, i) => (
-                                            <div key={"empty-" + i}></div>
-                                        ))}
-                                        {dias.map((dia) => {
-                                            const isSelected = selectedDay === dia;
-                                            return (
-                                                <button
-                                                    key={dia}
-                                                    type="button"
-                                                    onClick={() => setSelectedDay(dia)}
-                                                    className={`w-9 h-9 rounded flex items-center justify-center border
-                ${isSelected
-                                                        ? "bg-[#18668b] text-white border-[#18668b]"
-                                                        : "bg-white hover:bg-gray-100 border-gray-200 text-gray-700"
-                                                    }
-              `}
-                                                >
-                                                    {dia}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                            {/* Horarios */}
-                            <div className="w-full md:w-1/2">
-                                <div className="grid grid-cols-2 md:grid-cols-2 gap-2">
-                                    {horarios.map((hora) => (
-                                        <button
-                                            key={hora}
-                                            type="button"
-                                            className={`rounded border py-2 font-semibold text-sm w-full
-            ${selectedTime === hora
-                                                ? "bg-[#18668b] text-white border-[#18668b]"
-                                                : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
-                                            }
-          `}
-                                            onClick={() => setSelectedTime(hora)}
-                                        >
-                                            {hora}
-                                        </button>
-                                    ))}
-                                </div>
                             </div>
                         </div>
+                        </div>
+                      {/* Horarios */}
+                    <div className="w-full md:w-1/2">
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-10">
+                            {horarios.map((hora) => (
+                                <button
+                                    key={hora}
+                                    type="button"
+                                    className={`rounded border py-2 font-semibold text-sm w-full
+                                        ${selectedTime === hora
+                                            ? "bg-[#18668b] text-white border-[#18668b]"
+                                            : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
+                                        }
+                                    `}
+                                    onClick={() => setSelectedTime(hora)}
+                                >
+                                    {hora}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    {/* Card Resumen */}
-                    <aside className="w-full md:w-1/3 md:pl-4 mt-10 md:mt-0">
-                        <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
+                    </div>
+                  
+                   <button
+                        className="w-full py-7 rounded font-bold text-white bg-gradient-to-r bg-[#62a7c7] hover:bg-[#14526d] mt-30"
+                        onClick={() => setPaso(3)}
+                        >
+                        Continuar
+                        </button>
+                </>
+                )}
+
+                 
+                {/* Paso 3:  */}
+                {paso === 3 && (
+                <>
+                    <div className=" text-gray-700 text-4xl font-bold mb-20 mt-10 ">
+                            Detalles de la reserva
+                    </div>
+                    <form className="space-y-4">
+                        {/* Solo muestra el primer visitante */}
+    {visitantes.length > 0 && (() => {
+        const vis = visitantes[0];
+        const errorNombre = !validateNombre(vis.nombre) && touched[0]?.nombre;
+        const errorCorreo = !validateCorreo(vis.correo, true) && touched[0]?.correo;
+        const errorCelular = !validateCelular(vis.celular) && touched[0]?.celular;
+        return (
+            <div className="p-4 flex flex-col gap-4 relative">
+                {/* Nombre */}
+                <div className="flex flex-col">
+                    <label className="block text-xs font-bold text-black mb-1 ">
+                        Visitante 1 (Tú)
+                    </label>
+                    <input
+                        type="text"
+                        placeholder="Nombre Completo"
+                        value={vis.nombre}
+                        onChange={(e) => handleVis(0, "nombre", e.target.value)}
+                        onBlur={() => handleBlur(0, "nombre")}
+                        className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${errorNombre ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black "}`}
+                        required
+                    />
+                    {renderError("El nombre es obligatorio.", errorNombre)}
+                </div>
+                {/* Correo */}
+                <div className="flex flex-row gap-6">
+                  {/* Correo */}
+                  <div className="flex flex-col flex-1">
+                    <label className="block text-xs font-bold text-black mb-1">
+                      Correo Electrónico <span className="text-[10px]">(Principal)</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="Correo electrónico"
+                      value={vis.correo}
+                      onChange={(e) => handleVis(0, "correo", e.target.value)}
+                      onBlur={() => handleBlur(0, "correo")}
+                      className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${errorCorreo ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
+                      required
+                    />
+                    {renderError("El correo es obligatorio y debe ser válido.", errorCorreo)}
+                  </div>
+                  {/* Celular */}
+                  <div className="flex flex-col flex-1">
+                    <label className="block text-xs font-bold text-black mb-1">
+                      Celular WhatsApp
+                    </label>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="\d{10,}"
+                      placeholder="Ej. 3312345678"
+                      value={vis.celular}
+                      onChange={(e) => handleVis(0, "celular", e.target.value)}
+                      onBlur={() => handleBlur(0, "celular")}
+                      className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${errorCelular ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
+                      required
+                    />
+                    {renderError("El celular debe tener al menos 10 dígitos numéricos.", errorCelular)}
+                  </div>
+                </div>
+                {/* Archivos INE */}
+                <div className="flex flex-col col-span-full">
+                    <label className="block text-xs font-bold text-black mb-1 mt-4">
+                        INE Frente (Imagen o PDF)
+                    </label>
+                    <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={e => handleIneFileChange(0, 'frente', e.target.files ? e.target.files[0] : null)}
+                        className="border p-1 rounded text-xs h-10"
+                    />
+                    {ineFiles[0]?.frente && (
+                        <span className="text-xs text-green-600 ">Archivo listo: {ineFiles[0].frente.name}</span>
+                    )}
+                    <label className="block text-xs font-bold text-black mb-1 mt-8">
+                        INE Reverso (Imagen o PDF)
+                    </label>
+                    <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={e => handleIneFileChange(0, 'reverso', e.target.files ? e.target.files[0] : null)}
+                        className="border p-1 rounded text-xs h-10"
+                    />
+                    {ineFiles[0]?.reverso && (
+                        <span className="text-xs text-green-600">Archivo listo: {ineFiles[0].reverso.name}</span>
+                    )}
+                </div>
+            </div>
+        );
+    })()}
+                    </form>
+                    
+                    <button
+                        className="mt-20 w-full py-7 rounded font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b]"
+                        onClick={() => setPaso(1)}
+                    >
+                        Volver a datos de huéspedes
+                    </button>
+
+                    {/* Resumen solo en mobile */}
+                    <div className="md:hidden mt-8 p-6 bg-white rounded shadow">
+                        <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
+                        <div className="flex items-center gap-2 text-sm mb-2">
+                            <span>📅</span>
+                            <span className="capitalize">{fechaDisplay}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm mb-2">
+                            <span>⏰</span>
+                            <span>{selectedTime}</span>
+                        </div>
+                        <div className="text-sm text-gray-500 mb-4">
+                            Disponibilidad confirmada para {visitantes.length} persona{visitantes.length > 1 ? "s" : ""}<br />
+                            {ninos > 0 && (
+                              <p className="block mt-1 text-gray-500">
+                                {ninos} niño{ninos > 1 ? "s" : ""} agregado{ninos > 1 ? "s" : ""}
+                              </p>
+                            )}
+                        </div>
+                        <div className="flex justify-between mb-1 text-sm">
+                            <span className="text-black">Pases de Acceso General</span>
+                            <span className="text-black">{visitantes.length} pases</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span>Precio por pase</span>
+                            <span>${PRECIO_PASE} MXN</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span>Subtotal</span>
+                            <span>${subtotal} MXN</span>
+                        </div>
+                        {promoAplicado && (
+                          <div className="flex justify-between text-sm text-green-700 font-bold">
+                            <span>Descuento aplicado</span>
+                            <span>-${DESCUENTO_PROMO} MXN</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between font-bold text-base">
+                            <span>Total</span>
+                            <span>${total}.00 MXN</span>
+                        </div>
+                        <div className="mt-4 text-xs text-gray-500">
+                          Los pases son válidos para la fecha y hora seleccionada.<br />
+                          Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
+                        </div>
+                        {/* Botón finalizar para pago en efectivo en mobile */}
+                        {metodoPago === "efectivo" && (
+                          <button
+                            className={`mt-6 w-full py-2 rounded font-bold text-white ${
+                              puedeFinalizarEfectivo
+                                ? "bg-[#18668b] hover:bg-[#14526d]"
+                                : "bg-gray-300 cursor-not-allowed"
+                            }`}
+                            onClick={handleContinuar}
+                            disabled={!puedeFinalizarEfectivo}
+                          >
+                            Finalizar y ver resumen para pago en efectivo
+                          </button>
+                        )}
+                    </div>
+                </>
+                )}
+            </section>
+             {/* Columna imagen */}
+            <aside className="hidden md:flex w-1/2 h-full items-center justify-center bg-[#f8fafc]">
+                <div className="relative w-full h-full flex items-center justify-center">
+                <img
+                    src={imagenes[paso - 1]}
+                    alt={pasos[paso - 1].label}
+                    className="object-cover w-full h-[945px]  shadow"
+                />
+                
+                </div>
+                {paso === 3 && ( 
+                    <>
+                        <div className="  p-6 mb-6">
                             <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
                             <div className="flex items-center gap-2 text-sm mb-2">
                                 <span>📅</span>
@@ -625,9 +878,14 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 <span>⏰</span>
                                 <span>{selectedTime}</span>
                             </div>
-                            <div className="text-sm text-gray-500 mb-4">
-                                Disponibilidad confirmada para {visitantes.length} persona{visitantes.length > 1 && "s"}
-                            </div>
+                          <div className="text-sm text-gray-500 mb-4">
+                            Disponibilidad confirmada para {visitantes.length} persona{visitantes.length > 1 ? "s" : ""}<br />
+                            {ninos > 0 && (
+                                <p className="block mt-1 text-gray-500">
+                                    {ninos} niño{ninos > 1 ? "s" : ""} agregado{ninos > 1 ? "s" : ""}
+                                </p>
+                            )}
+                        </div>
                             <div className="flex justify-between mb-1 text-sm">
                                 <span className="text-black">Pases de Acceso General</span>
                                 <span className="text-black">{visitantes.length} pases</span>
@@ -650,6 +908,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 <span>Total</span>
                                 <span>${total}.00 MXN</span>
                             </div>
+
                             {/* Código promocional */}
                             <input
                                 className="mt-4 w-full border rounded px-2 py-1 text-sm"
@@ -671,8 +930,8 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     {msgPromo}
                                 </div>
                             )}
-                            {/*
-                            <button
+                            
+                            {/* <button
                                 onClick={handleContinuar}
                                 disabled={!puedeContinuar}
                                 className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar
@@ -681,10 +940,10 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 }`}
                             >
                                 Continuar con Transporte
-                            </button>
-                            */}
+                            </button> */}
+                            
 
-                            <h4 className="font-bold mb-3">Resumen de reserva</h4>
+                            <h4 className="font-bold mb-3 mt-8">Resumen de reserva</h4>
                             {/* Total visible siempre */}
                             <div className="flex justify-between font-bold text-lg mb-4">
                                 <span>Total:</span>
@@ -707,7 +966,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     />
                                     <span>Efectivo</span>
                                 </label>
-                                <label className="flex items-center cursor-pointer">
+                                {/* <label className="flex items-center cursor-pointer">
                                     <input
                                         type="radio"
                                         className="mr-2"
@@ -720,11 +979,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                         }}
                                     />
                                     <span>Tarjeta</span>
-                                </label>
+                                </label> */}
                             </div>
 
                             {/* Pago tarjeta visible solo si es tarjeta */}
-                            {!paid && metodoPago === "tarjeta" && (
+                            {/* {!paid && metodoPago === "tarjeta" && (
                                 <form
                                     className="border-t pt-4 mt-3 flex flex-col gap-2"
                                     onSubmit={handlePay}
@@ -795,12 +1054,12 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     </div>
                                 </form>
                             )}
-                            {/* Pago realizado */}
+                            {/* Pago realizado 
                             {paid && metodoPago === "tarjeta" && (
                                 <div className="mt-4 text-green-700 text-center font-bold">
                                     ¡Pago realizado con éxito!
                                 </div>
-                            )}
+                            )} */}
                             {paid && metodoPago === "efectivo" && (
                                 <div className="mt-4 text-yellow-700 text-center font-bold">
                                     Presenta este resumen y paga en taquilla.
@@ -820,7 +1079,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 ? "Finalizar y ver resumen para pago en efectivo"
                                 : "Continuar al resumen"}
                             </button>
-                            {/*<button
+                            {/* <button
                                 onClick={handleSiguiente}
                                 disabled={!puedeContinuar}
                                 className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar
@@ -829,16 +1088,19 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 }`}
                             >
                                 Continuar a Extras
-                            </button>*/}
+                            </button> */}
                             <div className="mt-4 text-xs text-gray-500">
                                 Los pases son válidos para la fecha y hora seleccionada.<br />
                                 Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
                             </div>
                         </div>
-                    </aside>
-                </section>
+                    </>
+                    )} 
+
+
+            </aside>
             </main>
-            <Footer />
-        </div>
+            {/* <Footer /> */}
+          </div>
     );
 }
