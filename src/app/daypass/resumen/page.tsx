@@ -101,7 +101,6 @@ export default function ConfirmacionReservaPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
-            <Header />
             <main className="max-w-5xl w-full mx-auto px-4 py-12 flex-1">
                 {/* Mensaje de confirmación */}
                 <div className="text-center mb-10">
@@ -243,7 +242,6 @@ export default function ConfirmacionReservaPage() {
                     </button>
                 </div>
             </main>
-            <Footer />
         </div>
     );
 }

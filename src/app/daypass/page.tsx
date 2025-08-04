@@ -8,10 +8,12 @@ import Footer from "@/components/Footer";
 import toast, {Toaster} from "react-hot-toast";
 import {FiPlus, FiTrash2} from "react-icons/fi";
 import Stepper from "@/components/Stepper";
+import axios from "axios";
 
 const CODIGO_PROMO = "PROMO100";
 const DESCUENTO_PROMO = 100;
 const PRECIO_PASE = 350;
+
 
 function getPrecioPase(fecha: string, categoria: string = "general") {
     // Obtén el día de la semana: 0=Domingo, 1=Lunes, ..., 6=Sábado
@@ -76,10 +78,20 @@ export default function DaypassUnicaPage() {
         localStorage.clear();
     }, []);
     const [visitantes, setVisitantes] = useState([
-        {nombre: "", correo: "", celular: ""},
+        {nombre: "", apellido:"", correo: "", celular: "", cumple: "", ciudad: "", estado:"", pais:"",tipo: "general",},
     ]);
     const [touched, setTouched] = useState([
-        {nombre: false, correo: false, celular: false},
+          {
+    nombre: false,
+    apellido: false,
+    correo: false,
+    celular: false,
+    cumple: false,
+    ciudad: false,
+    estado: false,
+    pais: false,
+    ine: false,
+  },
     ]);
     // Estado para archivos INE por visitante
     const [ineFiles, setIneFiles] = useState<IneFiles[]>(
@@ -95,11 +107,25 @@ export default function DaypassUnicaPage() {
     const [year, setYear] = useState(today.getFullYear());
     const [selectedDay, setSelectedDay] = useState(today.getDate());
     const [selectedTime, setSelectedTime] = useState("11:00 AM");
-
+    const [errores, setErrores] = useState(
+    visitantes.map(() => ({
+        nombre: "",
+        apellido:"",
+        correo: "",
+        celular: "",
+        cumple: "",
+        ciudad: "",
+        estado: "",
+        pais: ""
+    }))
+    );
     
 
     function validateNombre(nombre: string) {
         return nombre.trim().length > 0;
+    }
+     function validateApellido(apellido: string) {
+        return apellido.trim().length > 0;
     }
 
     function validateCorreo(correo: string, obligatorio: boolean) {
@@ -110,27 +136,54 @@ export default function DaypassUnicaPage() {
     function validateCelular(celular: string) {
         return /^\d{10,}$/.test(celular.trim());
     }
-
+    const validateCumple = (fecha: string) => fecha.trim() !== "";
+    const validateCiudad = (ciudad: string) => ciudad.trim() !== "";
+    const validateEstado = (estado: string) => estado.trim() !== "";
+    const validatePais = (pais: string) => pais.trim() !== "";
+    const validateIne = (ine: string) => ine.trim() !== "";
+    
     const puedeContinuar =
         visitantes.every(
             (v, i) =>
                 validateNombre(v.nombre) &&
+                validateApellido(v.apellido) &&
                 validateCelular(v.celular) &&
                 validateCorreo(v.correo, i === 0)
         ) &&
         selectedDay > 0 &&
         selectedTime;
+type Visitante = {
+  nombre: string;
+  apellido: string;
+  correo: string;
+  celular: string;
+  cumple: string;
+  ciudad: string;
+  estado: string;
+  pais: string;
+  tipo: "adulto" | "nino"; // ← agrega esto
+};
 
     // Agregar visitante
     const handleAddVisitante = () => {
         if (visitantes.length >= 10) return;
         setVisitantes((prev) => [
             ...prev,
-            {nombre: "", correo: "", celular: ""},
+            {nombre: "", apellido:"", correo: "", celular: "", cumple: "", ciudad: "", estado:"", pais:"",tipo: "adulto", },
         ]);
         setTouched((prev) => [
             ...prev,
-            {nombre: false, correo: false, celular: false},
+              {
+    nombre: false,
+    apellido:false,
+    correo: false,
+    celular: false,
+    cumple: false,
+    ciudad: false,
+    estado: false,
+    pais: false,
+    ine: false,
+  },
         ]);
         setIneFiles((prev) => [
             ...prev,
@@ -139,7 +192,7 @@ export default function DaypassUnicaPage() {
     };
 
     // Cambios por visitante
-    const handleVis = (idx: number, campo: 'nombre' | 'correo' | 'celular', valor: string) => {
+    const handleVis = (idx: number, campo: 'nombre' |'apellido'| 'correo' | 'celular'| 'cumple'| 'ciudad' | 'estado'| 'pais', valor: string) => {
         setVisitantes((prev) => {
             const copia = [...prev];
             copia[idx][campo] = valor;
@@ -147,13 +200,25 @@ export default function DaypassUnicaPage() {
         });
     };
 
-    const handleBlur = (idx: number, campo: 'nombre' | 'correo' | 'celular') => {
-        setTouched((prev) => {
-            const copy = [...prev];
-            copy[idx][campo] = true;
-            return copy;
-        });
-    };
+  type Campo =
+  | 'nombre'
+  |'apellido'
+  | 'correo'
+  | 'celular'
+  | 'cumple'
+  | 'ciudad'
+  | 'estado'
+  | 'pais'
+  | 'ine';
+
+const handleBlur = (idx: number, campo: Campo) => {
+  setTouched((prev) => {
+    const copy = [...prev];
+    copy[idx][campo] = true;
+    return copy;
+  });
+};
+
 
     const aplicarPromo = () => {
         if (codigoPromo.trim().toUpperCase() === CODIGO_PROMO) {
@@ -176,19 +241,37 @@ export default function DaypassUnicaPage() {
     };
 
     const {dias, primerDia} = getDiasMes(year, mes);
-    const fechaSeleccionada = `${year}-${(mes + 1).toString().padStart(2, "0")}-${selectedDay
-        .toString()
-        .padStart(2, "0")}`;
+    const fechaSeleccionada = `${year}-${(mes + 1).toString().padStart(2, "0")}-${selectedDay.toString().padStart(2, "0")}`;
     const fechaDisplay = formatFechaEs(year, mes, selectedDay);
 
-    const subtotal = visitantes.length * getPrecioPase(fechaSeleccionada, "general");
-    const total = Math.max(subtotal - descuento, 0);
+    const [adultos, setAdultos] = useState(1);
+    const [ninos, setNinos] = useState(0);
+    const [adultos60, setAdultos60] = useState(0);
+
+    const cantidadAdultos = adultos;
+    const cantidadAdultos60 = adultos60;
+    const cantidadNinos = ninos;
+    const cantidadMenores2 = 0; // Si manejas menores de 2 años, ajusta aquí
+
+const precioAdulto = getPrecioPorTipo(fechaSeleccionada, "adulto");
+const precioAdulto60 = getPrecioPorTipo(fechaSeleccionada, "adulto60");
+const precioNino = getPrecioPorTipo(fechaSeleccionada, "nino");
+const precioMenor2 = getPrecioPorTipo(fechaSeleccionada, "menor2");
+
+const subtotalAdultos = cantidadAdultos * precioAdulto;
+const subtotalAdultos60 = cantidadAdultos60 * precioAdulto60;
+const subtotalNinos = cantidadNinos * precioNino;
+const subtotalMenores2 = cantidadMenores2 * precioMenor2;
+
+const subtotal = subtotalAdultos + subtotalAdultos60 + subtotalNinos + subtotalMenores2;
+const total = Math.max(subtotal - descuento, 0);
 
     // Prepara los datos del formulario para enviar por correo electrónico
     function prepararDatosParaCorreo() {
         const data = {
             visitantes: visitantes.map((v, idx) => ({
                 nombre: v.nombre,
+                apellido: v.apellido,
                 correo: v.correo,
                 celular: v.celular,
                 ine_frente: idx === 0 && ineFiles[idx]?.frente ? ineFiles[idx].frente.name : undefined,
@@ -211,7 +294,7 @@ export default function DaypassUnicaPage() {
     // Genera el cuerpo del correo electrónico en texto plano
     function generarCuerpoCorreo(data: ReturnType<typeof prepararDatosParaCorreo>) {
         const visitantesTxt = data.visitantes.map((v, idx) =>
-            `Visitante ${idx + 1}:\n- Nombre: ${v.nombre}\n- Correo: ${v.correo}\n- Celular: ${v.celular}\n`
+            `Visitante ${idx + 1}:\n- Nombre: ${v.nombre} \n- Apellido: ${v.apellido}\n- Correo: ${v.correo}\n- Celular: ${v.celular}\n`
             + (idx === 0 ? `- INE Frente: ${v.ine_frente || "No adjunto"}\n- INE Reverso: ${v.ine_reverso || "No adjunto"}\n` : "")
         ).join('\n');
 
@@ -244,58 +327,60 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         window.location.href = "/daypass/extras";
     };
 
-    async function handleContinuar() {
-        const datos = prepararDatosParaCorreo();
+    // async function handleContinuar() {
+    //     const datos = prepararDatosParaCorreo();
 
-        // Armado exacto de FormData
-        const formData = new FormData();
+    //     // Armado exacto de FormData
+    //     const formData = new FormData();
 
-        // Visitor principal
-        const principal = datos.visitantes[0];
-        formData.append("visitor[name]", principal.nombre);
-        formData.append("visitor[email]", principal.correo);
-        formData.append("visitor[phone]", principal.celular);
-        formData.append("visitor[type]", "general");
+    //     // Visitor principal
+    //     const principal = datos.visitantes[0];
+    //     formData.append("visitor[name]", principal.nombre);
+    //     formData.append("visitor[lastname]", principal.apellido);
+    //     formData.append("visitor[email]", principal.correo);
+    //     formData.append("visitor[phone]", principal.celular);
+    //     formData.append("visitor[type]", "general");
 
-        // INE archivos (si existen)
-        if (ineFiles[0]?.frente) formData.append("idcard_front", ineFiles[0].frente, ineFiles[0].frente.name);
-        if (ineFiles[0]?.reverso) formData.append("idcard_back", ineFiles[0].reverso, ineFiles[0].reverso.name);
+    //     // INE archivos (si existen)
+    //     if (ineFiles[0]?.frente) formData.append("idcard_front", ineFiles[0].frente, ineFiles[0].frente.name);
+    //     if (ineFiles[0]?.reverso) formData.append("idcard_back", ineFiles[0].reverso, ineFiles[0].reverso.name);
 
-        // Fecha y hora combinada
-        const fechaHora = datos.fecha + " " + (datos.horario || "11:00 AM");
-        formData.append("reservation_at", fechaHora);
+    //     // Fecha y hora combinada
+    //     const fechaHora = datos.fecha + " " + (datos.horario || "11:00 AM");
+    //     formData.append("reservation_at", fechaHora);
 
-        // Totales
-        formData.append("totals[total]", String(datos.total));
+    //     // Totales
+    //     formData.append("totals[total]", String(datos.total));
 
-        // Promo como JSON vacío o valor real si existe
-        formData.append("promo", datos.promoAplicado ? JSON.stringify({ code: datos.codigoPromo }) : "[]");
+    //     // Promo como JSON vacío o valor real si existe
+    //     formData.append("promo", datos.promoAplicado ? JSON.stringify({ code: datos.codigoPromo }) : "[]");
 
-        // Todos los visitantes
-        datos.visitantes.forEach((v, idx) => {
-            formData.append(`visitors[${idx}][name]`, v.nombre);
-            formData.append(`visitors[${idx}][email]`, v.correo);
-            formData.append(`visitors[${idx}][phone]`, v.celular);
-            formData.append(`visitors[${idx}][type]`, "general");
-        });
+    //     // Todos los visitantes
+    //     datos.visitantes.forEach((v, idx) => {
+    //         formData.append(`visitors[${idx}][name]`, v.nombre);
+    //         formData.append(`visitors[${idx}][lastname]`, v.apellido);
+    //         formData.append(`visitors[${idx}][email]`, v.correo);
+    //         formData.append(`visitors[${idx}][phone]`, v.celular);
+    //         formData.append(`visitors[${idx}][type]`, "general");
+    //     });
 
-        try {
-            const response = await fetch("/api/reservations", {
-                method: "POST",
-                body: formData,
-            });
+    //     try {
+    //         const response = await fetch("/api/reservations", {
+    //             method: "POST",
+    //             body: formData,
+    //         });
 
-            if (!response.ok) {
-                throw new Error("Error en el envío de la reservación");
-            }
+    //         if (!response.ok) {
+    //             throw new Error("Error en el envío de la reservación");
+    //         }
 
-            alert("¡Reservación enviada correctamente!");
-            window.location.href = "/daypass/resumen";
-        } catch (error) {
-            alert("Ocurrió un error al enviar la reservación. Intenta de nuevo.");
-            console.error(error);
-        }
-    }
+    //         alert("¡Reservación enviada correctamente!");
+    //         window.location.href = "/daypass/resumen";
+    //     } catch (error) {
+    //         alert("Ocurrió un error al enviar la reservación. Intenta de nuevo.");
+    //         console.error(error);
+    //     }
+    // }
 
     // Métodos de pago y simulación de pago
     const [metodoPago, setMetodoPago] = useState("efectivo");
@@ -367,6 +452,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     // Puede finalizar en efectivo
     const puedeFinalizarEfectivo =
       validateNombre(visitantes[0]?.nombre) &&
+      validateNombre(visitantes[0]?.apellido) &&
       validateCelular(visitantes[0]?.celular) &&
       validateCorreo(visitantes[0]?.correo, true) &&
       ineFiles[0]?.frente &&
@@ -406,8 +492,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         "/assets/img-5.webp",        // Paso 2
         "/image.png",   // Paso 3
     ];
-    const [adultos, setAdultos] = useState(1);
-    const [ninos, setNinos] = useState(0);
+  
 
     const hoy = new Date();
     hoy.setHours(0,0,0,0);
@@ -418,6 +503,91 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     lastDayPrevMonth.setHours(0,0,0,0);
 
     const puedeIrMesAnterior = lastDayPrevMonth >= hoy;
+
+  async function handleContinuar() {
+  const formData = new FormData();
+
+  // Tipado explícito y manejo de nombre completo
+  function separarNombreApellido(nombreCompleto: string): [string, string] {
+    const partes = nombreCompleto.trim().split(" ");
+    const nombre = partes.shift() || "Nombre";
+    const apellido = partes.join(" ") || "Apellido";
+    return [nombre, apellido];
+  }
+
+  const responsable = visitantes[0];
+  const [nombre, apellido] = separarNombreApellido(responsable.nombre);
+
+  // Información del cliente principal
+  formData.append("client[name]", nombre);
+  formData.append("client[lastname]", apellido);
+  formData.append("client[email]", responsable.correo || "");
+  formData.append("client[phone]", responsable.celular || "");
+  formData.append("client[birthdate]", responsable.cumple || "");
+  formData.append("visit_date", fechaSeleccionada || "");
+  formData.append("origin_city", responsable.ciudad || "");
+  formData.append("payment_method", metodoPago || "");
+
+  // Información de cada visitante
+  visitantes.forEach((v, idx) => {
+    const [n, a] = separarNombreApellido(v.nombre);
+
+    formData.append(`visitors[${idx}][name]`, n);
+    formData.append(`visitors[${idx}][lastname]`, a);
+    formData.append(`visitors[${idx}][birthdate]`, v.cumple || "");
+    formData.append(`visitors[${idx}][email]`, v.correo || "");
+    formData.append(`visitors[${idx}][phone]`, v.celular || "");
+    formData.append(`visitors[${idx}][visitor_type_id]`, v.tipo === "nino" ? "2" : "1");
+    formData.append(`visitors[${idx}][checkin_time]`, selectedTime?.substring(0, 5) || "");
+
+    if (idx === 0) {
+      formData.append(`visitors[${idx}][document_type]`, "INE");
+
+      if (ineFiles[idx]?.frente) {
+        formData.append(`visitors[${idx}][document_front]`, ineFiles[idx].frente, ineFiles[idx].frente.name);
+      }
+
+      if (ineFiles[idx]?.reverso) {
+        formData.append(`visitors[${idx}][document_back]`, ineFiles[idx].reverso, ineFiles[idx].reverso.name);
+      }
+    }
+  });
+
+  // Debug: revisar lo que se está enviando
+  for (const pair of formData.entries()) {
+    console.log(pair[0] + ": ", pair[1]);
+  }
+
+  try {
+    const res = await fetch("https://lasjaras-api.kerveldev.com/api/reservations", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+      body: formData,
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      console.error("Error al enviar reserva:", json);
+      alert("Error al enviar la reservación. Revisa los campos e intenta nuevamente.");
+      return;
+    }
+
+    console.log("Reserva enviada correctamente:", json);
+    alert("¡Reservación enviada correctamente!");
+    window.location.href = "/daypass/resumen";
+  } catch (error) {
+    console.error("Error inesperado:", error);
+    alert("Ocurrió un error al procesar la reservación.");
+  }
+}
+
+
+
+
+
 
     return (
         
@@ -476,10 +646,10 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                 {/* paso 1: Huéspedes */}
                 {paso === 1 && (
                     <>
-                        <div className="text-gray-700 text-5xl font-bold mb-6 ">
+                        <div className="text-gray-700 text-5xl font-bold mb-6 mt-2">
                             ¿Cuántos visitantes son?
                         </div>
-                        <p className="mb-20 text-gray-600 text-2xl">
+                        <p className="mb-10 text-gray-600 text-2xl">
                         El precio varía según el horario. Niños menores de 13 años entran gratis.
                         </p>
                         <div className="space-y-6 mb-0 mt-auto">
@@ -496,11 +666,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                                 setVisitantes((prev) => {
                                                     const nuevo = prev.slice(0, prev.length - 1);
                                                     // Siempre deja al menos un visitante
-                                                    return nuevo.length === 0 ? [{ nombre: "", correo: "", celular: "" }] : nuevo;
+                                                    return nuevo.length === 0 ? [{ nombre: "", apellido:"", correo: "", celular: "", cumple: "", ciudad:"", estado:"", pais:"",tipo: "adulto",}] : nuevo;
                                                 });
                                                 setTouched((prev) => {
                                                     const nuevo = prev.slice(0, prev.length - 1);
-                                                    return nuevo.length === 0 ? [{ nombre: false, correo: false, celular: false }] : nuevo;
+                                                    return nuevo.length === 0 ? [ {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}] : nuevo;
                                                 });
                                                 setIneFiles((prev) => {
                                                     const nuevo = prev.slice(0, prev.length - 1);
@@ -519,12 +689,56 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                         onClick={() => {
                                             if (adultos < 14) {
                                                 setAdultos(adultos + 1);
-                                                setVisitantes((prev) => [...prev, { nombre: "", correo: "", celular: "" }]);
-                                                setTouched((prev) => [...prev, { nombre: false, correo: false, celular: false }]);
+                                                setVisitantes((prev) => [...prev, { nombre: "", apellido:"", correo: "", celular: "", cumple:"", ciudad:"",estado:"",pais:"",tipo: "adulto",}]);
+                                                setTouched((prev) => [...prev, {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}]);
                                                 setIneFiles((prev) => [...prev, { frente: null, reverso: null }]);
                                             }
                                         }}
-                                        disabled={adultos >= 14}
+                                        disabled={adultos + adultos60 >= 14}
+                                    >+</button>
+                                </div>
+                            </div>
+                             {/* Adultos 60+ */}
+                            <div className="flex items-center justify-between bg-white rounded shadow p-5 mb-10 ">
+                                <span className="font-semibold text-lg">Adultos 60 +</span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        className="px-3 py-1 rounded text-xl font-bold bg-gray-200 hover:bg-[#302f2f] text-black hover:text-white"
+                                        onClick={() => {
+                                            if (adultos60 > 0) {
+                                                setAdultos60(adultos60 - 1);
+                                                setVisitantes((prev) => {
+                                                    const nuevo = prev.slice(0, prev.length - 1);
+                                                    return nuevo;
+                                                });
+                                                setTouched((prev) => {
+                                                    const nuevo = prev.slice(0, prev.length - 1);
+                                                    return nuevo.length === 0 ? [{nombre: false, apellido: false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}] : nuevo;
+                                                });
+                                                setIneFiles((prev) => {
+                                                    const nuevo = prev.slice(0, prev.length - 1);
+                                                    return nuevo.length === 0 ? [{ frente: null, reverso: null }] : nuevo;
+                                                });
+                                                
+                                            }
+                                        }}
+                                        disabled={adultos60 <= 0}
+                                        
+                                    >-</button>
+                                    <span className="text-xl font-bold">{adultos60}</span>
+                                    <button
+                                        type="button"
+                                        className="px-3 py-1 rounded text-xl font-bold bg-gray-200 hover:bg-[#302f2f] text-black hover:text-white"
+                                        onClick={() => {
+                                            if (adultos60 < 14) {
+                                                setAdultos60(adultos60 + 1);
+                                                setVisitantes((prev) => [...prev, { nombre: "", apellido:"", correo: "", celular: "" , cumple:"", ciudad:"", estado:"", pais:"",tipo: "adulto", }]);
+                                                setTouched((prev) => [...prev, {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}]);
+                                                setIneFiles((prev) => [...prev, { frente: null, reverso: null }]);
+                                            }
+                                        }}
+                                        disabled={adultos60 + adultos >= 14}
                                     >+</button>
                                 </div>
                             </div>
@@ -535,26 +749,60 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     <button
                                         type="button"
                                         className="px-3 py-1 rounded text-xl font-bold bg-gray-200 hover:bg-[#302f2f] text-black hover:text-white"
-                                        onClick={() => setNinos(Math.max(0, ninos - 1))}
+                                       onClick={() => {
+                                        if (ninos > 0) {
+                                            setNinos(ninos - 1);
+
+                                            // Filtrar visitantes para eliminar el último niño
+                                            setVisitantes((prev) => {
+                                                const sinUltimoNino = [...prev];
+                                                const idxUltimoNino = [...prev].map(v => v.tipo).lastIndexOf("nino");
+                                                if (idxUltimoNino !== -1) sinUltimoNino.splice(idxUltimoNino, 1);
+                                                return sinUltimoNino;
+                                            });
+                                        }
+                                    }}
                                         disabled={ninos <= 0}
                                     >-</button>
                                     <span className="text-xl font-bold">{ninos}</span>
                                     <button
                                         type="button"
                                         className="px-3 py-1 rounded text-xl font-bold bg-gray-200 hover:bg-[#302f2f] text-black hover:text-white"
-                                        onClick={() => setNinos(ninos < adultos * 2 ? ninos + 1 : ninos)}
+                                        onClick={() => {
+                                            if (ninos < adultos * 2) {
+                                                setNinos(ninos + 1);
+                                                setVisitantes((prev) => [
+                                                    ...prev,
+                                                    { nombre: "",apellido: "", correo: "", celular: "" , cumple:"", ciudad:"", estado:"", pais:"",tipo: "nino" } // Solo nombre y cumpleaños para niños
+                                                ]);
+                                                setTouched((prev) => [
+                                                    ...prev,
+                                                    {nombre: false,apellido: false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}
+                                                ]);
+                                                setIneFiles((prev) => [
+                                                    ...prev,
+                                                    { frente: null, reverso: null }
+                                                ]);
+                                            }
+                                        }}
                                         disabled={ninos >= adultos * 2}
                                     >+</button>
                                     </div>
                                 </div>
                         </div>
                         {ninos > 0 && (
-                        <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-22 text-sm text-gray-700 mt-4">
+                        <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-20 text-sm text-gray-700 mt-2">
                             Los niños de 2 a 13 años deben estar acompañados por un adulto. No incluye bebida ni bata. Niños menores de 8 años deben usar flotadores.
                         </div>
                         )}
-                         {adultos >= 14 && (
-                        <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-43 text-sm text-gray-700 mt-25">
+                        
+                         {adultos60 > 0 && (
+                        <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-41 text-sm text-gray-700 mt-23">
+                           Los adultos mayores de 60 años de edad deberán presentar tarjeda del INAPAM actualizada, de lo contrario se cobrará la entrada a precio regular.
+                        </div>
+                        )}
+                         {adultos + adultos60 >= 14 && (
+                        <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-49 text-sm text-gray-700 mt-44">
                            Si desea reservar para más de 14 adultos, póngase en contacto con nuestro <a href="#" className="text-blue-700"> Servicio de Atención al Cliente</a> para consultar la disponibilidad.
                         </div>
                         )}
@@ -688,173 +936,375 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                  
                 {/* Paso 3:  */}
                 {paso === 3 && (
-                <>
-                    <div className=" text-gray-700 text-4xl font-bold mb-20 mt-10 ">
+                    <div className="relative h-[800px] overflow-hidden">
+                        <div className="overflow-y-auto h-full">
+                        
+                            <div className="text-gray-700 text-4xl font-bold mb-5 mt-5 overflow-hidden">
                             Detalles de la reserva
-                    </div>
-                    <form className="space-y-4">
-                        {/* Solo muestra el primer visitante */}
-    {visitantes.length > 0 && (() => {
-        const vis = visitantes[0];
-        const errorNombre = !validateNombre(vis.nombre) && touched[0]?.nombre;
-        const errorCorreo = !validateCorreo(vis.correo, true) && touched[0]?.correo;
-        const errorCelular = !validateCelular(vis.celular) && touched[0]?.celular;
-        return (
-            <div className="p-4 flex flex-col gap-4 relative">
-                {/* Nombre */}
-                <div className="flex flex-col">
-                    <label className="block text-xs font-bold text-black mb-1 ">
-                        Visitante 1 (Tú)
-                    </label>
-                    <input
-                        type="text"
-                        placeholder="Nombre Completo"
-                        value={vis.nombre}
-                        onChange={(e) => handleVis(0, "nombre", e.target.value)}
-                        onBlur={() => handleBlur(0, "nombre")}
-                        className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${errorNombre ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black "}`}
-                        required
-                    />
-                    {renderError("El nombre es obligatorio.", errorNombre)}
-                </div>
-                {/* Correo */}
-                <div className="flex flex-row gap-6">
-                  {/* Correo */}
-                  <div className="flex flex-col flex-1">
-                    <label className="block text-xs font-bold text-black mb-1">
-                      Correo Electrónico <span className="text-[10px]">(Principal)</span>
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="Correo electrónico"
-                      value={vis.correo}
-                      onChange={(e) => handleVis(0, "correo", e.target.value)}
-                      onBlur={() => handleBlur(0, "correo")}
-                      className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${errorCorreo ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
-                      required
-                    />
-                    {renderError("El correo es obligatorio y debe ser válido.", errorCorreo)}
-                  </div>
-                  {/* Celular */}
-                  <div className="flex flex-col flex-1">
-                    <label className="block text-xs font-bold text-black mb-1">
-                      Celular WhatsApp
-                    </label>
-                    <input
-                      type="tel"
-                      inputMode="numeric"
-                      pattern="\d{10,}"
-                      placeholder="Ej. 3312345678"
-                      value={vis.celular}
-                      onChange={(e) => handleVis(0, "celular", e.target.value)}
-                      onBlur={() => handleBlur(0, "celular")}
-                      className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${errorCelular ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-black"}`}
-                      required
-                    />
-                    {renderError("El celular debe tener al menos 10 dígitos numéricos.", errorCelular)}
-                  </div>
-                </div>
-                {/* Archivos INE */}
-                <div className="flex flex-col col-span-full">
-                    <label className="block text-xs font-bold text-black mb-1 mt-4">
-                        INE Frente (Imagen o PDF)
-                    </label>
-                    <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        onChange={e => handleIneFileChange(0, 'frente', e.target.files ? e.target.files[0] : null)}
-                        className="border p-1 rounded text-xs h-10"
-                    />
-                    {ineFiles[0]?.frente && (
-                        <span className="text-xs text-green-600 ">Archivo listo: {ineFiles[0].frente.name}</span>
-                    )}
-                    <label className="block text-xs font-bold text-black mb-1 mt-8">
-                        INE Reverso (Imagen o PDF)
-                    </label>
-                    <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        onChange={e => handleIneFileChange(0, 'reverso', e.target.files ? e.target.files[0] : null)}
-                        className="border p-1 rounded text-xs h-10"
-                    />
-                    {ineFiles[0]?.reverso && (
-                        <span className="text-xs text-green-600">Archivo listo: {ineFiles[0].reverso.name}</span>
-                    )}
-                </div>
-            </div>
-        );
-    })()}
-                    </form>
-                    
-                    <button
-                        className="mt-20 w-full py-7 rounded font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b]"
-                        onClick={() => setPaso(1)}
-                    >
-                        Volver a datos de huéspedes
-                    </button>
+                            </div>
+                            <form className="space-y-4">
+                            {visitantes.map((vis, idx) => {
+                                // Es niño si no tiene correo ni celular
+                                const esNino = vis.tipo === "nino";
+                                const nombreValido = validateNombre(vis.nombre);
+                                const apellidoValido = validateNombre(vis.apellido);
+                                const correoValido = validateCorreo(vis.correo, idx === 0); // solo obligatorio para el primer visitante
+                                const celularValido = validateCelular(vis.celular);
+                                const cumpleValido = validateCumple(vis.cumple);
+                                const ciudadValido = validateCiudad(vis.ciudad);
+                                const estadoValido = validateEstado(vis.estado);
+                                const paisValido = validatePais(vis.pais);
 
-                    {/* Resumen solo en mobile */}
-                    <div className="md:hidden mt-8 p-6 bg-white rounded shadow">
-                        <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
-                        <div className="flex items-center gap-2 text-sm mb-2">
-                            <span>📅</span>
-                            <span className="capitalize">{fechaDisplay}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm mb-2">
-                            <span>⏰</span>
-                            <span>{selectedTime}</span>
-                        </div>
-                        <div className="text-sm text-gray-500 mb-4">
-                            Disponibilidad confirmada para {visitantes.length} persona{visitantes.length > 1 ? "s" : ""}<br />
-                            {ninos > 0 && (
-                              <p className="block mt-1 text-gray-500">
-                                {ninos} niño{ninos > 1 ? "s" : ""} agregado{ninos > 1 ? "s" : ""}
-                              </p>
-                            )}
-                        </div>
-                        <div className="flex justify-between mb-1 text-sm">
-                            <span className="text-black">Pases de Acceso General</span>
-                            <span className="text-black">{visitantes.length} pases</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span>Precio por pase</span>
-                            <span>${PRECIO_PASE} MXN</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span>Subtotal</span>
-                            <span>${subtotal} MXN</span>
-                        </div>
-                        {promoAplicado && (
-                          <div className="flex justify-between text-sm text-green-700 font-bold">
-                            <span>Descuento aplicado</span>
-                            <span>-${DESCUENTO_PROMO} MXN</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between font-bold text-base">
-                            <span>Total</span>
-                            <span>${total}.00 MXN</span>
-                        </div>
-                        <div className="mt-4 text-xs text-gray-500">
-                          Los pases son válidos para la fecha y hora seleccionada.<br />
-                          Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
-                        </div>
-                        {/* Botón finalizar para pago en efectivo en mobile */}
-                        {metodoPago === "efectivo" && (
+                                return (
+                                <div key={idx} className="p-4 flex flex-col gap-4 relative  rounded border">
+                                     <div className="flex flex-row gap-6">
+                                    {/* Nombre */}
+                                    <div className="flex flex-col flex-1">
+                                   <label className="block text-xs font-bold text-black mb-1">
+                                    {`Visitante ${idx + 1} ${esNino ? "(Niño)" : idx === 0 ? "(Tú)" : ""}`}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Nombre/s"
+                                        value={vis.nombre}
+                                        onChange={(e) => handleVis(idx, "nombre", e.target.value)}
+                                         onBlur={() => handleBlur(idx, "nombre")}
+                                        className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${ touched[idx]?.nombre && !nombreValido ? "border-red-500" : "border-gray-300"}`}
+                                        required
+                                    />
+                                    {touched[idx]?.nombre && !nombreValido && (
+                                        <p className="text-red-600 text-sm mt-1">El nombre es obligatorio.</p>
+                                    )}
+                                    </div>
+                                      {/* Apellido */}
+                                    <div className="flex flex-col flex-1">
+                                   <label className="block text-xs font-bold text-black mb-1">
+                                    Apellidos
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Apellidos"
+                                        value={vis.apellido}
+                                        onChange={(e) => handleVis(idx, "apellido", e.target.value)}
+                                         onBlur={() => handleBlur(idx, "apellido")}
+                                        className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${ touched[idx]?.apellido && !apellidoValido ? "border-red-500" : "border-gray-300"}`}
+                                        required
+                                    />
+                                    {touched[idx]?.apellido && !apellidoValido && (
+                                        <p className="text-red-600 text-sm mt-1">Este campo es obligatorio.</p>
+                                    )}
+                                    </div>
+                                    </div>
+                                    {/* Solo adultos: correo y celular */}
+                                    {!esNino && (
+                                    <div className="flex flex-row gap-6">
+                                        {/* Correo */}
+                                        <div className="flex flex-col flex-1">
+                                        <label className="block text-xs font-bold text-black mb-1">
+                                            Correo Electrónico <span className="text-[10px]">{idx === 0 ? "(Principal)" : "(opcional)"}</span>
+                                        </label>
+                                        <input
+                                            type="email"
+                                            placeholder="Correo electrónico"
+                                            value={vis.correo}
+                                            onChange={(e) => handleVis(idx, "correo", e.target.value)}
+                                            onBlur={() => handleBlur(idx, "correo")}
+                                            className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${
+                                            touched[idx]?.correo && !correoValido ? "border-red-500" : "border-gray-300"
+                                            }`}
+                                        />
+                                        {touched[idx]?.correo && !correoValido && (
+                                            <p className="text-red-600 text-sm mt-1">Correo electrónico inválido.</p>
+                                        )}
+                                        </div>
+
+                                        {/* Celular */}
+                                        <div className="flex flex-col flex-1">
+                                        <label className="block text-xs font-bold text-black mb-1">
+                                            Celular WhatsApp
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            inputMode="numeric"
+                                            pattern="\d{10,}"
+                                            placeholder="Ej. 3312345678"
+                                            value={vis.celular}
+                                            onChange={(e) => handleVis(idx, "celular", e.target.value)}
+                                            onBlur={() => handleBlur(idx, "celular")}
+                                            className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${
+                                            touched[idx]?.celular && !celularValido ? "border-red-500" : "border-gray-300"
+                                            }`}
+                                        />
+                                        {touched[idx]?.celular && !celularValido && (
+                                            <p className="text-red-600 text-sm mt-1">Debe tener al menos 10 dígitos.</p>
+                                        )}
+                                        </div>
+                                    </div>
+                                    )}
+                                    {/* Cumpleaños */}
+                                    <div className="flex flex-col flex-1">
+                                    <label className="block text-xs font-bold text-black mb-1">
+                                        Fecha de nacimiento
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={vis.cumple}
+                                        onChange={(e) => handleVis(idx, "cumple", e.target.value)}
+                                        onBlur={() => handleBlur(idx, "cumple")}
+                                        className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${
+                                        touched[idx]?.cumple && !cumpleValido ? "border-red-500" : "border-gray-300"
+                                        }`}
+                                    />
+                                    {touched[idx]?.cumple && !cumpleValido && (
+                                        <p className="text-red-600 text-sm mt-1">Selecciona una fecha válida.</p>
+                                    )}
+                                    </div>
+                                    
+                                    {/* Solo visitante 1: ciudad, estado, país */}
+                                    {idx === 0 && !esNino && (
+                                    <>
+                                        <div className="flex flex-row gap-6">
+                                        {/* Ciudad */}
+                                        <div className="flex flex-col flex-1">
+                                            <label className="block text-xs font-bold text-black mb-1">Ciudad</label>
+                                            <input
+                                            type="text"
+                                            value={vis.ciudad}
+                                            onChange={(e) => handleVis(idx, "ciudad", e.target.value)}
+                                            onBlur={() => handleBlur(idx, "ciudad")}
+                                            className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${
+                                            touched[idx]?.ciudad && !ciudadValido ? "border-red-500" : "border-gray-300"
+                                            }`}
+                                        />
+                                        {touched[idx]?.ciudad && !ciudadValido && (
+                                            <p className="text-red-600 text-sm mt-1">La ciudad es obligatoria.</p>
+                                        )}
+                                        </div>
+                                        {/* Estado */}
+                                        <div className="flex flex-col flex-1">
+                                            <label className="block text-xs font-bold text-black mb-1">Estado</label>
+                                            <input
+                                            type="text"
+                                            value={vis.estado}
+                                            onChange={(e) => handleVis(idx, "estado", e.target.value)}
+                                            onBlur={() => handleBlur(idx, "estado")}
+                                            className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${
+                                            touched[idx]?.estado && !estadoValido ? "border-red-500" : "border-gray-300"
+                                            }`}
+                                        />
+                                        {touched[idx]?.estado && !estadoValido && (
+                                            <p className="text-red-600 text-sm mt-1">El estado es obligatorio.</p>
+                                        )}
+                                        </div>
+                                        {/* País */}
+                                        <div className="flex flex-col flex-1">
+                                            <label className="block text-xs font-bold text-black mb-1">País</label>
+                                            <input
+                                            type="text"
+                                            value={vis.pais}
+                                            onChange={(e) => handleVis(idx, "pais", e.target.value)}
+                                            onBlur={() => handleBlur(idx, "pais")}
+                                            className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${
+                                            touched[idx]?.pais && !paisValido ? "border-red-500" : "border-gray-300"
+                                            }`}
+                                        />
+                                        {touched[idx]?.pais && !paisValido && (
+                                            <p className="text-red-600 text-sm mt-1">El país es obligatorio.</p>
+                                        )}
+                                                                                </div>
+                                        </div>
+                                     {/* INE Frente */}
+                                        <div className="flex flex-row items-start gap-4 mt-4">
+                                        <div className="flex flex-col flex-1">
+                                            <label className="block text-xs font-bold text-black mb-1">
+                                            INE Frente (Imagen o PDF)
+                                            </label>
+                                            <input
+                                            type="file"
+                                            accept="image/*,.pdf"
+                                            onChange={e =>
+                                                handleIneFileChange(idx, 'frente', e.target.files ? e.target.files[0] : null)
+                                            }
+                                            className="border p-1 rounded text-xs h-10"
+                                            />
+                                            {ineFiles[idx]?.frente && (
+                                            <span className="text-xs text-green-600 mt-1">
+                                                Archivo listo: {ineFiles[idx].frente.name}
+                                            </span>
+                                            )}
+                                        </div>
+
+                                        {/* Visualizador a la derecha */}
+                                        <div>
+                                            {ineFiles[idx]?.frente?.type?.startsWith("image/") && (
+                                            <img
+                                                src={URL.createObjectURL(ineFiles[idx].frente)}
+                                                alt="Previsualización INE Frente"
+                                                className="max-w-[350px] rounded border"
+                                            />
+                                            )}
+
+                                            {ineFiles[idx]?.frente?.type === "application/pdf" && (
+                                            <a
+                                                href={URL.createObjectURL(ineFiles[idx].frente)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 text-xs underline"
+                                            >
+                                                Ver PDF INE Frente
+                                            </a>
+                                            )}
+                                        </div>
+                                        </div>
+
+                                        {/* INE Reverso */}
+                                        <div className="flex flex-row items-start gap-4 mt-4">
+                                        <div className="flex flex-col flex-1">
+                                            <label className="block text-xs font-bold text-black mb-1">
+                                            INE Reverso (Imagen o PDF)
+                                            </label>
+                                            <input
+                                            type="file"
+                                            accept="image/*,.pdf"
+                                            onChange={e =>
+                                                handleIneFileChange(idx, 'reverso', e.target.files ? e.target.files[0] : null)
+                                            }
+                                            className="border p-1 rounded text-xs h-10"
+                                            />
+                                            {ineFiles[idx]?.reverso && (
+                                            <span className="text-xs text-green-600 mt-1">
+                                                Archivo listo: {ineFiles[idx].reverso.name}
+                                            </span>
+                                            )}
+                                        </div>
+
+                                        {/* Visualizador a la derecha */}
+                                        <div>
+                                            {ineFiles[idx]?.reverso?.type?.startsWith("image/") && (
+                                            <img
+                                                src={URL.createObjectURL(ineFiles[idx].reverso)}
+                                                alt="Previsualización INE Reverso"
+                                                className="max-w-[350px] rounded border"
+                                            />
+                                            )}
+
+                                            {ineFiles[idx]?.reverso?.type === "application/pdf" && (
+                                            <a
+                                                href={URL.createObjectURL(ineFiles[idx].reverso)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 text-xs underline"
+                                            >
+                                                Ver PDF INE Reverso
+                                            </a>
+                                            )}
+                                        </div>
+                                        </div>
+                                    </>
+                                    )}
+                                </div>
+                                );
+                            })}
+                            </form>
+                          
+                              {/* Resumen solo en mobile */}
+                            <div className="md:hidden mt-8 p-6 bg-white rounded shadow">
+                                <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
+                                <div className="flex items-center gap-2 text-sm mb-2">
+                                    <span>📅</span>
+                                    <span className="capitalize">{fechaDisplay}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm mb-2">
+                                    <span>⏰</span>
+                                    <span>{selectedTime}</span>
+                                </div>
+                                <div className="text-sm text-gray-500 mb-4">
+                                    Disponibilidad confirmada para {visitantes.length} pase{visitantes.length > 1 ? "s" : ""}<br />
+                                  
+                                </div>
+                                <div className="flex flex-col gap-1 text-sm mb-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span>Precio Adultos 14+</span>
+                                        <span>${precioAdulto} MXN</span>
+                                    </div>
+                                    {cantidadAdultos60 > 0 && (
+                                    <div className="flex justify-between text-sm">
+                                        <span>Precio Adultos 60+</span>
+                                        <span>${precioAdulto60} MXN</span>
+                                    </div>
+                                    )}
+                                    {cantidadNinos > 0 && ( 
+                                    <div className="flex justify-between text-sm">
+                                        <span>PrecioNiños 2-13</span>
+                                        <span>$70 MXN</span>
+                                    </div>
+                                    )}
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span>Subtotal</span>
+                                    <span>${subtotal} MXN</span>
+                                </div>
+                                {promoAplicado && (
+                                    <div className="flex justify-between text-sm text-green-700 font-bold">
+                                    <span>Descuento aplicado</span>
+                                    <span>-${DESCUENTO_PROMO} MXN</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between font-bold text-base">
+                                    <span>Total</span>
+                                    <span>${total}.00 MXN</span>
+                                </div>
+                                {/* Código promocional */}
+                                <input
+                                    className="mt-4 w-full border rounded px-2 py-1 text-sm"
+                                    placeholder="Código promocional"
+                                    value={codigoPromo}
+                                    onChange={e => setCodigoPromo(e.target.value)}
+                                    disabled={promoAplicado}
+                                />
+                                <button
+                                    type="button"
+                                    className="mt-2 w-full text-xs font-semibold text-black py-2 border border-gray-300 rounded hover:bg-gray-100"
+                                    onClick={aplicarPromo}
+                                    disabled={promoAplicado}
+                                >
+                                    Aplicar
+                                </button>
+                                {msgPromo && (
+                                    <div className={`text-xs mt-2 ${promoAplicado ? "text-green-700" : "text-red-600"}`}>
+                                    {msgPromo}
+                                    </div>
+                                )}
+                                {/* Botón finalizar para pago en efectivo */}
+                                <button
+                                    className={`mt-6 w-full py-2 rounded font-bold text-white ${
+                                    (metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid)
+                                        ? "bg-[#18668b] hover:bg-[#14526d]"
+                                        : "bg-gray-300 cursor-not-allowed"
+                                    }`}
+                                    onClick={() => {
+                                        handleContinuar();
+                                    }}
+                                    disabled={metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid}
+                                >
+                                    {metodoPago === "efectivo"
+                                    ? "Finalizar y ver resumen para pago en efectivo"
+                                    : "Continuar al resumen"}
+                                </button>
+                                <div className="mt-4 text-xs text-gray-500">
+                                    Los pases son válidos para la fecha y hora seleccionada.<br />
+                                    Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
+                                </div>
+                            </div>
                           <button
-                            className={`mt-6 w-full py-2 rounded font-bold text-white ${
-                              puedeFinalizarEfectivo
-                                ? "bg-[#18668b] hover:bg-[#14526d]"
-                                : "bg-gray-300 cursor-not-allowed"
-                            }`}
-                            onClick={handleContinuar}
-                            disabled={!puedeFinalizarEfectivo}
-                          >
-                            Finalizar y ver resumen para pago en efectivo
-                          </button>
-                        )}
+                                className="mt-20 w-full py-7 rounded font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b]"
+                                onClick={() => setPaso(1)}
+                            >
+                                Volver a datos de huéspedes
+                            </button>
+                        </div>
                     </div>
-                </>
-                )}
+                    )}  
             </section>
              {/* Columna imagen */}
             <aside className="hidden md:flex w-1/2 h-full items-center justify-center bg-[#f8fafc]">
@@ -879,21 +1329,29 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 <span>{selectedTime}</span>
                             </div>
                           <div className="text-sm text-gray-500 mb-4">
-                            Disponibilidad confirmada para {visitantes.length} persona{visitantes.length > 1 ? "s" : ""}<br />
-                            {ninos > 0 && (
-                                <p className="block mt-1 text-gray-500">
-                                    {ninos} niño{ninos > 1 ? "s" : ""} agregado{ninos > 1 ? "s" : ""}
-                                </p>
-                            )}
+                            Disponibilidad confirmada para {visitantes.length} pase{visitantes.length > 1 ? "s" : ""}<br />
+                            
                         </div>
                             <div className="flex justify-between mb-1 text-sm">
                                 <span className="text-black">Pases de Acceso General</span>
                                 <span className="text-black">{visitantes.length} pases</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span>Precio por pase</span>
-                                <span>${PRECIO_PASE} MXN</span>
+                                <span>Precio Adultos 14+</span>
+                                <span>${precioAdulto} MXN</span>
                             </div>
+                            {cantidadAdultos60 > 0 && (
+                               <div className="flex justify-between text-sm">
+                                <span>Precio Adultos 60+</span>
+                                <span>${precioAdulto60} MXN</span>
+                            </div>
+                            )}
+                             {cantidadNinos > 0 && ( 
+                              <div className="flex justify-between text-sm">
+                                <span>PrecioNiños 2-13</span>
+                                <span>$70 MXN</span>
+                            </div>
+                            )}
                             <div className="flex justify-between text-sm">
                                 <span>Subtotal</span>
                                 <span>${subtotal} MXN</span>
@@ -931,18 +1389,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 </div>
                             )}
                             
-                            {/* <button
-                                onClick={handleContinuar}
-                                disabled={!puedeContinuar}
-                                className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar
-                                    ? "bg-[#18668b] hover:bg-[#14526d]"
-                                    : "bg-gray-300 cursor-not-allowed"
-                                }`}
-                            >
-                                Continuar con Transporte
-                            </button> */}
-                            
-
                             <h4 className="font-bold mb-3 mt-8">Resumen de reserva</h4>
                             {/* Total visible siempre */}
                             <div className="flex justify-between font-bold text-lg mb-4">
@@ -966,100 +1412,10 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     />
                                     <span>Efectivo</span>
                                 </label>
-                                {/* <label className="flex items-center cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        className="mr-2"
-                                        name="metodoPago"
-                                        value="tarjeta"
-                                        checked={metodoPago === "tarjeta"}
-                                        onChange={() => {
-                                            setMetodoPago("tarjeta");
-                                            setPaid(false);
-                                        }}
-                                    />
-                                    <span>Tarjeta</span>
-                                </label> */}
+                              
                             </div>
 
-                            {/* Pago tarjeta visible solo si es tarjeta */}
-                            {/* {!paid && metodoPago === "tarjeta" && (
-                                <form
-                                    className="border-t pt-4 mt-3 flex flex-col gap-2"
-                                    onSubmit={handlePay}
-                                    autoComplete="off"
-                                >
-                                    <h5 className="font-semibold mb-2">Paga con tarjeta</h5>
-                                    <input
-                                        className="border rounded px-2 py-2 text-sm"
-                                        placeholder="Nombre en la tarjeta"
-                                        type="text"
-                                        required
-                                        value={card.name}
-                                        disabled={isPaying}
-                                        onChange={e => setCard({ ...card, name: e.target.value })}
-                                    />
-                                    <input
-                                        className="border rounded px-2 py-2 text-sm"
-                                        placeholder="Número de tarjeta"
-                                        maxLength={16}
-                                        type="text"
-                                        inputMode="numeric"
-                                        required
-                                        value={card.num}
-                                        disabled={isPaying}
-                                        onChange={e => setCard({ ...card, num: e.target.value.replace(/\D/g, "") })}
-                                    />
-                                    <div className="flex gap-x-3">
-                                        <input
-                                            className="border rounded px-2 py-2 text-sm w-2/3"
-                                            placeholder="MM/AA"
-                                            maxLength={5}
-                                            type="text"
-                                            required
-                                            value={card.exp}
-                                            disabled={isPaying}
-                                            onChange={handleExpChange}
-                                            style={{
-                                                borderColor:
-                                                    card.exp.length === 5 && !isExpValid(card.exp)
-                                                        ? "#f87171"
-                                                        : undefined,
-                                            }}
-                                        />
-                                        <input
-                                            className="border rounded px-2 py-2 text-sm w-1/3"
-                                            placeholder="CVC"
-                                            maxLength={4}
-                                            type="text"
-                                            required
-                                            value={card.cvc}
-                                            disabled={isPaying}
-                                            onChange={e => setCard({ ...card, cvc: e.target.value.replace(/\D/g, "") })}
-                                        />
-                                    </div>
-                                    {card.exp.length === 5 && !isExpValid(card.exp) && (
-                                        <span className="text-xs text-red-600">Fecha inválida</span>
-                                    )}
-
-                                    <button
-                                        type="submit"
-                                        className="w-full py-2 mt-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition"
-                                        disabled={isPaying}
-                                    >
-                                        {isPaying ? "Procesando..." : "Pagar con tarjeta"}
-                                    </button>
-                                    <div className="text-xs text-gray-400 mt-1">
-                                        * Simulación, no se procesa pago real.
-                                    </div>
-                                </form>
-                            )}
-                            {/* Pago realizado 
-                            {paid && metodoPago === "tarjeta" && (
-                                <div className="mt-4 text-green-700 text-center font-bold">
-                                    ¡Pago realizado con éxito!
-                                </div>
-                            )} */}
+                           
                             {paid && metodoPago === "efectivo" && (
                                 <div className="mt-4 text-yellow-700 text-center font-bold">
                                     Presenta este resumen y paga en taquilla.
@@ -1072,30 +1428,23 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                   ? "bg-[#18668b] hover:bg-[#14526d]"
                                   : "bg-gray-300 cursor-not-allowed"
                               }`}
-                              onClick={handleContinuar}
+                               onClick={() => {
+                                        handleContinuar();
+                                    }}
                               disabled={metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid}
                             >
                               {metodoPago === "efectivo"
                                 ? "Finalizar y ver resumen para pago en efectivo"
                                 : "Continuar al resumen"}
                             </button>
-                            {/* <button
-                                onClick={handleSiguiente}
-                                disabled={!puedeContinuar}
-                                className={`mt-6 w-full py-2 rounded font-bold text-white ${puedeContinuar
-                                    ? "bg-[#18668b] hover:bg-[#14526d]"
-                                    : "bg-gray-300 cursor-not-allowed"
-                                }`}
-                            >
-                                Continuar a Extras
-                            </button> */}
+                           
                             <div className="mt-4 text-xs text-gray-500">
                                 Los pases son válidos para la fecha y hora seleccionada.<br />
                                 Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
                             </div>
                         </div>
                     </>
-                    )} 
+                    )}  
 
 
             </aside>
@@ -1103,4 +1452,21 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
             {/* <Footer /> */}
           </div>
     );
+}
+
+function getPrecioPorTipo(fecha: string, tipo: "adulto" | "adulto60" | "nino" | "menor2") {
+    const diaSemana = new Date(fecha).getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
+    if (tipo === "adulto") {
+        return [1,2,3,4].includes(diaSemana) ? 350 : 420;
+    }
+    if (tipo === "adulto60") {
+        return [1,2,3,4].includes(diaSemana) ? 300 : 360;
+    }
+    if (tipo === "nino") {
+        return 70;
+    }
+    if (tipo === "menor2") {
+        return 0;
+    }
+    return 0;
 }
