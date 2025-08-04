@@ -9,6 +9,7 @@ import toast, {Toaster} from "react-hot-toast";
 import {FiPlus, FiTrash2} from "react-icons/fi";
 import Stepper from "@/components/Stepper";
 import axios from "axios";
+import { Country, State, City } from "country-state-city";
 
 const CODIGO_PROMO = "PROMO100";
 const DESCUENTO_PROMO = 100;
@@ -74,6 +75,142 @@ function formatFechaEs(year: number, month: number, day: number) {
 }
 
 export default function DaypassUnicaPage() {
+    
+    const [paises, setPaises] = useState<string[]>([]);
+    const [estados, setEstados] = useState<string[]>([]);
+    const [ciudades, setCiudades] = useState<string[]>([]);
+
+useEffect(() => {
+  async function cargarPaises() {
+    try {
+      const res = await fetch("https://countriesnow.space/api/v0.1/countries/positions");
+      const data = await res.json();
+      const nombres = Array.isArray(data.data)
+        ? data.data.map((p: any) => p.name)
+        : [];
+      setPaises(nombres);
+    } catch (error) {
+      console.error("Error al cargar países:", error);
+    }
+  }
+
+  async function detectarUbicacionPorIP() {
+    try {
+      const res = await fetch("https://ipapi.co/json/");
+      const data = await res.json();
+
+      const pais = data.country_name;      // ej. "Mexico"
+      const estado = data.region;          // ej. "Jalisco"
+      const ciudad = data.city;            // ej. "Zapopan"
+
+      console.log("Detectado por IP:", pais, estado, ciudad);
+
+      // Cargamos estados y ciudades según país/estado detectados
+      await fetchEstadosDePais(pais);
+      await fetchCiudadesDeEstado(pais, estado);
+
+      // Asignamos la ubicación detectada al visitante 0
+      setVisitantes((prev) => {
+        const copia = [...prev];
+        copia[0].pais = pais;
+        copia[0].estado = estado;
+        copia[0].ciudad = ciudad;
+        return copia;
+      });
+    } catch (error) {
+      console.error("Error al detectar ubicación por IP:", error);
+    }
+  }
+
+  cargarPaises();
+  detectarUbicacionPorIP();
+}, []);
+
+const fetchEstadosDePais = async (paisNombre: string) => {
+  if (!paisNombre) return;
+
+  try {
+    const res = await fetch("https://countriesnow.space/api/v0.1/countries/states", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: paisNombre }),
+    });
+
+    const data = await res.json();
+
+    if (data.data && Array.isArray(data.data.states)) {
+      const estados = data.data.states.map((s: any) => s.name);
+      setEstados(estados);
+    } else {
+      console.warn("No se encontraron estados para:", paisNombre);
+      setEstados([]);
+    }
+  } catch (error) {
+    console.error("Error al cargar estados:", error);
+    setEstados([]);
+  }
+};
+
+const fetchCiudadesDeEstado = async (paisNombre: string, estadoNombre: string) => {
+  if (!paisNombre || !estadoNombre) return;
+
+  try {
+    const res = await fetch("https://countriesnow.space/api/v0.1/countries/state/cities", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: paisNombre, state: estadoNombre }),
+    });
+
+    const data = await res.json();
+
+    if (Array.isArray(data.data)) {
+      setCiudades(data.data);
+    } else {
+      console.warn(`No se encontraron ciudades para ${estadoNombre}, ${paisNombre}`);
+      setCiudades([]);
+    }
+  } catch (error) {
+    console.error("Error al cargar ciudades:", error);
+    setCiudades([]);
+  }
+};
+
+const handlePaisChange = (idx: number, paisNombre: string) => {
+  setVisitantes((prev) => {
+    const copia = [...prev];
+    copia[idx].pais = paisNombre;
+    copia[idx].estado = "";
+    copia[idx].ciudad = "";
+    return copia;
+  });
+
+  fetchEstadosDePais(paisNombre);
+};
+
+const handleEstadoChange = (idx: number, estadoNombre: string) => {
+  setVisitantes((prev) => {
+    const copia = [...prev];
+    const paisActual = copia[idx].pais; // usamos la copia ya actualizada
+    copia[idx].estado = estadoNombre;
+    copia[idx].ciudad = "";
+
+    fetchCiudadesDeEstado(paisActual, estadoNombre);
+
+    return copia;
+  });
+};
+const handleCiudadChange = (idx: number, ciudadNombre: string) => {
+  setVisitantes((prev) => {
+    const copia = [...prev];
+    copia[idx].ciudad = ciudadNombre;
+    return copia;
+  });
+};
+
+
+
+
+
     useEffect(() => {
         localStorage.clear();
     }, []);
@@ -258,6 +395,7 @@ const precioAdulto60 = getPrecioPorTipo(fechaSeleccionada, "adulto60");
 const precioNino = getPrecioPorTipo(fechaSeleccionada, "nino");
 const precioMenor2 = getPrecioPorTipo(fechaSeleccionada, "menor2");
 
+
 const subtotalAdultos = cantidadAdultos * precioAdulto;
 const subtotalAdultos60 = cantidadAdultos60 * precioAdulto60;
 const subtotalNinos = cantidadNinos * precioNino;
@@ -265,6 +403,21 @@ const subtotalMenores2 = cantidadMenores2 * precioMenor2;
 
 const subtotal = subtotalAdultos + subtotalAdultos60 + subtotalNinos + subtotalMenores2;
 const total = Math.max(subtotal - descuento, 0);
+// Porcentajes
+const porcentajePlataforma = 0.05;  // 5%
+const porcentajeTerminal = 0.03;    // 3%
+const porcentajeIVA = 0.16;         // 16%
+
+// Descuento aplicado al subtotal
+const subtotalConDescuento = Math.max(subtotal - descuento, 0);
+
+// Montos adicionales
+const montoPlataforma = subtotalConDescuento * porcentajePlataforma;
+const montoTerminal = subtotalConDescuento * porcentajeTerminal;
+const montoIVA = subtotalConDescuento * porcentajeIVA;
+
+// Total final
+const totalConCargos = subtotalConDescuento + montoPlataforma + montoTerminal + montoIVA;
 
     // Prepara los datos del formulario para enviar por correo electrónico
     function prepararDatosParaCorreo() {
@@ -576,7 +729,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     }
 
     console.log("Reserva enviada correctamente:", json);
-    alert("¡Reservación enviada correctamente!");
     window.location.href = "/daypass/resumen";
   } catch (error) {
     console.error("Error inesperado:", error);
@@ -792,7 +944,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                         </div>
                         {ninos > 0 && (
                         <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-20 text-sm text-gray-700 mt-2">
-                            Los niños de 2 a 13 años deben estar acompañados por un adulto. No incluye bebida ni bata. Niños menores de 8 años deben usar flotadores.
+                            Los niños de 2 a 13 años deben estar acompañados por un adulto. No incluye acceso al jardín termal, acceso GRATIS para niños menores de 2 años.
                         </div>
                         )}
                         
@@ -1064,54 +1216,76 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     {idx === 0 && !esNino && (
                                     <>
                                         <div className="flex flex-row gap-6">
-                                        {/* Ciudad */}
-                                        <div className="flex flex-col flex-1">
+                                            {/* Ciudad */}
+                                            <div className="flex flex-col flex-1">
                                             <label className="block text-xs font-bold text-black mb-1">Ciudad</label>
-                                            <input
-                                            type="text"
-                                            value={vis.ciudad}
-                                            onChange={(e) => handleVis(idx, "ciudad", e.target.value)}
-                                            onBlur={() => handleBlur(idx, "ciudad")}
-                                            className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${
-                                            touched[idx]?.ciudad && !ciudadValido ? "border-red-500" : "border-gray-300"
-                                            }`}
-                                        />
-                                        {touched[idx]?.ciudad && !ciudadValido && (
-                                            <p className="text-red-600 text-sm mt-1">La ciudad es obligatoria.</p>
-                                        )}
-                                        </div>
-                                        {/* Estado */}
-                                        <div className="flex flex-col flex-1">
+                                            <select
+                                                value={vis.ciudad}
+                                                onChange={(e) => handleCiudadChange(idx, e.target.value)}
+                                                onBlur={() => handleBlur(idx, "ciudad")}
+                                                className={`border p-2 rounded w-full transition-colors duration-150 h-13 text-black ${
+                                                touched[idx]?.ciudad && !ciudadValido ? "border-red-500" : "border-gray-300"
+                                                }`}
+                                                disabled={!vis.estado}
+                                            >
+                                                <option value="">Selecciona ciudad</option>
+                                                {(ciudades ?? []).map((ciudad) => (
+                                                <option key={ciudad} value={ciudad}>
+                                                    {ciudad}
+                                                </option>
+                                                ))}
+                                            </select>
+                                            {touched[idx]?.ciudad && !ciudadValido && (
+                                                <p className="text-red-600 text-sm mt-1">La ciudad es obligatoria.</p>
+                                            )}
+                                            </div>
+                                                                            
+                                            {/* Estado */}
+                                            <div className="flex flex-col flex-1">
                                             <label className="block text-xs font-bold text-black mb-1">Estado</label>
-                                            <input
-                                            type="text"
-                                            value={vis.estado}
-                                            onChange={(e) => handleVis(idx, "estado", e.target.value)}
-                                            onBlur={() => handleBlur(idx, "estado")}
-                                            className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${
-                                            touched[idx]?.estado && !estadoValido ? "border-red-500" : "border-gray-300"
-                                            }`}
-                                        />
-                                        {touched[idx]?.estado && !estadoValido && (
-                                            <p className="text-red-600 text-sm mt-1">El estado es obligatorio.</p>
-                                        )}
-                                        </div>
-                                        {/* País */}
-                                        <div className="flex flex-col flex-1">
+                                            <select
+                                                value={vis.estado}
+                                                onChange={(e) => handleEstadoChange(idx, e.target.value)}
+                                                onBlur={() => handleBlur(idx, "estado")}
+                                                className={`border p-2 rounded w-full transition-colors duration-150 h-13 text-black ${
+                                                touched[idx]?.estado && !estadoValido ? "border-red-500" : "border-gray-300"
+                                                }`}
+                                                disabled={!vis.pais}
+                                            >
+                                                <option value="">Selecciona estado</option>
+                                                {(estados ?? []).map((estado) => (
+                                                <option key={estado} value={estado}>
+                                                    {estado}
+                                                </option>
+                                                ))}
+                                            </select>
+                                            {touched[idx]?.estado && !estadoValido && (
+                                                <p className="text-red-600 text-sm mt-1">El estado es obligatorio.</p>
+                                            )}
+                                            </div>
+
+                                                {/* País */}
+                                            <div className="flex flex-col flex-1">
                                             <label className="block text-xs font-bold text-black mb-1">País</label>
-                                            <input
-                                            type="text"
-                                            value={vis.pais}
-                                            onChange={(e) => handleVis(idx, "pais", e.target.value)}
-                                            onBlur={() => handleBlur(idx, "pais")}
-                                            className={`border p-2 rounded w-full transition-colors duration-150 h-13 ${
-                                            touched[idx]?.pais && !paisValido ? "border-red-500" : "border-gray-300"
-                                            }`}
-                                        />
-                                        {touched[idx]?.pais && !paisValido && (
-                                            <p className="text-red-600 text-sm mt-1">El país es obligatorio.</p>
-                                        )}
-                                                                                </div>
+                                            <select
+                                                value={vis.pais}
+                                                onChange={(e) => handlePaisChange(idx, e.target.value)}
+                                                onBlur={() => handleBlur(idx, "pais")}
+                                                className={`border p-2 rounded w-full transition-colors duration-150 h-13 text-black ${
+                                                touched[idx]?.pais && !paisValido ? "border-red-500" : "border-gray-300"
+                                                }`}
+                                            >
+                                                <option value="">Selecciona país</option>
+                                                {(paises ?? []).map((pais) => (
+                                                <option key={pais} value={pais}>
+                                                    {pais}
+                                                </option>
+                                                ))}
+                                            </select>
+                                            {touched[idx]?.pais && !paisValido && (
+                                                <p className="text-red-600 text-sm mt-1">El país es obligatorio.</p>
+                                            )}
+                                            </div>
                                         </div>
                                      {/* INE Frente */}
                                         <div className="flex flex-row items-start gap-4 mt-4">
@@ -1240,20 +1414,30 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     </div>
                                     )}
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span>Subtotal</span>
-                                    <span>${subtotal} MXN</span>
-                                </div>
+                                 <div className="flex justify-between text-sm">
+                                <span>Plataforma (5%)</span>
+                                <span>${montoPlataforma.toFixed(2)} MXN</span>
+                            </div> <div className="flex justify-between text-sm">
+                                <span>Terminal (3%)</span>
+                                <span>${montoTerminal .toFixed(2)} MXN</span>
+                            </div> <div className="flex justify-between text-sm">
+                                <span>IVA (16%)</span>
+                                <span>${montoIVA .toFixed(2)} MXN</span>
+                            </div>
                                 {promoAplicado && (
                                     <div className="flex justify-between text-sm text-green-700 font-bold">
                                     <span>Descuento aplicado</span>
                                     <span>-${DESCUENTO_PROMO} MXN</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between font-bold text-base">
-                                    <span>Total</span>
-                                    <span>${total}.00 MXN</span>
-                                </div>
+                                <div className="flex justify-between text-sm">
+                                <span>Subtotal</span>
+                                <span>${subtotalConDescuento} MXN</span>
+                            </div>
+                            <div className="flex justify-between font-bold text-base">
+                                <span>Total</span>
+                                <span>${totalConCargos.toFixed(2)} MXN</span>
+                            </div>
                                 {/* Código promocional */}
                                 <input
                                     className="mt-4 w-full border rounded px-2 py-1 text-sm"
@@ -1275,6 +1459,37 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     {msgPromo}
                                     </div>
                                 )}
+                                 <h4 className="font-bold mb-3 mt-8">Resumen de reserva</h4>
+                            {/* Total visible siempre */}
+                            <div className="flex justify-between font-bold text-lg mb-4">
+                                <span>Total:</span>
+                                <span>${totalConCargos.toFixed(2)} MXN</span>
+                            </div>
+                             {/* NUEVO: Método de pago */}
+                            <div className="flex gap-3 mb-4">
+                                <label className="flex items-center cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        className="mr-2"
+                                        name="metodoPago"
+                                        value="efectivo"
+                                        checked={metodoPago === "efectivo"}
+                                        onChange={() => {
+                                            setMetodoPago("efectivo");
+                                            setPaid(true); // Efectivo se considera "pagado"
+                                        }}
+                                    />
+                                    <span>Efectivo</span>
+                                </label>
+                              
+                            </div>
+                               {paid && metodoPago === "efectivo" && (
+                                <div className="mt-4 text-yellow-700 text-center font-bold">
+                                    Presenta este resumen y paga en taquilla.
+                                </div>
+                            )}
+
+
                                 {/* Botón finalizar para pago en efectivo */}
                                 <button
                                     className={`mt-6 w-full py-2 rounded font-bold text-white ${
@@ -1352,9 +1567,16 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 <span>$70 MXN</span>
                             </div>
                             )}
-                            <div className="flex justify-between text-sm">
-                                <span>Subtotal</span>
-                                <span>${subtotal} MXN</span>
+                           
+                             <div className="flex justify-between text-sm">
+                                <span>Plataforma (5%)</span>
+                                <span>${montoPlataforma.toFixed(2)} MXN</span>
+                            </div> <div className="flex justify-between text-sm">
+                                <span>Terminal (3%)</span>
+                                <span>${montoTerminal .toFixed(2)} MXN</span>
+                            </div> <div className="flex justify-between text-sm">
+                                <span>IVA (16%)</span>
+                                <span>${montoIVA .toFixed(2)} MXN</span>
                             </div>
                             {promoAplicado && (
                                 <div className="flex justify-between text-sm text-green-700 font-bold">
@@ -1362,10 +1584,15 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     <span>-${DESCUENTO_PROMO} MXN</span>
                                 </div>
                             )}
+                             <div className="flex justify-between text-sm">
+                                <span>Subtotal</span>
+                                <span>${subtotalConDescuento} MXN</span>
+                            </div>
                             <div className="flex justify-between font-bold text-base">
                                 <span>Total</span>
-                                <span>${total}.00 MXN</span>
+                                <span>${totalConCargos.toFixed(2)} MXN</span>
                             </div>
+
 
                             {/* Código promocional */}
                             <input
@@ -1393,7 +1620,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             {/* Total visible siempre */}
                             <div className="flex justify-between font-bold text-lg mb-4">
                                 <span>Total:</span>
-                                <span>${total} MXN</span>
+                                <span>${totalConCargos.toFixed(2)} MXN</span>
                             </div>
 
                             {/* NUEVO: Método de pago */}
@@ -1455,18 +1682,24 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 }
 
 function getPrecioPorTipo(fecha: string, tipo: "adulto" | "adulto60" | "nino" | "menor2") {
-    const diaSemana = new Date(fecha).getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
-    if (tipo === "adulto") {
-        return [1,2,3,4].includes(diaSemana) ? 350 : 420;
-    }
-    if (tipo === "adulto60") {
-        return [1,2,3,4].includes(diaSemana) ? 300 : 360;
-    }
-    if (tipo === "nino") {
-        return 70;
-    }
-    if (tipo === "menor2") {
-        return 0;
-    }
+  const [year, month, day] = fecha.split("-");
+  const fechaLocal = new Date(Number(year), Number(month) - 1, Number(day));
+  const diaSemana = fechaLocal.getDay(); // 0=Domingo, ..., 6=Sábado
+
+  const esLunesAJueves = diaSemana >= 1 && diaSemana <= 4;
+
+  if (tipo === "adulto") {
+    return esLunesAJueves ? 350 : 420;
+  }
+  if (tipo === "adulto60") {
+    return esLunesAJueves ? 300 : 360;
+  }
+  if (tipo === "nino") {
+    return 70;
+  }
+  if (tipo === "menor2") {
     return 0;
+  }
+
+  return 0;
 }
