@@ -16,34 +16,34 @@ const DESCUENTO_PROMO = 100;
 const PRECIO_PASE = 350;
 
 
-function getPrecioPase(fecha: string, categoria: string = "general") {
-    // Obtén el día de la semana: 0=Domingo, 1=Lunes, ..., 6=Sábado
-    const diaSemana = new Date(fecha).getDay();
-    // Lunes a Jueves: 1-4, Viernes a Domingo: 0, 5, 6
-    if ([1, 2, 3, 4].includes(diaSemana)) {
-        // Lunes a Jueves
-        switch (categoria) {
-            case "general": return 350;
-            case "grupos": return 325;
-            case "inapam": return 300;
-            case "convenios": return 300;
-            case "locales": return 250;
-            case "discapacidad": return 250;
-            default: return 350;
-        }
-    } else {
-        // Viernes a Domingo
-        switch (categoria) {
-            case "general": return 420;
-            case "grupos": return 390;
-            case "inapam": return 360;
-            case "convenios": return 360;
-            case "locales": return 300;
-            case "discapacidad": return 300;
-            default: return 420;
-        }
-    }
-}
+// function getPrecioPase(fecha: string, categoria: string = "general") {
+//     // Obtén el día de la semana: 0=Domingo, 1=Lunes, ..., 6=Sábado
+//     const diaSemana = new Date(fecha).getDay();
+//     // Lunes a Jueves: 1-4, Viernes a Niños menores de 13 años entran gratis.Domingo: 0, 5, 6
+//     if ([1, 2, 3, 4].includes(diaSemana)) {
+//         // Lunes a Jueves
+//         switch (categoria) {
+//             case "general": return 350;
+//             case "grupos": return 325;
+//             case "inapam": return 300;
+//             case "convenios": return 300;
+//             case "locales": return 250;
+//             case "discapacidad": return 250;
+//             default: return 350;
+//         }
+//     } else {
+//         // Viernes a Domingo
+//         switch (categoria) {
+//             case "general": return 420;
+//             case "grupos": return 390;
+//             case "inapam": return 360;
+//             case "convenios": return 360;
+//             case "locales": return 300;
+//             case "discapacidad": return 300;
+//             default: return 420;
+//         }
+//     }
+// }
 
 const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -75,7 +75,7 @@ function formatFechaEs(year: number, month: number, day: number) {
 }
 
 export default function DaypassUnicaPage() {
-    
+
     const [paises, setPaises] = useState<string[]>([]);
     const [estados, setEstados] = useState<string[]>([]);
     const [ciudades, setCiudades] = useState<string[]>([]);
@@ -256,7 +256,7 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
         pais: ""
     }))
     );
-    
+
 
     function validateNombre(nombre: string) {
         return nombre.trim().length > 0;
@@ -278,7 +278,7 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
     const validateEstado = (estado: string) => estado.trim() !== "";
     const validatePais = (pais: string) => pais.trim() !== "";
     const validateIne = (ine: string) => ine.trim() !== "";
-    
+
     const puedeContinuar =
         visitantes.every(
             (v, i) =>
@@ -389,11 +389,14 @@ const handleBlur = (idx: number, campo: Campo) => {
     const cantidadAdultos60 = adultos60;
     const cantidadNinos = ninos;
     const cantidadMenores2 = 0; // Si manejas menores de 2 años, ajusta aquí
+    const esGrupo = (cantidadAdultos + cantidadAdultos60) >= 12;
 
-const precioAdulto = getPrecioPorTipo(fechaSeleccionada, "adulto");
-const precioAdulto60 = getPrecioPorTipo(fechaSeleccionada, "adulto60");
-const precioNino = getPrecioPorTipo(fechaSeleccionada, "nino");
-const precioMenor2 = getPrecioPorTipo(fechaSeleccionada, "menor2");
+
+const precioAdulto = getPrecioPorTipo(fechaSeleccionada, "adulto", esGrupo);
+const precioAdulto60 = getPrecioPorTipo(fechaSeleccionada, "adulto60", esGrupo);
+const precioNino = getPrecioPorTipo(fechaSeleccionada, "nino", esGrupo);
+const precioMenor2 = getPrecioPorTipo(fechaSeleccionada, "menor2", esGrupo);
+
 
 
 const subtotalAdultos = cantidadAdultos * precioAdulto;
@@ -418,6 +421,16 @@ const montoIVA = subtotalConDescuento * porcentajeIVA;
 
 // Total final
 const totalConCargos = subtotalConDescuento + montoPlataforma + montoTerminal + montoIVA;
+function calcularCortesias(totalAdultos: number): number {
+  if (totalAdultos >= 60) return 4;
+  if (totalAdultos >= 45) return 3;
+  if (totalAdultos >= 30) return 2;
+  if (totalAdultos >= 15) return 1;
+  return 0;
+}
+const totalAdultosUnicos = cantidadAdultos + cantidadAdultos60;
+const cortesias = calcularCortesias(totalAdultosUnicos);
+
 
     // Prepara los datos del formulario para enviar por correo electrónico
     function prepararDatosParaCorreo() {
@@ -631,13 +644,13 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
             return copia;
         });
     };
-    
+
     const [paso, setPaso] = useState(1);
     const pasos = [
         { label: "Huéspedes", paso: 1 },
         { label: "Fecha y Tiempo", paso: 2 },
         { label: "Verificar", paso: 3 },
-        
+
     ];
 
     const imagenes = [
@@ -645,7 +658,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         "/assets/img-5.webp",        // Paso 2
         "/image.png",   // Paso 3
     ];
-  
+
 
     const hoy = new Date();
     hoy.setHours(0,0,0,0);
@@ -737,24 +750,50 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 }
 
 
+function getPrecioPorTipo(
+  fecha: string,
+  tipo: "adulto" | "adulto60" | "nino" | "menor2",
+  esGrupo: boolean = false
+) {
+  const [year, month, day] = fecha.split("-");
+  const fechaLocal = new Date(Number(year), Number(month) - 1, Number(day));
+  const diaSemana = fechaLocal.getDay(); // 0=Domingo, ..., 6=Sábado
+
+  const esLunesAJueves = diaSemana >= 1 && diaSemana <= 4;
+
+  if (tipo === "adulto") {
+    if (esGrupo) return esLunesAJueves ? 325 : 390;
+    return esLunesAJueves ? 350 : 420;
+  }
+
+  if (tipo === "adulto60") {
+    if (esGrupo) return esLunesAJueves ? 300 : 360;
+    return esLunesAJueves ? 300 : 360;
+  }
+
+  if (tipo === "nino") return 70;
+  if (tipo === "menor2") return 0;
+
+  return 0;
+}
 
 
 
-
+// ------------------------------------------------------------ RETURN --------------------------------------------------------------
     return (
-        
+
 
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
             <Toaster position="top-center" />
             {/* <Header /> */}
 
-            
+
 
             {/* <h1 className="text-2xl font-bold text-center mb-8 text-[#18668b] pt-12">
                 Completa tu Reservación y Agenda tu Visita
             </h1> */}
             <main className="flex flex-row w-full min-h-[calc(100vh-120px)] max-w-none">
-                
+
             <section className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12">
                  {/* Stepper visual */}
             <div className="flex items-center justify-center gap-6 mt-0 mb-auto">
@@ -802,7 +841,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             ¿Cuántos visitantes son?
                         </div>
                         <p className="mb-10 text-gray-600 text-2xl">
-                        El precio varía según el horario. Niños menores de 13 años entran gratis.
+                        El precio varía según el horario. Niños menores de 2 años entran gratis.
                         </p>
                         <div className="space-y-6 mb-0 mt-auto">
                             {/* Adultos */}
@@ -839,14 +878,13 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                         type="button"
                                         className="px-3 py-1 rounded text-xl font-bold bg-gray-200 hover:bg-[#302f2f] text-black hover:text-white"
                                         onClick={() => {
-                                            if (adultos < 14) {
+
                                                 setAdultos(adultos + 1);
                                                 setVisitantes((prev) => [...prev, { nombre: "", apellido:"", correo: "", celular: "", cumple:"", ciudad:"",estado:"",pais:"",tipo: "adulto",}]);
                                                 setTouched((prev) => [...prev, {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}]);
                                                 setIneFiles((prev) => [...prev, { frente: null, reverso: null }]);
-                                            }
+
                                         }}
-                                        disabled={adultos + adultos60 >= 14}
                                     >+</button>
                                 </div>
                             </div>
@@ -872,25 +910,24 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                                     const nuevo = prev.slice(0, prev.length - 1);
                                                     return nuevo.length === 0 ? [{ frente: null, reverso: null }] : nuevo;
                                                 });
-                                                
+
                                             }
                                         }}
                                         disabled={adultos60 <= 0}
-                                        
+
                                     >-</button>
                                     <span className="text-xl font-bold">{adultos60}</span>
                                     <button
                                         type="button"
                                         className="px-3 py-1 rounded text-xl font-bold bg-gray-200 hover:bg-[#302f2f] text-black hover:text-white"
                                         onClick={() => {
-                                            if (adultos60 < 14) {
+
                                                 setAdultos60(adultos60 + 1);
                                                 setVisitantes((prev) => [...prev, { nombre: "", apellido:"", correo: "", celular: "" , cumple:"", ciudad:"", estado:"", pais:"",tipo: "adulto", }]);
                                                 setTouched((prev) => [...prev, {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}]);
                                                 setIneFiles((prev) => [...prev, { frente: null, reverso: null }]);
-                                            }
+
                                         }}
-                                        disabled={adultos60 + adultos >= 14}
                                     >+</button>
                                 </div>
                             </div>
@@ -947,15 +984,16 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             Los niños de 2 a 13 años deben estar acompañados por un adulto. No incluye acceso al jardín termal, acceso GRATIS para niños menores de 2 años.
                         </div>
                         )}
-                        
+
                          {adultos60 > 0 && (
                         <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-41 text-sm text-gray-700 mt-23">
                            Los adultos mayores de 60 años de edad deberán presentar tarjeda del INAPAM actualizada, de lo contrario se cobrará la entrada a precio regular.
                         </div>
                         )}
-                         {adultos + adultos60 >= 14 && (
+                         {adultos + adultos60 >= 12 && (
                         <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-49 text-sm text-gray-700 mt-44">
-                           Si desea reservar para más de 14 adultos, póngase en contacto con nuestro <a href="#" className="text-blue-700"> Servicio de Atención al Cliente</a> para consultar la disponibilidad.
+                           Al reservar para 12 o más adultos, se aplicará automáticamente una tarifa preferencial. Para grupos de 15 personas o más, se otorgarán cortesías proporcionales según la cantidad total de asistentes (los precios y cortesias se veran reflejados en el calculo final).
+
                         </div>
                         )}
                         <button
@@ -966,7 +1004,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                         </button>
                     </>
                 )}
-        
+
 
                 {/* Paso 2: Fecha y horario */}
                 {paso === 2 && (
@@ -1075,7 +1113,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                         </div>
                     </div>
                     </div>
-                  
+
                    <button
                         className="w-full py-7 rounded font-bold text-white bg-gradient-to-r bg-[#62a7c7] hover:bg-[#14526d] mt-30"
                         onClick={() => setPaso(3)}
@@ -1085,12 +1123,12 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                 </>
                 )}
 
-                 
+
                 {/* Paso 3:  */}
                 {paso === 3 && (
                     <div className="relative h-[800px] overflow-hidden">
                         <div className="overflow-y-auto h-full">
-                        
+
                             <div className="text-gray-700 text-4xl font-bold mb-5 mt-5 overflow-hidden">
                             Detalles de la reserva
                             </div>
@@ -1211,7 +1249,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                         <p className="text-red-600 text-sm mt-1">Selecciona una fecha válida.</p>
                                     )}
                                     </div>
-                                    
+
                                     {/* Solo visitante 1: ciudad, estado, país */}
                                     {idx === 0 && !esNino && (
                                     <>
@@ -1239,7 +1277,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                                 <p className="text-red-600 text-sm mt-1">La ciudad es obligatoria.</p>
                                             )}
                                             </div>
-                                                                            
+
                                             {/* Estado */}
                                             <div className="flex flex-col flex-1">
                                             <label className="block text-xs font-bold text-black mb-1">Estado</label>
@@ -1380,7 +1418,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 );
                             })}
                             </form>
-                          
+
                               {/* Resumen solo en mobile */}
                             <div className="md:hidden mt-8 p-6 bg-white rounded shadow">
                                 <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
@@ -1394,7 +1432,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 </div>
                                 <div className="text-sm text-gray-500 mb-4">
                                     Disponibilidad confirmada para {visitantes.length} pase{visitantes.length > 1 ? "s" : ""}<br />
-                                  
+
                                 </div>
                                 <div className="flex flex-col gap-1 text-sm mb-2">
                                     <div className="flex justify-between text-sm">
@@ -1407,7 +1445,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                         <span>${precioAdulto60} MXN</span>
                                     </div>
                                     )}
-                                    {cantidadNinos > 0 && ( 
+                                    {cantidadNinos > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span>PrecioNiños 2-13</span>
                                         <span>$70 MXN</span>
@@ -1481,7 +1519,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     />
                                     <span>Efectivo</span>
                                 </label>
-                              
+
                             </div>
                                {paid && metodoPago === "efectivo" && (
                                 <div className="mt-4 text-yellow-700 text-center font-bold">
@@ -1519,7 +1557,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             </button>
                         </div>
                     </div>
-                    )}  
+                    )}
             </section>
              {/* Columna imagen */}
             <aside className="hidden md:flex w-1/2 h-full items-center justify-center bg-[#f8fafc]">
@@ -1529,9 +1567,9 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                     alt={pasos[paso - 1].label}
                     className="object-cover w-full h-[945px]  shadow"
                 />
-                
+
                 </div>
-                {paso === 3 && ( 
+                {paso === 3 && (
                     <>
                         <div className="  p-6 mb-6">
                             <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
@@ -1545,8 +1583,15 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             </div>
                           <div className="text-sm text-gray-500 mb-4">
                             Disponibilidad confirmada para {visitantes.length} pase{visitantes.length > 1 ? "s" : ""}<br />
-                            
+
                         </div>
+                        {cortesias > 0 && (
+                          <div className="text-sm text-gray-500 mb-4">
+
+                             {cortesias} Cortesía{cortesias > 1 ? "s" : ""} agregada{cortesias > 1 ? "s" : ""} gratis
+
+                        </div>
+                        )}
                             <div className="flex justify-between mb-1 text-sm">
                                 <span className="text-black">Pases de Acceso General</span>
                                 <span className="text-black">{visitantes.length} pases</span>
@@ -1561,13 +1606,13 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 <span>${precioAdulto60} MXN</span>
                             </div>
                             )}
-                             {cantidadNinos > 0 && ( 
+                             {cantidadNinos > 0 && (
                               <div className="flex justify-between text-sm">
                                 <span>PrecioNiños 2-13</span>
                                 <span>$70 MXN</span>
                             </div>
                             )}
-                           
+
                              <div className="flex justify-between text-sm">
                                 <span>Plataforma (5%)</span>
                                 <span>${montoPlataforma.toFixed(2)} MXN</span>
@@ -1615,7 +1660,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     {msgPromo}
                                 </div>
                             )}
-                            
+
                             <h4 className="font-bold mb-3 mt-8">Resumen de reserva</h4>
                             {/* Total visible siempre */}
                             <div className="flex justify-between font-bold text-lg mb-4">
@@ -1639,10 +1684,10 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                     />
                                     <span>Efectivo</span>
                                 </label>
-                              
+
                             </div>
 
-                           
+
                             {paid && metodoPago === "efectivo" && (
                                 <div className="mt-4 text-yellow-700 text-center font-bold">
                                     Presenta este resumen y paga en taquilla.
@@ -1664,14 +1709,14 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 ? "Finalizar y ver resumen para pago en efectivo"
                                 : "Continuar al resumen"}
                             </button>
-                           
+
                             <div className="mt-4 text-xs text-gray-500">
                                 Los pases son válidos para la fecha y hora seleccionada.<br />
                                 Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
                             </div>
                         </div>
                     </>
-                    )}  
+                    )}
 
 
             </aside>
@@ -1681,25 +1726,3 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     );
 }
 
-function getPrecioPorTipo(fecha: string, tipo: "adulto" | "adulto60" | "nino" | "menor2") {
-  const [year, month, day] = fecha.split("-");
-  const fechaLocal = new Date(Number(year), Number(month) - 1, Number(day));
-  const diaSemana = fechaLocal.getDay(); // 0=Domingo, ..., 6=Sábado
-
-  const esLunesAJueves = diaSemana >= 1 && diaSemana <= 4;
-
-  if (tipo === "adulto") {
-    return esLunesAJueves ? 350 : 420;
-  }
-  if (tipo === "adulto60") {
-    return esLunesAJueves ? 300 : 360;
-  }
-  if (tipo === "nino") {
-    return 70;
-  }
-  if (tipo === "menor2") {
-    return 0;
-  }
-
-  return 0;
-}
