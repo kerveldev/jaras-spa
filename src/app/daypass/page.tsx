@@ -408,8 +408,8 @@ const subtotal = subtotalAdultos + subtotalAdultos60 + subtotalNinos + subtotalM
 const total = Math.max(subtotal - descuento, 0);
 // Porcentajes
 const porcentajePlataforma = 0.05;  // 5%
-const porcentajeTerminal = 0.03;    // 3%
-const porcentajeIVA = 0.16;         // 16%
+const porcentajeTerminal = 0.05;    // 5% 
+// const porcentajeIVA = 0.16;         // 16%
 
 // Descuento aplicado al subtotal
 const subtotalConDescuento = Math.max(subtotal - descuento, 0);
@@ -417,10 +417,10 @@ const subtotalConDescuento = Math.max(subtotal - descuento, 0);
 // Montos adicionales
 const montoPlataforma = subtotalConDescuento * porcentajePlataforma;
 const montoTerminal = subtotalConDescuento * porcentajeTerminal;
-const montoIVA = subtotalConDescuento * porcentajeIVA;
+// const montoIVA = subtotalConDescuento * porcentajeIVA;
 
 // Total final
-const totalConCargos = subtotalConDescuento + montoPlataforma + montoTerminal + montoIVA;
+const totalConCargos = subtotalConDescuento + montoPlataforma + montoTerminal;
 function calcularCortesias(totalAdultos: number): number {
   if (totalAdultos >= 60) return 4;
   if (totalAdultos >= 45) return 3;
@@ -1093,7 +1093,11 @@ function getPrecioPorTipo(
                         </div>
                         </div>
                       {/* Horarios */}
+                      
                     <div className="w-full md:w-1/2">
+                      <p className=" mb-10 text-gray-800 text-base font-bold">
+                        Selecciona tu horario de llagada.
+                        </p>
                         <div className="grid grid-cols-1 md:grid-cols-1 gap-10">
                             {horarios.map((hora) => (
                                 <button
@@ -1434,6 +1438,13 @@ function getPrecioPorTipo(
                                     Disponibilidad confirmada para {visitantes.length} pase{visitantes.length > 1 ? "s" : ""}<br />
 
                                 </div>
+                                {cortesias > 0 && (
+                                <div className="text-sm text-gray-500 mb-4">
+                                    
+                                    {cortesias} Cortesía{cortesias > 1 ? "s" : ""} agregada{cortesias > 1 ? "s" : ""} gratis
+                                    
+                                </div>
+                                )}
                                 <div className="flex flex-col gap-1 text-sm mb-2">
                                     <div className="flex justify-between text-sm">
                                         <span>Precio Adultos 14+</span>
@@ -1456,12 +1467,10 @@ function getPrecioPorTipo(
                                 <span>Plataforma (5%)</span>
                                 <span>${montoPlataforma.toFixed(2)} MXN</span>
                             </div> <div className="flex justify-between text-sm">
-                                <span>Terminal (3%)</span>
+                                <span>Terminal e impuestos (5%)</span>
                                 <span>${montoTerminal .toFixed(2)} MXN</span>
-                            </div> <div className="flex justify-between text-sm">
-                                <span>IVA (16%)</span>
-                                <span>${montoIVA .toFixed(2)} MXN</span>
-                            </div>
+                            </div> 
+                            
                                 {promoAplicado && (
                                     <div className="flex justify-between text-sm text-green-700 font-bold">
                                     <span>Descuento aplicado</span>
@@ -1617,12 +1626,10 @@ function getPrecioPorTipo(
                                 <span>Plataforma (5%)</span>
                                 <span>${montoPlataforma.toFixed(2)} MXN</span>
                             </div> <div className="flex justify-between text-sm">
-                                <span>Terminal (3%)</span>
+                                <span>Terminal e impuestos (5%)</span>
                                 <span>${montoTerminal .toFixed(2)} MXN</span>
-                            </div> <div className="flex justify-between text-sm">
-                                <span>IVA (16%)</span>
-                                <span>${montoIVA .toFixed(2)} MXN</span>
-                            </div>
+                            </div> 
+                            
                             {promoAplicado && (
                                 <div className="flex justify-between text-sm text-green-700 font-bold">
                                     <span>Descuento aplicado</span>
