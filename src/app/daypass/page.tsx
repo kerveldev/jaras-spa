@@ -279,6 +279,34 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
     const validatePais = (pais: string) => pais.trim() !== "";
     const validateIne = (ine: string) => ine.trim() !== "";
 
+    // Función para verificar si un horario ya pasó cuando es el día de hoy
+    function isHorarioPasado(horario: string): boolean {
+        const fechaSeleccionada = new Date(year, mes, selectedDay);
+        const hoy = new Date();
+
+        // Si no es el día de hoy, el horario está disponible
+        if (fechaSeleccionada.toDateString() !== hoy.toDateString()) {
+            return false;
+        }
+
+        // Convertir el horario a formato 24 horas para comparar
+        const [tiempo, periodo] = horario.split(' ');
+        const [horas, minutos] = tiempo.split(':').map(Number);
+
+        let horaEn24 = horas;
+        if (periodo === 'PM' && horas !== 12) {
+            horaEn24 += 12;
+        } else if (periodo === 'AM' && horas === 12) {
+            horaEn24 = 0;
+        }
+
+        // Crear fecha con el horario seleccionado
+        const fechaHorario = new Date(year, mes, selectedDay, horaEn24, minutos);
+
+        // Comparar con la hora actual
+        return fechaHorario <= hoy;
+    }
+
     const puedeContinuar =
         visitantes.every(
             (v, i) =>
@@ -312,7 +340,7 @@ type Visitante = {
             ...prev,
               {
     nombre: false,
-    apellido:false,
+    apellido: false,
     correo: false,
     celular: false,
     cumple: false,
@@ -1463,10 +1491,10 @@ function getPrecioPorTipo(
                                     </div>
                                     )}
                                 </div>
-                                 <div className="flex justify-between text-sm">
+                                 <div className="flex justify-between text-sm mb-2">
                                 <span>Plataforma (5%)</span>
                                 <span>${montoPlataforma.toFixed(2)} MXN</span>
-                            </div> <div className="flex justify-between text-sm">
+                            </div> <div className="flex justify-between text-sm mb-2">
                                 <span>Terminal e impuestos (5%)</span>
                                 <span>${montoTerminal .toFixed(2)} MXN</span>
                             </div> 
