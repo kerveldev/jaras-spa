@@ -333,8 +333,7 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
                 validateCelular(v.celular) &&
                 validateCorreo(v.correo, i === 0)
         ) &&
-        selectedDay > 0 &&
-        selectedTime;
+        puedeAvanzarPaso2(); // Usar la función que ya verifica día, horario y que no haya pasado
 type Visitante = {
   nombre: string;
   apellido: string;
@@ -1043,11 +1042,7 @@ function getPrecioPorTipo(
                         </div>
                         )}
                         <button
-                        className={`w-full py-7 rounded font-bold text-white mt-50 transition-colors ${
-                            puedeAvanzarPaso2()
-                                ? "bg-gradient-to-r bg-[#62a7c7] hover:bg-[#14526d] cursor-pointer"
-                                : "bg-gray-400 cursor-not-allowed"
-                        }`}
+                        className="w-full py-7 rounded font-bold text-white mt-30 transition-colors bg-gradient-to-r bg-[#62a7c7] hover:bg-[#14526d] cursor-pointer"
                         onClick={() => setPaso(2)}
                         >
                         Continuar
@@ -1600,19 +1595,12 @@ function getPrecioPorTipo(
 
                                 {/* Botón finalizar para pago en efectivo */}
                                 <button
-                                    className={`mt-6 w-full py-2 rounded font-bold text-white ${
-                                    (metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid)
-                                        ? "bg-[#18668b] hover:bg-[#14526d]"
-                                        : "bg-gray-300 cursor-not-allowed"
-                                    }`}
+                                    className="mt-6 w-full py-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d]"
                                     onClick={() => {
                                         handleContinuar();
                                     }}
-                                    disabled={metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid}
                                 >
-                                    {metodoPago === "efectivo"
-                                    ? "Finalizar y ver resumen para pago en efectivo"
-                                    : "Continuar al resumen"}
+                                    Finalizar y ver resumen para pago en efectivo
                                 </button>
                                 <div className="mt-4 text-xs text-gray-500">
                                     Los pases son válidos para la fecha y hora seleccionada.<br />
@@ -1763,19 +1751,12 @@ function getPrecioPorTipo(
                             )}
 
                             <button
-                              className={`mt-6 w-full py-2 rounded font-bold text-white ${
-                                (metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid)
-                                  ? "bg-[#18668b] hover:bg-[#14526d]"
-                                  : "bg-gray-300 cursor-not-allowed"
-                              }`}
+                              className="mt-6 w-full py-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d]"
                                onClick={() => {
                                         handleContinuar();
                                     }}
-                              disabled={metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid}
                             >
-                              {metodoPago === "efectivo"
-                                ? "Finalizar y ver resumen para pago en efectivo"
-                                : "Continuar al resumen"}
+                              Finalizar y ver resumen para pago en efectivo
                             </button>
 
                             <div className="mt-4 text-xs text-gray-500">
