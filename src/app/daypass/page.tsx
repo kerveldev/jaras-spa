@@ -309,8 +309,15 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
 
     // Función para verificar si se puede continuar al paso 3
     function puedeAvanzarPaso2(): boolean {
+        console.log('Debug puedeAvanzarPaso2:', {
+            selectedDay,
+            selectedTime,
+            selectedTimeLength: selectedTime?.length,
+            isEmpty: selectedTime === "" || selectedTime === null || selectedTime === undefined
+        });
+
         // Verificar que hay un día y horario seleccionado
-        if (!selectedDay || !selectedTime) {
+        if (!selectedDay || !selectedTime || selectedTime.trim() === "") {
             return false;
         }
 
