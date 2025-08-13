@@ -243,7 +243,7 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
     const [mes, setMes] = useState(today.getMonth());
     const [year, setYear] = useState(today.getFullYear());
     const [selectedDay, setSelectedDay] = useState(today.getDate());
-    const [selectedTime, setSelectedTime] = useState("11:00 AM");
+    const [selectedTime, setSelectedTime] = useState(""); // Inicializar vacío para forzar selección
     const [errores, setErrores] = useState(
     visitantes.map(() => ({
         nombre: "",
@@ -305,6 +305,17 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
 
         // Comparar con la hora actual
         return fechaHorario <= hoy;
+    }
+
+    // Función para verificar si se puede continuar al paso 3
+    function puedeAvanzarPaso2(): boolean {
+        // Verificar que hay un día y horario seleccionado
+        if (!selectedDay || !selectedTime) {
+            return false;
+        }
+
+        // Verificar que el horario seleccionado no haya pasado
+        return !isHorarioPasado(selectedTime);
     }
 
     const puedeContinuar =
@@ -1025,7 +1036,11 @@ function getPrecioPorTipo(
                         </div>
                         )}
                         <button
-                        className="w-full py-7 rounded font-bold text-white bg-gradient-to-r bg-[#62a7c7] hover:bg-[#14526d] mt-50"
+                        className={`w-full py-7 rounded font-bold text-white mt-50 transition-colors ${
+                            puedeAvanzarPaso2()
+                                ? "bg-gradient-to-r bg-[#62a7c7] hover:bg-[#14526d] cursor-pointer"
+                                : "bg-gray-400 cursor-not-allowed"
+                        }`}
                         onClick={() => setPaso(2)}
                         >
                         Continuar
@@ -1124,31 +1139,42 @@ function getPrecioPorTipo(
                       
                     <div className="w-full md:w-1/2">
                       <p className=" mb-10 text-gray-800 text-base font-bold">
-                        Selecciona tu horario de llagada.
+                        Selecciona tu horario de llegada.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-1 gap-10">
-                            {horarios.map((hora) => (
-                                <button
-                                    key={hora}
-                                    type="button"
-                                    className={`rounded border py-2 font-semibold text-sm w-full
-                                        ${selectedTime === hora
-                                            ? "bg-[#18668b] text-white border-[#18668b]"
-                                            : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
-                                        }
-                                    `}
-                                    onClick={() => setSelectedTime(hora)}
-                                >
-                                    {hora}
-                                </button>
-                            ))}
+                            {horarios.map((hora) => {
+                                const horarioPasado = isHorarioPasado(hora);
+                                return (
+                                    <button
+                                        key={hora}
+                                        type="button"
+                                        disabled={horarioPasado}
+                                        className={`rounded border py-2 font-semibold text-sm w-full transition
+                                            ${horarioPasado
+                                                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                                : selectedTime === hora
+                                                    ? "bg-[#18668b] text-white border-[#18668b]"
+                                                    : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
+                                            }
+                                        `}
+                                        onClick={() => !horarioPasado && setSelectedTime(hora)}
+                                    >
+                                        {hora} {horarioPasado && "(No disponible)"}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                     </div>
 
                    <button
-                        className="w-full py-7 rounded font-bold text-white bg-gradient-to-r bg-[#62a7c7] hover:bg-[#14526d] mt-30"
-                        onClick={() => setPaso(3)}
+                        className={`w-full py-7 rounded font-bold text-white mt-30 transition-colors ${
+                            puedeAvanzarPaso2()
+                                ? "bg-gradient-to-r bg-[#62a7c7] hover:bg-[#14526d] cursor-pointer"
+                                : "bg-gray-400 cursor-not-allowed"
+                        }`}
+                        onClick={() => puedeAvanzarPaso2() && setPaso(3)}
+                        disabled={!puedeAvanzarPaso2()}
                         >
                         Continuar
                         </button>
