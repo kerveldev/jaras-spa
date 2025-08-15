@@ -103,52 +103,69 @@ export default function ConfirmacionReservaPage() {
         <div className="min-h-screen flex flex-col bg-[#f8fafc]">
             <main className="max-w-5xl w-full mx-auto px-4 py-12 flex-1">
                 {/* Mensaje de confirmación */}
-                <div className="text-center mb-10">
-                    <div className="text-3xl mb-4 text-black">¡Reserva Confirmada!</div>
-                    <div className="text-lg text-gray-700">
-                        Gracias por tu reserva en Las Jaras. A continuación encontrarás tus boletos de acceso.
-                    </div>
-                </div>
+               <div className="mb-10">
+          <div className="flex items-center justify-center gap-3">
+            <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-700">
+              {/* Check icon */}
+              <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          </div>
+          <h1 className="text-center text-3xl sm:text-4xl font-extrabold text-slate-900 mt-4">¡Reserva confirmada!</h1>
+          <p className="text-center text-slate-600 mt-2">
+            Gracias por tu reserva en <span className="font-semibold text-slate-800">Las Jaras</span>. Aquí tienes tus detalles y accesos.
+          </p>
+        </div>
 
 
-                {/* Confirmación de reserva y PDF */}
-                <section className="flex justify-center items-center py-16">
-                    <div className="bg-white border rounded p-8 max-w-md w-full text-center">
-                        <div className="font-bold text-black text-lg mb-4">¡Reserva completada!</div>
-                        <div className="text-gray-600 mb-2">
-                            Recibirás un <span className="font-semibold">PDF con tus accesos</span> y toda la información de tu reserva en tu correo electrónico.
-                        </div>
-                        <div className="text-gray-500 text-xs">
-                            Revisa tu bandeja de entrada y, si no lo encuentras, verifica en la carpeta de spam o promociones.
-                        </div>
-                    </div>
-                </section>
+                {/* Confirmación + Detalles (side by side) */}
+            <section className="py-16">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            {/* Confirmación de reserva y PDF */}
+            <div className="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 p-8 shadow-sm">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 mb-4">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Confirmada
+              </div>
+              <div className="font-bold text-slate-900 text-xl mb-2 text-left">¡Reserva completada!</div>
+              <p className="text-slate-700 mb-3">
+                Recibirás un <span className="font-semibold">PDF con tus accesos</span> y toda la información de tu reserva en tu correo electrónico.
+              </p>
+              <p className="text-slate-500 text-xs">
+                Revisa tu bandeja de entrada y, si no lo encuentras, verifica en la carpeta de spam o promociones.
+              </p>
+
+             
+            </div>
 
                 {/* Detalles de la reserva */}
-                <section className="bg-white border rounded mb-10 p-6">
-                    <div className="w-full overflow-x-auto">
-                        <table className="w-full text-xs border border-gray-200 rounded">
-                            <thead>
-                                <tr className="bg-gray-100">
-                                    <th className="py-2 px-2 text-left text-black font-bold">#</th>
-                                    <th className="py-2 px-2 text-left text-black font-bold">Fecha de Visita</th>
-                                    <th className="py-2 px-2 text-left text-black font-bold">Nombre</th>
-                                    <th className="py-2 px-2 text-left text-black font-bold">Hora de Llegada</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {visitantes.filter(v => v.nombre || v.correo || v.celular).map((v, idx) => (
-                                    <tr key={idx} className="border-t border-gray-100 text-black">
-                                        <td className="py-2 px-2">{idx + 1}</td>
-                                        <td className="py-2 px-2">{fechaLegible(fecha)}</td>
-                                        <td className="py-2 px-2">{v.nombre || "-"}</td>
-                                        <td className="py-2 px-2">{hora || "-"}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+            <div className="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 p-5 shadow-sm">
+
+               <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                <div className="rounded-xl border border-slate-200 p-4">
+                  <div className="text-slate-500">Fecha</div>
+                  <div className="font-semibold text-slate-900">{fechaLegible(fecha)}</div>
+                </div>
+                <div className="rounded-xl border border-slate-200 p-4">
+                  <div className="text-slate-500">Nombre</div>
+                  <div className="font-semibold text-slate-900">{visitantes.find((v:any) => v?.nombre || v?.correo || v?.celular)?.nombre || "-"}</div>
+                </div>
+                <div className="rounded-xl border border-slate-200 p-4">
+                  <div className="text-slate-500">Hora</div>
+                  <div className="font-semibold text-slate-900">{hora || "-"}</div>
+                </div>
+                <div className="rounded-xl border border-slate-200 p-4">
+                  <div className="text-slate-500">Pases</div>
+                  <div className="font-semibold text-slate-900">{totalPases}</div>
+                </div>
+                
+              </div>
+            </div>
+          </div>
+
+            </section>
+
 
                 {/* Boletos de acceso y autobús */}
                 {/*<section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">*/}
@@ -194,7 +211,7 @@ export default function ConfirmacionReservaPage() {
 
 
                 {/* Detalles y extras */}
-                <section className="flex flex-col md:flex-row gap-6 md:gap-8 mb-10 text-sm justify-center items-stretch">
+                {/* <section className="flex flex-col md:flex-row gap-6 md:gap-8 mb-10 text-sm justify-center items-stretch">
                     <div className="bg-white border rounded-lg shadow-md p-6 flex-1 min-w-[280px] max-w-md flex flex-col justify-center items-center">
                         <div className="font-bold text-black mb-4 text-lg flex items-center gap-2">⭐ Resumen de Orden</div>
                         <div className="mb-1 text-black">
@@ -229,12 +246,11 @@ export default function ConfirmacionReservaPage() {
                             Recibirás un correo de confirmación y tu código de acceso.
                         </div>
                     </div>
-                </section>
+                </section> */}
                 <div className="flex justify-center my-8">
                     <button
                         className="bg-[#18668b] hover:bg-[#14526d] text-white font-bold px-6 py-3 rounded-lg shadow transition"
                         onClick={() => {
-                            localStorage.clear();
                             router.push("/daypass");
                         }}
                     >
