@@ -244,7 +244,7 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
     const [mes, setMes] = useState(today.getMonth());
     const [year, setYear] = useState(today.getFullYear());
     const [selectedDay, setSelectedDay] = useState(today.getDate());
-    const [selectedTime, setSelectedTime] = useState("11:00 AM");
+    const [selectedTime, setSelectedTime] = useState(""); // Inicializar vacío para forzar selección
     const [errores, setErrores] = useState(
     visitantes.map(() => ({
         nombre: "",
@@ -280,6 +280,52 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
     const validatePais = (pais: string) => pais.trim() !== "";
     const validateIne = (ine: string) => ine.trim() !== "";
 
+    // Función para verificar si un horario ya pasó cuando es el día de hoy
+    function isHorarioPasado(horario: string): boolean {
+        const fechaSeleccionada = new Date(year, mes, selectedDay);
+        const hoy = new Date();
+
+        // Si no es el día de hoy, el horario está disponible
+        if (fechaSeleccionada.toDateString() !== hoy.toDateString()) {
+            return false;
+        }
+
+        // Convertir el horario a formato 24 horas para comparar
+        const [tiempo, periodo] = horario.split(' ');
+        const [horas, minutos] = tiempo.split(':').map(Number);
+
+        let horaEn24 = horas;
+        if (periodo === 'PM' && horas !== 12) {
+            horaEn24 += 12;
+        } else if (periodo === 'AM' && horas === 12) {
+            horaEn24 = 0;
+        }
+
+        // Crear fecha con el horario seleccionado
+        const fechaHorario = new Date(year, mes, selectedDay, horaEn24, minutos);
+
+        // Comparar con la hora actual
+        return fechaHorario <= hoy;
+    }
+
+    // Función para verificar si se puede continuar al paso 3
+    function puedeAvanzarPaso2(): boolean {
+        console.log('Debug puedeAvanzarPaso2:', {
+            selectedDay,
+            selectedTime,
+            selectedTimeLength: selectedTime?.length,
+            isEmpty: selectedTime === "" || selectedTime === null || selectedTime === undefined
+        });
+
+        // Verificar que hay un día y horario seleccionado
+        if (!selectedDay || !selectedTime || selectedTime.trim() === "") {
+            return false;
+        }
+
+        // Verificar que el horario seleccionado no haya pasado
+        return !isHorarioPasado(selectedTime);
+    }
+
     const puedeContinuar =
         visitantes.every(
             (v, i) =>
@@ -288,8 +334,7 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
                 validateCelular(v.celular) &&
                 validateCorreo(v.correo, i === 0)
         ) &&
-        selectedDay > 0 &&
-        selectedTime;
+        puedeAvanzarPaso2(); // Usar la función que ya verifica día, horario y que no haya pasado
 type Visitante = {
   nombre: string;
   apellido: string;
@@ -313,7 +358,7 @@ type Visitante = {
             ...prev,
               {
     nombre: false,
-    apellido:false,
+    apellido: false,
     correo: false,
     celular: false,
     cumple: false,
@@ -773,22 +818,28 @@ async function handleContinuar() {
       body: formData,
     });
 
+    const return_data = await res.json();
+    console.log("Respuesta de la API:", return_data);
+
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      console.error("Error al enviar reserva:", json);
+      console.error("Error al enviar reserva:", json.message.message);
       toast.dismiss("reservation-processing");
-      if ((json as any)?.errors) {
-        console.table((json as any).errors);
-        toast.error("Faltan campos requeridos. Revisa la información.");
-        alert("Faltan campos requeridos:\n" + JSON.stringify((json as any).errors, null, 2));
-      } else if ((json as any)?.error) {
-        toast.error(`Error: ${(json as any).error}`);
-        alert(`Error: ${(json as any).error}`);
-      } else {
-        toast.error("Error al enviar la reservación. Intenta nuevamente.");
-        alert("Error al enviar la reservación. Revisa los campos e intenta nuevamente.");
+      
+      // Determinar el mensaje de error apropiado
+      let errorMessage = "Error al enviar la reservación. Intenta nuevamente.";
+      
+      if (json?.message) {
+        errorMessage = json.message;
+      } else if (json?.error) {
+        errorMessage = json.error;
+      } else if (json?.errors) {
+        console.table(json.errors);
+        errorMessage = "Faltan campos requeridos. Revisa la información.";
       }
+      
+      toast.error(errorMessage);
       return;
     }
 
@@ -798,11 +849,10 @@ async function handleContinuar() {
     setTimeout(() => {
       window.location.href = "/daypass/resumen";
     }, 1000);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error inesperado:", error);
     toast.dismiss("reservation-processing");
-    toast.error("Error al procesar la reservación.");
-    alert("Ocurrió un error al procesar la reservación.");
+    toast.error(error.message || "Error al procesar la reservación. Intenta nuevsssamente.");
   } finally {
     setIsProcessingReservation(false);
   }
@@ -1352,7 +1402,7 @@ function getPrecioPorTipo(
                                     </div>
                                     )}
                                 </div>
-                                 <div className="flex justify-between text-sm">
+                                 <div className="flex justify-between text-sm mb-2">
                                 <span>Plataforma (5%)</span>
                                 <span>${montoPlataforma.toFixed(2)} MXN</span>
                             </div>
