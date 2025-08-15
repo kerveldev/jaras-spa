@@ -900,9 +900,9 @@ function getPrecioPorTipo(
             {/* <h1 className="text-2xl font-bold text-center mb-8 text-[#18668b] pt-12">
                 Completa tu Reservación y Agenda tu Visita
             </h1> */}
-            <main className="flex flex-row w-full min-h-[calc(100vh-120px)] max-w-none">
+            <main className="flex flex-col md:flex-row w-full min-h-[calc(100vh-120px)] max-w-none isolate">
 
-            <section className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12">
+            <section className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12 relative z-10">
                  {/* Stepper visual */}
             <div className="flex items-center justify-center gap-6 mt-0 mb-auto">
               {paso > 1 && (
@@ -1517,9 +1517,9 @@ function getPrecioPorTipo(
                     )}
             </section>
              {/* Columna imagen */}
-            <aside className="hidden md:flex w-1/2 h-full bg-[#f8fafc]">
+            <aside className="block md:flex w-full md:w-1/2 md:h-full bg-[#f8fafc] relative z-0">
             {/* Contenedor relativo para posicionar fondo+overlay */}
-            <div className="relative w-full h-[945px]">
+            <div className="relative w-full h-[320px] sm:h-[420px] md:h-[945px]">
                 {/* Imagen de fondo SIEMPRE absoluta para que no mueva el layout */}
                 <Image
                 src={imagenes[paso - 1]}
@@ -1531,7 +1531,7 @@ function getPrecioPorTipo(
                 />
 
                 {/* Overlay base SIEMPRE (mismo posicionamiento para todos los pasos) */}
-                <div className={`absolute inset-0 flex items-center justify-center p-6 ${paso === 1 ? "bg-black/50 backdrop-blur-sm" : "bg-black/20"}`}>
+                <div className={`absolute inset-0 flex items-center justify-center p-6 ${paso === 1 ? "bg-black/50 backdrop-blur-sm" : "bg-black/20"} pointer-events-none md:pointer-events-auto`}>
                 {/* Tarjeta contenedora (centrada y con scroll si se requiere) */}
                 <div className={`w-full ${
                     paso === 1 ? "max-w-4xl" : "max-w-lg"
