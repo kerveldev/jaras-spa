@@ -819,7 +819,7 @@ async function handleContinuar() {
     });
 
     const return_data = await res.json();
-    console.log("Respuesta de la API:", return_data);
+    console.log("Respuesta de la API:", return_data.message["message"]);
 
     const json = await res.json().catch(() => ({}));
 
