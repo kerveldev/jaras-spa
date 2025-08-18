@@ -1249,27 +1249,36 @@ function getPrecioPorTipo(
                 </div>
                 </div>
 
-                {/* Fecha de nacimiento */}
-                <div className="flex flex-col">
-                <label className="block text-xs font-bold text-black mb-1">
-                    Fecha de nacimiento
-                </label>
-                <input
-                    type="date"
-                    value={vis.cumple}
-                    onChange={(e) => handleVis(idx, "cumple", e.target.value)}
-                    onBlur={() => handleBlur(idx, "cumple")}
-                    className={`border p-2 rounded w-full h-13 ${
-                    touched[idx]?.cumple && !cumpleValido
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                />
-                {renderError(
-                    "Selecciona una fecha válida.",
-                    !!touched[idx]?.cumple && !cumpleValido
-                )}
-                </div>
+                                {/* Fecha de nacimiento (input con máscara DD/MM/AAAA) */}
+                                <div className="flex flex-col">
+                                    <label className="block text-xs font-bold text-black mb-1">
+                                        Fecha de nacimiento
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="DD/MM/AAAA"
+                                        maxLength={10}
+                                        value={vis.cumple}
+                                        onChange={e => {
+                                            let v = e.target.value.replace(/[^0-9]/g, "");
+                                            if (v.length > 8) v = v.slice(0, 8);
+                                            let formatted = v;
+                                            if (v.length > 4) formatted = v.slice(0,2) + "/" + v.slice(2,4) + "/" + v.slice(4);
+                                            else if (v.length > 2) formatted = v.slice(0,2) + "/" + v.slice(2);
+                                            handleVis(idx, "cumple", formatted);
+                                        }}
+                                        onBlur={() => handleBlur(idx, "cumple")}
+                                        className={`border p-2 rounded w-full h-13 ${
+                                            touched[idx]?.cumple && !cumpleValido
+                                                ? "border-red-500"
+                                                : "border-gray-300"
+                                        }`}
+                                    />
+                                    {renderError(
+                                        "Formato: DD/MM/AAAA",
+                                        !!touched[idx]?.cumple && !cumpleValido
+                                    )}
+                                </div>
 
                 {/* País / Estado / Ciudad */}
                 <div className="flex flex-row gap-6">
