@@ -1584,45 +1584,48 @@ function getPrecioPorTipo(
                             )}
 
 
-                                {/* Botón finalizar para pago en efectivo */}
-                                <button
-                                    className={`mt-6 w-full py-2 rounded font-bold text-white flex items-center justify-center transition-all duration-200 ${
-                                    (metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid) && !isProcessingReservation
-                                        ? "bg-[#18668b] hover:bg-[#14526d]"
-                                        : "bg-gray-300 cursor-not-allowed"
-                                    }`}
-                                    onClick={() => {
-                                        if (!isProcessingReservation) {
-                                            handleContinuar();
-                                        }
-                                    }}
-                                    disabled={isProcessingReservation || (metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid)}
-                                >
-                                    {isProcessingReservation ? (
-                                        <>
-                                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            Procesando reservación...
-                                        </>
-                                    ) : (
-                                        metodoPago === "efectivo"
-                                        ? "Finalizar y ver resumen para pago en efectivo"
-                                        : "Continuar al resumen"
-                                    )}
-                                </button>
+                                                                {/* Botones Finalizar y Volver en el mismo row */}
+                                                                <div className="flex flex-row gap-4 mt-6">
+                                                                    <button
+                                                                        className={`w-1/2 py-2 rounded font-bold text-white flex items-center justify-center transition-all duration-200 ${
+                                                                            (metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid) && !isProcessingReservation
+                                                                                ? "bg-[#18668b] hover:bg-[#14526d]"
+                                                                                : "bg-gray-300 cursor-not-allowed"
+                                                                        }`}
+                                                                        onClick={() => {
+                                                                            if (!isProcessingReservation) {
+                                                                                handleContinuar();
+                                                                            }
+                                                                        }}
+                                                                        disabled={isProcessingReservation || (metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid)}
+                                                                    >
+                                                                        {isProcessingReservation ? (
+                                                                            <>
+                                                                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                                </svg>
+                                                                                Procesando reservación...
+                                                                            </>
+                                                                        ) : (
+                                                                            metodoPago === "efectivo"
+                                                                                ? "Finalizar y ver resumen para pago en efectivo"
+                                                                                : "Continuar al resumen"
+                                                                        )}
+                                                                    </button>
+                                                                    <button
+                                                                        className="w-1/2 py-2 rounded font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b] transition-all duration-200"
+                                                                        onClick={() => setPaso(1)}
+                                                                    >
+                                                                        Volver
+                                                                    </button>
+                                                                </div>
                                 <div className="mt-4 text-xs text-gray-500">
                                     Los pases son válidos para la fecha y hora seleccionada.<br />
                                     Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
                                 </div>
                             </div>
-                          <button
-                                className="mt-20 w-full py-4 rounded-2xl font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b]"
-                                onClick={() => setPaso(1)}
-                            >
-                                Volver
-                            </button>
+                          
                         </div>
                     </div>
                     )}
