@@ -1365,7 +1365,7 @@ function getPrecioPorTipo(
 
   <div className="flex flex-col min-w-0">
     <label htmlFor={`celular-${idx}`} className="block text-xs font-bold text-black mb-1">
-      Celular WhatsAppaaaaaaaaaa
+      Celular WhatsApp
     </label>
     <input
       id={`celular-${idx}`}
@@ -1390,117 +1390,125 @@ function getPrecioPorTipo(
 
 
                                     {/* Fecha de nacimiento + País/Estado/Ciudad en un solo row */}
-                                    <div className="flex flex-row gap-6">
-                                        <div className="flex flex-col flex-1 min-w-[180px]">
-                                            <label className="block text-xs font-bold text-black mb-1">
-                                                Fecha de nacimiento
-                                            </label>
-                                            <input
-                                                type="text"
-                                                placeholder="DD/MM/AAAA"
-                                                maxLength={10}
-                                                value={vis.cumple}
-                                                onChange={e => {
-                                                    let v = e.target.value.replace(/[^0-9]/g, "");
-                                                    if (v.length > 8) v = v.slice(0, 8);
-                                                    let formatted = v;
-                                                    if (v.length > 4) formatted = v.slice(0,2) + "/" + v.slice(2,4) + "/" + v.slice(4);
-                                                    else if (v.length > 2) formatted = v.slice(0,2) + "/" + v.slice(2);
-                                                    handleVis(idx, "cumple", formatted);
-                                                }}
-                                                onBlur={() => handleBlur(idx, "cumple")}
-                                                className={`border p-2 rounded w-full  h-9 ${
-                                                    touched[idx]?.cumple && !cumpleValido
-                                                        ? "border-red-500"
-                                                        : "border-gray-300"
-                                                }`}
-                                            />
-                                            {renderError(
-                                                "Formato: DD/MM/AAAA",
-                                                !!touched[idx]?.cumple && !cumpleValido
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col flex-1">
-                                            <label className="block text-xs font-bold text-black mb-1">
-                                                País
-                                            </label>
-                                            <select
-                                                value={vis.pais}
-                                                onChange={(e) => handlePaisChange(idx, e.target.value)}
-                                                onBlur={() => handleBlur(idx, "pais")}
-                                                className={`border p-2 rounded w-full  h-9 text-black ${
-                                                    touched[idx]?.pais && !paisValido
-                                                        ? "border-red-500"
-                                                        : "border-gray-300"
-                                                }`}
-                                            >
-                                                <option value="">Selecciona país</option>
-                                                {(paises ?? []).map((pais) => (
-                                                    <option key={pais} value={pais}>
-                                                        {pais}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {renderError(
-                                                "El país es obligatorio.",
-                                                !!touched[idx]?.pais && !paisValido
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col flex-1">
-                                            <label className="block text-xs font-bold text-black mb-1">
-                                                Estado
-                                            </label>
-                                            <select
-                                                value={vis.estado}
-                                                onChange={(e) => handleEstadoChange(idx, e.target.value)}
-                                                onBlur={() => handleBlur(idx, "estado")}
-                                                disabled={!vis.pais}
-                                                className={`border p-2 rounded w-full  h-9 text-black ${
-                                                    touched[idx]?.estado && !estadoValido
-                                                        ? "border-red-500"
-                                                        : "border-gray-300"
-                                                }`}
-                                            >
-                                                <option value="">Selecciona estado</option>
-                                                {(estados ?? []).map((estado) => (
-                                                    <option key={estado} value={estado}>
-                                                        {estado}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {renderError(
-                                                "El estado es obligatorio.",
-                                                !!touched[idx]?.estado && !estadoValido
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col flex-1">
-                                            <label className="block text-xs font-bold text-black mb-1">
-                                                Ciudad
-                                            </label>
-                                            <select
-                                                value={vis.ciudad}
-                                                onChange={(e) => handleCiudadChange(idx, e.target.value)}
-                                                onBlur={() => handleBlur(idx, "ciudad")}
-                                                disabled={!vis.estado}
-                                                className={`border p-2 rounded w-full  h-9 text-black ${
-                                                    touched[idx]?.ciudad && !ciudadValido
-                                                        ? "border-red-500"
-                                                        : "border-gray-300"
-                                                }`}
-                                            >
-                                                <option value="">Selecciona ciudad</option>
-                                                {(ciudades ?? []).map((ciudad) => (
-                                                    <option key={ciudad} value={ciudad}>
-                                                        {ciudad}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {renderError(
-                                                "La ciudad es obligatoria.",
-                                                !!touched[idx]?.ciudad && !ciudadValido
-                                            )}
-                                        </div>
-                                    </div>
+                                  <div className="flex flex-wrap gap-6">
+  {/* Fecha de nacimiento */}
+  <div className="flex flex-col flex-1 min-w-[180px]">
+    <label className="block text-xs font-bold text-black mb-1">
+      Fecha de nacimiento
+    </label>
+    <input
+      type="text"
+      placeholder="DD/MM/AAAA"
+      maxLength={10}
+      value={vis.cumple}
+      onChange={e => {
+        let v = e.target.value.replace(/[^0-9]/g, "");
+        if (v.length > 8) v = v.slice(0, 8);
+        let formatted = v;
+        if (v.length > 4) formatted = v.slice(0,2) + "/" + v.slice(2,4) + "/" + v.slice(4);
+        else if (v.length > 2) formatted = v.slice(0,2) + "/" + v.slice(2);
+        handleVis(idx, "cumple", formatted);
+      }}
+      onBlur={() => handleBlur(idx, "cumple")}
+      className={`border p-2 rounded w-full h-9 ${
+        touched[idx]?.cumple && !cumpleValido
+          ? "border-red-500"
+          : "border-gray-300"
+      }`}
+    />
+    {renderError(
+      "Formato: DD/MM/AAAA",
+      !!touched[idx]?.cumple && !cumpleValido
+    )}
+  </div>
+
+  {/* País */}
+  <div className="flex flex-col flex-1 min-w-[180px]">
+    <label className="block text-xs font-bold text-black mb-1">
+      País
+    </label>
+    <select
+      value={vis.pais}
+      onChange={(e) => handlePaisChange(idx, e.target.value)}
+      onBlur={() => handleBlur(idx, "pais")}
+      className={`border p-2 rounded w-full h-9 text-black ${
+        touched[idx]?.pais && !paisValido
+          ? "border-red-500"
+          : "border-gray-300"
+      }`}
+    >
+      <option value="">Selecciona país</option>
+      {(paises ?? []).map((pais) => (
+        <option key={pais} value={pais}>
+          {pais}
+        </option>
+      ))}
+    </select>
+    {renderError(
+      "El país es obligatorio.",
+      !!touched[idx]?.pais && !paisValido
+    )}
+  </div>
+
+  {/* Estado */}
+  <div className="flex flex-col flex-1 min-w-[180px]">
+    <label className="block text-xs font-bold text-black mb-1">
+      Estado
+    </label>
+    <select
+      value={vis.estado}
+      onChange={(e) => handleEstadoChange(idx, e.target.value)}
+      onBlur={() => handleBlur(idx, "estado")}
+      disabled={!vis.pais}
+      className={`border p-2 rounded w-full h-9 text-black ${
+        touched[idx]?.estado && !estadoValido
+          ? "border-red-500"
+          : "border-gray-300"
+      }`}
+    >
+      <option value="">Selecciona estado</option>
+      {(estados ?? []).map((estado) => (
+        <option key={estado} value={estado}>
+          {estado}
+        </option>
+      ))}
+    </select>
+    {renderError(
+      "El estado es obligatorio.",
+      !!touched[idx]?.estado && !estadoValido
+    )}
+  </div>
+
+  {/* Ciudad */}
+  <div className="flex flex-col flex-1 min-w-[180px]">
+    <label className="block text-xs font-bold text-black mb-1">
+      Ciudad
+    </label>
+    <select
+      value={vis.ciudad}
+      onChange={(e) => handleCiudadChange(idx, e.target.value)}
+      onBlur={() => handleBlur(idx, "ciudad")}
+      disabled={!vis.estado}
+      className={`border p-2 rounded w-full h-9 text-black ${
+        touched[idx]?.ciudad && !ciudadValido
+          ? "border-red-500"
+          : "border-gray-300"
+      }`}
+    >
+      <option value="">Selecciona ciudad</option>
+      {(ciudades ?? []).map((ciudad) => (
+        <option key={ciudad} value={ciudad}>
+          {ciudad}
+        </option>
+      ))}
+    </select>
+    {renderError(
+      "La ciudad es obligatoria.",
+      !!touched[idx]?.ciudad && !ciudadValido
+    )}
+  </div>
+</div>
+
                                 </div>
                                 );
                             })()}
