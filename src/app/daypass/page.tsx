@@ -945,172 +945,283 @@ function getPrecioPorTipo(
                 {/* paso 1: Visitantes */}
                 {paso === 1 && (
                     <>
-                        <div className="text-gray-700 text-5xl font-bold mb-6 mt-2">
-                            ¿Cuántos visitantes son?
-                        </div>
-                        <p className="mb-10 text-gray-600 text-2xl">
-                        El precio varía según el horario. Niños menores de 2 años entran gratis.
-                        </p>
-                        <div className="space-y-6 mb-0 mt-auto">
-                            {/* Adultos */}
-                            <div className="flex items-center justify-between bg-white rounded shadow p-5 mb-10 rounded-2xl">
-                                <span className="font-semibold text-lg">Adultos 14 +</span>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
-                                        onClick={() => {
-                                            if (adultos > 1) {
-                                                setAdultos(adultos - 1);
-                                                setVisitantes((prev) => {
-                                                    const nuevo = prev.slice(0, prev.length - 1);
-                                                    // Siempre deja al menos un visitante
-                                                    return nuevo.length === 0 ? [{ nombre: "", apellido:"", correo: "", celular: "", cumple: "", ciudad:"", estado:"", pais:"",tipo: "adulto",}] : nuevo;
-                                                });
-                                                setTouched((prev) => {
-                                                    const nuevo = prev.slice(0, prev.length - 1);
-                                                    return nuevo.length === 0 ? [ {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}] : nuevo;
-                                                });
-                                                setIneFiles((prev) => {
-                                                    const nuevo = prev.slice(0, prev.length - 1);
-                                                    return nuevo.length === 0 ? [{ frente: null, reverso: null }] : nuevo;
-                                                });
-                                                // Si al bajar adultos hay más niños que el nuevo máximo, ajusta niños
-                                                if (ninos > (adultos - 1) * 2) setNinos((adultos - 1) * 2);
-                                            }
-                                        }}
-                                        disabled={adultos <= 1}
-                                    >-</button>
-                                    <span className="text-xl font-bold">{adultos}</span>
-                                    <button
-                                        type="button"
-                                        className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                                        onClick={() => {
-
-                                                setAdultos(adultos + 1);
-                                                setVisitantes((prev) => [...prev, { nombre: "", apellido:"", correo: "", celular: "", cumple:"", ciudad:"",estado:"",pais:"",tipo: "adulto",}]);
-                                                setTouched((prev) => [...prev, {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}]);
-                                                setIneFiles((prev) => [...prev, { frente: null, reverso: null }]);
-
-                                        }}
-                                    >+</button>
-                                </div>
+                    <div >
+                        <div className="text-gray-700 text-3xl font-bold mb-6 mt-2 text-center ">
+                                ¿Cuántos visitantes son?
                             </div>
-                             {/* Adultos 60+ */}
-                            <div className="flex items-center justify-between bg-white rounded shadow p-5 mb-10 rounded-2xl">
-                                <span className="font-semibold text-lg">Adultos 60 +</span>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
-
-                                        onClick={() => {
-                                            if (adultos60 > 0) {
-                                                setAdultos60(adultos60 - 1);
-                                                setVisitantes((prev) => {
-                                                    const nuevo = prev.slice(0, prev.length - 1);
-                                                    return nuevo;
-                                                });
-                                                setTouched((prev) => {
-                                                    const nuevo = prev.slice(0, prev.length - 1);
-                                                    return nuevo.length === 0 ? [{nombre: false, apellido: false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}] : nuevo;
-                                                });
-                                                setIneFiles((prev) => {
-                                                    const nuevo = prev.slice(0, prev.length - 1);
-                                                    return nuevo.length === 0 ? [{ frente: null, reverso: null }] : nuevo;
-                                                });
-
-                                            }
-                                        }}
-                                        disabled={adultos60 <= 0}
-
-                                    >-</button>
-                                    <span className="text-xl font-bold">{adultos60}</span>
-                                    <button
-                                        type="button"
-                                        className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                                        onClick={() => {
-
-                                                setAdultos60(adultos60 + 1);
-                                                setVisitantes((prev) => [...prev, { nombre: "", apellido:"", correo: "", celular: "" , cumple:"", ciudad:"", estado:"", pais:"",tipo: "adulto", }]);
-                                                setTouched((prev) => [...prev, {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}]);
-                                                setIneFiles((prev) => [...prev, { frente: null, reverso: null }]);
-
-                                        }}
-                                    >+</button>
-                                </div>
-                            </div>
-                            {/* Niños */}
-                            <div className="flex items-center justify-between bg-white rounded shadow p-5 rounded-2xl">
-                                    <span className="font-semibold text-lg">Niños 2 - 13</span>
+                            <p className="mb-10 text-gray-600 text-1xl">
+                            El precio varía según el horario. Niños menores de 2 años entran gratis.
+                            </p>
+                            <div className="space-y-6 mb-0 mt-auto">
+                                {/* Adultos */}
+                                <div className="flex items-center justify-between bg-white rounded shadow p-2 mb-8 rounded-2xl">
+                                    <span className="font-semibold text-lg">Adultos 14 +</span>
                                     <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
-                                        onClick={() => {
-                                        if (ninos > 0) {
-                                            setNinos(ninos - 1);
+                                        <button
+                                            type="button"
+                                            className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                                            onClick={() => {
+                                                if (adultos > 1) {
+                                                    setAdultos(adultos - 1);
+                                                    setVisitantes((prev) => {
+                                                        const nuevo = prev.slice(0, prev.length - 1);
+                                                        // Siempre deja al menos un visitante
+                                                        return nuevo.length === 0 ? [{ nombre: "", apellido:"", correo: "", celular: "", cumple: "", ciudad:"", estado:"", pais:"",tipo: "adulto",}] : nuevo;
+                                                    });
+                                                    setTouched((prev) => {
+                                                        const nuevo = prev.slice(0, prev.length - 1);
+                                                        return nuevo.length === 0 ? [ {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}] : nuevo;
+                                                    });
+                                                    setIneFiles((prev) => {
+                                                        const nuevo = prev.slice(0, prev.length - 1);
+                                                        return nuevo.length === 0 ? [{ frente: null, reverso: null }] : nuevo;
+                                                    });
+                                                    // Si al bajar adultos hay más niños que el nuevo máximo, ajusta niños
+                                                    if (ninos > (adultos - 1) * 2) setNinos((adultos - 1) * 2);
+                                                }
+                                            }}
+                                            disabled={adultos <= 1}
+                                        >-</button>
+                                        <span className="text-xl font-bold">{adultos}</span>
+                                        <button
+                                            type="button"
+                                            className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                            onClick={() => {
 
-                                            // Filtrar visitantes para eliminar el último niño
-                                            setVisitantes((prev) => {
-                                                const sinUltimoNino = [...prev];
-                                                const idxUltimoNino = [...prev].map(v => v.tipo).lastIndexOf("nino");
-                                                if (idxUltimoNino !== -1) sinUltimoNino.splice(idxUltimoNino, 1);
-                                                return sinUltimoNino;
-                                            });
-                                        }
-                                    }}
-                                        disabled={ninos <= 0}
-                                    >-</button>
-                                    <span className="text-xl font-bold">{ninos}</span>
-                                    <button
-                                        type="button"
-                                        className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                                        onClick={() => {
-                                            if (ninos < adultos * 2) {
-                                                setNinos(ninos + 1);
-                                                setVisitantes((prev) => [
-                                                    ...prev,
-                                                    { nombre: "",apellido: "", correo: "", celular: "" , cumple:"", ciudad:"", estado:"", pais:"",tipo: "nino" } // Solo nombre y cumpleaños para niños
-                                                ]);
-                                                setTouched((prev) => [
-                                                    ...prev,
-                                                    {nombre: false,apellido: false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}
-                                                ]);
-                                                setIneFiles((prev) => [
-                                                    ...prev,
-                                                    { frente: null, reverso: null }
-                                                ]);
-                                            }
-                                        }}
-                                        disabled={ninos >= adultos * 2}
-                                    >+</button>
+                                                    setAdultos(adultos + 1);
+                                                    setVisitantes((prev) => [...prev, { nombre: "", apellido:"", correo: "", celular: "", cumple:"", ciudad:"",estado:"",pais:"",tipo: "adulto",}]);
+                                                    setTouched((prev) => [...prev, {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}]);
+                                                    setIneFiles((prev) => [...prev, { frente: null, reverso: null }]);
+
+                                            }}
+                                        >+</button>
                                     </div>
                                 </div>
-                        </div>
-                        {ninos > 0 && (
-                        <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-20 text-sm text-gray-700 mt-2">
-                            Los niños de 2 a 13 años deben estar acompañados por un adulto. No incluye acceso al jardín termal, acceso GRATIS para niños menores de 2 años.
-                        </div>
-                        )}
+                                {/* Adultos 60+ */}
+                                <div className="flex items-center justify-between bg-white rounded shadow p-2 mb-8 rounded-2xl">
+                                    <span className="font-semibold text-lg">Adultos 60 +</span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
 
-                         {adultos60 > 0 && (
-                        <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-41 text-sm text-gray-700 mt-23">
-                           Los adultos mayores de 60 años de edad deberán presentar tarjeda del INAPAM actualizada, de lo contrario se cobrará la entrada a precio regular.
-                        </div>
-                        )}
-                         {adultos + adultos60 >= 12 && (
-                        <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-49 text-sm text-gray-700 mt-44">
-                           Al reservar para 12 o más adultos, se aplicará automáticamente una tarifa preferencial. Para grupos de 15 personas o más, se otorgarán cortesías proporcionales según la cantidad total de asistentes (los precios y cortesias se veran reflejados en el calculo final).
+                                            onClick={() => {
+                                                if (adultos60 > 0) {
+                                                    setAdultos60(adultos60 - 1);
+                                                    setVisitantes((prev) => {
+                                                        const nuevo = prev.slice(0, prev.length - 1);
+                                                        return nuevo;
+                                                    });
+                                                    setTouched((prev) => {
+                                                        const nuevo = prev.slice(0, prev.length - 1);
+                                                        return nuevo.length === 0 ? [{nombre: false, apellido: false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}] : nuevo;
+                                                    });
+                                                    setIneFiles((prev) => {
+                                                        const nuevo = prev.slice(0, prev.length - 1);
+                                                        return nuevo.length === 0 ? [{ frente: null, reverso: null }] : nuevo;
+                                                    });
 
+                                                }
+                                            }}
+                                            disabled={adultos60 <= 0}
+
+                                        >-</button>
+                                        <span className="text-xl font-bold">{adultos60}</span>
+                                        <button
+                                            type="button"
+                                            className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                            onClick={() => {
+
+                                                    setAdultos60(adultos60 + 1);
+                                                    setVisitantes((prev) => [...prev, { nombre: "", apellido:"", correo: "", celular: "" , cumple:"", ciudad:"", estado:"", pais:"",tipo: "adulto", }]);
+                                                    setTouched((prev) => [...prev, {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}]);
+                                                    setIneFiles((prev) => [...prev, { frente: null, reverso: null }]);
+
+                                            }}
+                                        >+</button>
+                                    </div>
+                                </div>
+                                {/* Niños */}
+                                <div className="flex items-center justify-between bg-white rounded shadow p-2 rounded-2xl">
+                                        <span className="font-semibold text-lg">Niños 2 - 13</span>
+                                        <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                                            onClick={() => {
+                                            if (ninos > 0) {
+                                                setNinos(ninos - 1);
+
+                                                // Filtrar visitantes para eliminar el último niño
+                                                setVisitantes((prev) => {
+                                                    const sinUltimoNino = [...prev];
+                                                    const idxUltimoNino = [...prev].map(v => v.tipo).lastIndexOf("nino");
+                                                    if (idxUltimoNino !== -1) sinUltimoNino.splice(idxUltimoNino, 1);
+                                                    return sinUltimoNino;
+                                                });
+                                            }
+                                        }}
+                                            disabled={ninos <= 0}
+                                        >-</button>
+                                        <span className="text-xl font-bold">{ninos}</span>
+                                        <button
+                                            type="button"
+                                            className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                            onClick={() => {
+                                                if (ninos < adultos * 2) {
+                                                    setNinos(ninos + 1);
+                                                    setVisitantes((prev) => [
+                                                        ...prev,
+                                                        { nombre: "",apellido: "", correo: "", celular: "" , cumple:"", ciudad:"", estado:"", pais:"",tipo: "nino" } // Solo nombre y cumpleaños para niños
+                                                    ]);
+                                                    setTouched((prev) => [
+                                                        ...prev,
+                                                        {nombre: false,apellido: false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}
+                                                    ]);
+                                                    setIneFiles((prev) => [
+                                                        ...prev,
+                                                        { frente: null, reverso: null }
+                                                    ]);
+                                                }
+                                            }}
+                                            disabled={ninos >= adultos * 2}
+                                        >+</button>
+                                        </div>
+                                    </div>
+                            </div>
+                            {ninos > 0 && (
+                            <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-20 text-sm text-gray-700 mt-2">
+                                Los niños de 2 a 13 años deben estar acompañados por un adulto. No incluye acceso al jardín termal, acceso GRATIS para niños menores de 2 años.
+                            </div>
+                            )}
+
+                            {adultos60 > 0 && (
+                            <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-41 text-sm text-gray-700 mt-23">
+                            Los adultos mayores de 60 años de edad deberán presentar tarjeda del INAPAM actualizada, de lo contrario se cobrará la entrada a precio regular.
+                            </div>
+                            )}
+                            {adultos + adultos60 >= 12 && (
+                                <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-49 text-sm text-gray-700 mt-44">
+                                 Al reservar para 12 o más adultos, se aplicará automáticamente una tarifa preferencial. Para grupos de 15 personas o más, se otorgarán cortesías proporcionales según la cantidad total de asistentes (los precios y cortesias se veran reflejados en el calculo final).
+                                </div>
+                            )}
+                    </div>
+                        
+
+                        <div>
+                              {/* Selección de fecha y horario (debajo de los selectores de visitantes) */}
+                                                <div className="mt-10">
+                                                    <div className="text-gray-700 text-3xl font-bold mb-6 mt-2 text-center ">
+                                                        Selecciona la fecha y el horario de tu visita
+                                                    </div>
+                                                    <p className="mb-6 text-gray-600 text-base md:text-xl">
+                                                        Estamos abiertos todos los días del año.
+                                                    </p>
+                                                    <div className="flex flex-col md:flex-row gap-6">
+                                                        {/* Calendario */}
+                                                        <div className="w-full md:w-1/2">
+                                                            <div className="bg-white border rounded-lg p-4 md:p-6 shadow-md">
+                                                                {/* Navegación */}
+                                                                <div className="flex items-center justify-between mb-4 md:mb-6">
+                                                                    <button
+                                                                        className={`text-sm font-bold hover:underline ${
+                                                                            puedeIrMesAnterior
+                                                                                ? "text-[#688b18] cursor-pointer"
+                                                                                : "text-gray-400 cursor-not-allowed"
+                                                                        }`}
+                                                                        onClick={handlePrevMonth}
+                                                                        type="button"
+                                                                        disabled={!puedeIrMesAnterior}
+                                                                    >
+                                                                        ← Mes anterior
+                                                                    </button>
+                                                                    <span className="text-base md:text-lg font-bold capitalize">
+                                                                        {new Date(year, mes).toLocaleDateString("es-MX", {
+                                                                            month: "long",
+                                                                            year: "numeric",
+                                                                        })}
+                                                                    </span>
+                                                                    <button
+                                                                        className="text-sm text-[#18668b] font-bold hover:underline"
+                                                                        onClick={handleNextMonth}
+                                                                        type="button"
+                                                                    >
+                                                                        Mes siguiente →
+                                                                    </button>
+                                                                </div>
+                                                                {/* Días de la semana */}
+                                                                <div className="grid grid-cols-7 text-center text-xs md:text-sm font-semibold mb-1 md:mb-2">
+                                                                    {diasSemana.map((dia) => (
+                                                                        <span key={dia} className="text-gray-600">
+                                                                            {dia}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                                {/* Días del mes */}
+                                                                <div className="grid grid-cols-7 gap-1 md:gap-2">
+                                                                    {[...Array(primerDia).keys()].map((_, i) => (
+                                                                        <div key={"empty-left-" + i}></div>
+                                                                    ))}
+                                                                    {dias.map((dia) => {
+                                                                        const fechaBtn = new Date(year, mes, dia);
+                                                                        const hoy = new Date();
+                                                                        hoy.setHours(0, 0, 0, 0);
+                                                                        const isSelected = selectedDay === dia;
+                                                                        const isDisabled = fechaBtn < hoy;
+                                                                        return (
+                                                                            <button
+                                                                                key={dia}
+                                                                                type="button"
+                                                                                onClick={() => !isDisabled && setSelectedDay(dia)}
+                                                                                disabled={isDisabled}
+                                                                                className={`w-9 h-9 md:w-12 md:h-12 text-sm md:text-base rounded-full border flex items-center justify-center transition ${
+                                                                                    isSelected
+                                                                                        ? "bg-[#18668b] text-white border-[#18668b]"
+                                                                                        : isDisabled
+                                                                                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                                                                        : "bg-white hover:bg-gray-100 border-gray-300 text-gray-700"
+                                                                                }`}
+                                                                            >
+                                                                                {dia}
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {/* Horarios */}
+                                                        <div className="w-full md:w-1/2">
+                                                            <p className="mb-3 md:mb-4 text-gray-800 text-sm md:text-base font-bold">
+                                                                Selecciona tu horario de llegada.
+                                                            </p>
+                                                            <div className="grid grid-cols-2 md:grid-cols-1 gap-2 md:gap-4">
+                                                                {horarios.map((hora) => (
+                                                                    <button
+                                                                        key={hora}
+                                                                        type="button"
+                                                                        className={`rounded border py-2 font-semibold text-xs md:text-sm w-full ${
+                                                                            selectedTime === hora
+                                                                                ? "bg-[#18668b] text-white border-[#18668b]"
+                                                                                : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
+                                                                        }`}
+                                                                        onClick={() => setSelectedTime(hora)}
+                                                                    >
+                                                                        {hora}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                            <button
+                                                                    className="w-full py-7 rounded-2xl font-bold text-white bg-gradient-to-r bg-[#62a7c7] hover:bg-[#14526d] mt-10"
+                                                                    onClick={() => setPaso(2)}
+                                                                >
+                                                                Continuar
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                         </div>
-                        )}
-                        <button
-                        className="w-full py-7 rounded-2xl font-bold text-white bg-gradient-to-r bg-[#62a7c7] hover:bg-[#14526d] mt-50"
-                        onClick={() => setPaso(2)}
-                        >
-                        Continuar
-                        </button>
+                                              
+                                               
                     </>
                 )}
 
@@ -1526,303 +1637,26 @@ function getPrecioPorTipo(
                     )}
             </section>
              {/* Columna imagen */}
-            <aside className="block md:flex w-full md:w-1/2 md:h-full bg-[#f8fafc] relative z-0">
-            {/* Contenedor relativo para posicionar fondo+overlay */}
-            <div className="relative w-full h-[320px] sm:h-[420px] md:h-[945px]">
-                {/* Imagen de fondo SIEMPRE absoluta para que no mueva el layout */}
-                <Image
-                src={imagenes[paso - 1]}
-                alt={pasos[paso - 1].label}
-                fill
-                className="object-cover"
-                priority
-                sizes="50vw"
-                />
-
-                {/* Overlay base SIEMPRE (mismo posicionamiento para todos los pasos) */}
-                <div className={`absolute inset-0 flex items-center justify-center p-6 ${paso === 1 ? "bg-black/50 backdrop-blur-sm" : "bg-black/20"} pointer-events-none md:pointer-events-auto`}>
-                {/* Tarjeta contenedora (centrada y con scroll si se requiere) */}
-                <div className={`w-full ${
-                    paso === 1 ? "max-w-4xl" : "max-w-lg"
-                    } bg-white/90 rounded-lg shadow-lg p-6 max-h-[90vh] overflow-y-auto`}
-                >
-                    {/* ===== PASO 1: Calendario + Horarios (SOBRE LA IMAGEN) ===== */}
-                    {paso === 1 && (
-                    <>
-                        <div className="text-gray-700 text-4xl font-bold mb-6 mt-2">
-                        Selecciona la fecha y el horario de tu visita
-                        </div>
-                        <p className="mb-8 text-gray-600 text-2xl">
-                        Estamos abiertos todos los días del año.
-                        </p>
-
-                        <div className="flex flex-col md:flex-row gap-6">
-                        {/* Calendario */}
-                        <div className="w-full">
-                            <div className="bg-white border rounded-lg p-6 shadow-md">
-                            {/* Navegación */}
-                            <div className="flex items-center justify-between mb-6">
-                                <button
-                                className={`text-sm font-bold hover:underline ${
-                                    puedeIrMesAnterior
-                                    ? "text-[#688b18] cursor-pointer"
-                                    : "text-gray-400 cursor-not-allowed"
-                                }`}
-                                onClick={handlePrevMonth}
-                                type="button"
-                                disabled={!puedeIrMesAnterior}
-                                >
-                                ← Mes anterior
-                                </button>
-                                <span className="text-lg font-bold capitalize">
-                                {new Date(year, mes).toLocaleDateString("es-MX", {
-                                    month: "long",
-                                    year: "numeric",
-                                })}
-                                </span>
-                                <button
-                                className="text-sm text-[#18668b] font-bold hover:underline"
-                                onClick={handleNextMonth}
-                                type="button"
-                                >
-                                Mes siguiente →
-                                </button>
-                            </div>
-
-                            {/* Días de la semana */}
-                            <div className="grid grid-cols-7 text-center text-sm font-semibold mb-2">
-                                {diasSemana.map((dia) => (
-                                <span key={dia} className="text-gray-600">
-                                    {dia}
-                                </span>
-                                ))}
-                            </div>
-
-                            {/* Días del mes */}
-                            <div className="grid grid-cols-7 gap-2">
-                                {[...Array(primerDia).keys()].map((_, i) => (
-                                <div key={"empty-" + i}></div>
-                                ))}
-                                {dias.map((dia) => {
-                                const fechaBtn = new Date(year, mes, dia);
-                                const hoy = new Date();
-                                hoy.setHours(0, 0, 0, 0);
-
-                                const isSelected = selectedDay === dia;
-                                const isDisabled = fechaBtn < hoy;
-
-                                return (
-                                    <button
-                                    key={dia}
-                                    type="button"
-                                    onClick={() => !isDisabled && setSelectedDay(dia)}
-                                    disabled={isDisabled}
-                                    className={`w-12 h-12 text-base rounded-full border flex items-center justify-center transition
-                                        ${
-                                        isSelected
-                                            ? "bg-[#18668b] text-white border-[#18668b]"
-                                            : isDisabled
-                                            ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                                            : "bg-white hover:bg-gray-100 border-gray-300 text-gray-700"
-                                        }
-                                    `}
-                                    >
-                                    {dia}
-                                    </button>
-                                );
-                                })}
-                            </div>
-                            </div>
-                        </div>
-
-                        {/* Horarios */}
-                        <div className="w-full md:w-1/2">
-                            <p className="mb-4 text-gray-800 text-base font-bold">
-                            Selecciona tu horario de llegada.
-                            </p>
-                            <div className="grid grid-cols-1 gap-4">
-                            {horarios.map((hora) => (
-                                <button
-                                key={hora}
-                                type="button"
-                                className={`rounded border py-2 font-semibold text-sm w-full
-                                    ${
-                                    selectedTime === hora
-                                        ? "bg-[#18668b] text-white border-[#18668b]"
-                                        : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
-                                    }
-                                `}
-                                onClick={() => setSelectedTime(hora)}
-                                >
-                                {hora}
-                                </button>
-                            ))}
-                            </div>
-                        </div>
-                        </div>
-                    </>
-                    )}
-
-                    {/* ===== PASO 3: Resumen (MISMO OVERLAY, MISMA POSICIÓN) ===== */}
+            <aside className="block md:flex w-full md:w-1/2 md:h-full relative z-0">
+                <div className="relative w-full h-full min-h-[320px] md:min-h-0 md:h-screen">
+                    <Image
+                        src={imagenes[paso - 1]}
+                        alt={pasos[paso - 1].label}
+                        fill
+                        className="object-cover"
+                        priority
+                        sizes="100vw"
+                    />
+                    {/* Overlay y resumen solo para paso 2 */}
                     {paso === 2 && (
-                    <>
-                        <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
-
-                        <div className="flex items-center gap-2 text-sm mb-2">
-                        <span>📅</span>
-                        <span className="capitalize">{fechaDisplay}</span>
+                        <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-auto">
+                            <div className="w-full max-w-lg bg-white/90 rounded-lg shadow-lg p-6 max-h-[90vh] overflow-y-auto">
+                                <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
+                                {/* ...contenido del resumen aquí... */}
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm mb-2">
-                        <span>⏰</span>
-                        <span>{selectedTime}</span>
-                        </div>
-
-                        <div className="text-sm text-gray-500 mb-4">
-                        Disponibilidad confirmada para {visitantes.length} pase{visitantes.length > 1 ? "s" : ""}
-                        </div>
-
-                        {cortesias > 0 && (
-                        <div className="text-sm text-gray-500 mb-4">
-                            {cortesias} Cortesía{cortesias > 1 ? "s" : ""} agregada{cortesias > 1 ? "s" : ""} gratis
-                        </div>
-                        )}
-
-                        <div className="flex justify-between mb-1 text-sm">
-                        <span className="text-black">Pases de Acceso General</span>
-                        <span className="text-black">{visitantes.length} pases</span>
-                        </div>
-
-                        <div className="flex justify-between text-sm">
-                        <span>Precio Adultos 14+</span>
-                        <span>${precioAdulto} MXN</span>
-                        </div>
-
-                        {cantidadAdultos60 > 0 && (
-                        <div className="flex justify-between text-sm">
-                            <span>Precio Adultos 60+</span>
-                            <span>${precioAdulto60} MXN</span>
-                        </div>
-                        )}
-
-                        {cantidadNinos > 0 && (
-                        <div className="flex justify-between text-sm">
-                            <span>Precio Niños 2-13</span>
-                            <span>$70 MXN</span>
-                        </div>
-                        )}
-
-                        <div className="flex justify-between text-sm">
-                        <span>Plataforma 5%</span>
-                        <span>${montoPlataforma.toFixed(2)} MXN</span>
-                        </div>
-
-                        {promoAplicado && (
-                        <div className="flex justify-between text-sm text-green-700 font-bold">
-                            <span>Descuento aplicado</span>
-                            <span>-${DESCUENTO_PROMO} MXN</span>
-                        </div>
-                        )}
-
-                        <div className="flex justify-between text-sm">
-                        <span>Subtotal</span>
-                        <span>${subtotalConDescuento} MXN</span>
-                        </div>
-
-                        <div className="flex justify-between font-bold text-base">
-                        <span>Total</span>
-                        <span>${totalConCargos.toFixed(2)} MXN</span>
-                        </div>
-
-                        {/* Código promocional */}
-                        <input
-                        className="mt-4 w-full border rounded px-2 py-1 text-sm"
-                        placeholder="Código promocional"
-                        value={codigoPromo}
-                        onChange={(e) => setCodigoPromo(e.target.value)}
-                        disabled={promoAplicado}
-                        />
-                        <button
-                        type="button"
-                        className="mt-2 w-full text-xs font-semibold text-black py-2 border border-gray-300 rounded hover:bg-gray-100"
-                        onClick={aplicarPromo}
-                        disabled={promoAplicado}
-                        >
-                        Aplicar
-                        </button>
-
-                        {msgPromo && (
-                        <div className={`text-xs mt-2 ${promoAplicado ? "text-green-700" : "text-red-600"}`}>
-                            {msgPromo}
-                        </div>
-                        )}
-
-                        <h4 className="font-bold mb-3 mt-8">Resumen de reserva</h4>
-                        <div className="flex justify-between font-bold text-lg mb-4">
-                        <span>Total:</span>
-                        <span>${totalConCargos.toFixed(2)} MXN</span>
-                        </div>
-
-                        <div className="flex gap-3 mb-4">
-                        <label className="flex items-center cursor-pointer">
-                            <input
-                            type="radio"
-                            className="mr-2"
-                            name="metodoPago"
-                            value="efectivo"
-                            checked={metodoPago === "efectivo"}
-                            onChange={() => {
-                                setMetodoPago("efectivo");
-                                setPaid(true);
-                            }}
-                            />
-                            <span>Efectivo</span>
-                        </label>
-                        </div>
-
-                        {paid && metodoPago === "efectivo" && (
-                        <div className="mt-4 text-yellow-700 text-center font-bold">
-                            Presenta este resumen y paga en taquilla.
-                        </div>
-                        )}
-
-                        <button
-                        className={`mt-6 w-full py-2 rounded font-bold text-white flex items-center justify-center transition-all duration-200 ${
-                            ((metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid) && !isProcessingReservation)
-                            ? "bg-[#18668b] hover:bg-[#14526d]" 
-                            : "bg-gray-300 cursor-not-allowed"
-                        }`}
-                        onClick={() => {
-                            if (!isProcessingReservation) {
-                                handleContinuar();
-                            }
-                        }}
-                        disabled={isProcessingReservation || (metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid)}
-                        >
-                        {isProcessingReservation ? (
-                            <>
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Procesando reservación...
-                            </>
-                        ) : (
-                            metodoPago === "efectivo"
-                                ? "Finalizar y ver resumen para pago en efectivo"
-                                : "Continuar al resumen"
-                        )}
-                        </button>
-
-                        <div className="mt-4 text-xs text-gray-500">
-                        Los pases son válidos para la fecha y hora seleccionada.
-                        <br />
-                        Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
-                        </div>
-                    </>
                     )}
                 </div>
-                </div>
-            </div>
             </aside>
 
 
