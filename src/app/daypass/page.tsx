@@ -771,6 +771,42 @@ async function handleContinuar() {
     if (visitantes[0]?.estado) formData.append("origin_state", visitantes[0].estado);
     if (visitantes[0]?.pais) formData.append("origin_country", visitantes[0].pais);
     formData.append("payment_method", metodoPago || "");
+const normalizeBirthdate = (input?: string | Date | null): string => {
+  if (!input) return ""; // o devuelve "null" si tu API lo prefiere
+
+  if (input instanceof Date) {
+    const yyyy = String(input.getFullYear());
+    const mm = String(input.getMonth() + 1).padStart(2, "0");
+    const dd = String(input.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  const s = String(input).trim();
+
+  // Ya viene en ISO
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+  // Convierte de D/M/AAAA o DD/MM/AAAA (también acepta guiones)
+  const m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (m) {
+    let [, dd, mm, yyyy] = m;
+    dd = dd.padStart(2, "0");
+    mm = mm.padStart(2, "0");
+
+    // Validación simple de fecha real
+    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    if (
+      d.getFullYear() === Number(yyyy) &&
+      d.getMonth() === Number(mm) - 1 &&
+      d.getDate() === Number(dd)
+    ) {
+      return `${yyyy}-${mm}-${dd}`;
+    }
+  }
+
+  console.warn(`Formato de fecha no reconocido para birthdate: "${s}"`);
+  return s; // fallback: envía tal cual (o decide omitir/cortar)
+};
 
     // Totales y promo (muchas APIs los requieren)
     formData.append("totals[total]", String(Number(totalConCargos.toFixed(2))));
@@ -782,7 +818,7 @@ async function handleContinuar() {
     visitors.forEach((v, i) => {
       formData.append(`visitors[${i}][name]`, v.name);
       formData.append(`visitors[${i}][lastname]`, v.lastname);
-      formData.append(`visitors[${i}][birthdate]`, v.birthdate);
+        formData.append(`visitors[${i}][birthdate]`, normalizeBirthdate(v.birthdate)); // << aquí el ajuste
       formData.append(`visitors[${i}][email]`, v.email);
       formData.append(`visitors[${i}][phone]`, v.phone);
       formData.append(`visitors[${i}][visitor_type_id]`, v.visitor_type_id);
@@ -819,12 +855,10 @@ async function handleContinuar() {
     });
 
     const return_data = await res.json();
-    console.log("Respuesta de la API:", return_data.message["message"]);
 
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      console.error("Error al enviar reserva:", json.message.message);
       toast.dismiss("reservation-processing");
       
       // Determinar el mensaje de error apropiado
@@ -843,7 +877,6 @@ async function handleContinuar() {
       return;
     }
 
-    console.log("Reserva enviada correctamente:", json);
     toast.dismiss("reservation-processing");
     toast.success("¡Reservación enviada exitosamente!");
     setTimeout(() => {
