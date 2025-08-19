@@ -1300,97 +1300,94 @@ function getPrecioPorTipo(
                                 const paisValido = validatePais(vis.pais);
 
                                 return (
-                                <div className="p-4 flex flex-col gap-4 relative rounded border">
+                                <div className="p-4  rounded border">
                                                     {/* Nombres, Apellidos, Correo, Celular en un solo row */}
-                                                    <div className="flex flex-row gap-6">
-                                                        <div className="flex flex-col flex-1 min-w-[180px]">
-                                                            <label className="block text-xs font-bold text-black mb-1">
-                                                                Nombres
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Nombre/s"
-                                                                value={vis.nombre}
-                                                                onChange={(e) => handleVis(idx, "nombre", e.target.value)}
-                                                                onBlur={() => handleBlur(idx, "nombre")}
-                                                                
-                                                                className={`border p-2 rounded w-full h-9 ${
-                                                                    touched[idx]?.nombre && !nombreValido
-                                                                        ? "border-red-500"
-                                                                        : "border-gray-300"
-                                                                }`}
-                                                            />
-                                                            {renderError(
-                                                                "El nombre es obligatorio.",
-                                                                !!touched[idx]?.nombre && !nombreValido
-                                                            )}
-                                                        </div>
-                                                        <div className="flex flex-col flex-1 min-w-[180px]">
-                                                            <label className="block text-xs font-bold text-black mb-1">
-                                                                Apellidos
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Apellidos"
-                                                                value={vis.apellido}
-                                                                onChange={(e) => handleVis(idx, "apellido", e.target.value)}
-                                                                onBlur={() => handleBlur(idx, "apellido")}
-                                                                className={`border p-2 rounded w-full  h-9 ${
-                                                                    touched[idx]?.apellido && !apellidoValido
-                                                                        ? "border-red-500"
-                                                                        : "border-gray-300"
-                                                                }`}
-                                                            />
-                                                            {renderError(
-                                                                "Este campo es obligatorio.",
-                                                                !!touched[idx]?.apellido && !apellidoValido
-                                                            )}
-                                                        </div>
-                                                        <div className="flex flex-col flex-1 min-w-[180px]">
-                                                            <label className="block text-xs font-bold text-black mb-1">
-                                                                Correo Electrónico <span className="text-[10px]">(Principal)</span>
-                                                            </label>
-                                                            <input
-                                                                type="email"
-                                                                placeholder="Correo electrónico"
-                                                                value={vis.correo}
-                                                                onChange={(e) => handleVis(idx, "correo", e.target.value)}
-                                                                onBlur={() => handleBlur(idx, "correo")}
-                                                                className={`border p-2 rounded w-full  h-9 ${
-                                                                    touched[idx]?.correo && !correoValido
-                                                                        ? "border-red-500"
-                                                                        : "border-gray-300"
-                                                                }`}
-                                                            />
-                                                            {renderError(
-                                                                "Correo electrónico inválido.",
-                                                                !!touched[idx]?.correo && !correoValido
-                                                            )}
-                                                        </div>
-                                                        <div className="flex flex-col flex-1 min-w-[180px]">
-                                                            <label className="block text-xs font-bold text-black mb-1">
-                                                                Celular WhatsApp
-                                                            </label>
-                                                            <input
-                                                                type="tel"
-                                                                inputMode="numeric"
-                                                                pattern="\d{10,}"
-                                                                placeholder="Ej. 3312345678"
-                                                                value={vis.celular}
-                                                                onChange={(e) => handleVis(idx, "celular", e.target.value)}
-                                                                onBlur={() => handleBlur(idx, "celular")}
-                                                                className={`border p-2 rounded w-full  h-9 ${
-                                                                    touched[idx]?.celular && !celularValido
-                                                                        ? "border-red-500"
-                                                                        : "border-gray-300"
-                                                                }`}
-                                                            />
-                                                            {renderError(
-                                                                "Debe tener al menos 10 dígitos.",
-                                                                !!touched[idx]?.celular && !celularValido
-                                                            )}
-                                                        </div>
-                                                    </div>
+<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2">
+  <div className="flex flex-col min-w-0">
+    <label htmlFor={`nombre-${idx}`} className="block text-xs font-bold text-black mb-1">
+      Nombres
+    </label>
+    <input
+      id={`nombre-${idx}`}
+      type="text"
+      placeholder="Nombre/s"
+      autoComplete="given-name"
+      value={vis.nombre}
+      onChange={(e) => handleVis(idx, "nombre", e.target.value)}
+      onBlur={() => handleBlur(idx, "nombre")}
+      className={`border p-2 rounded w-full h-9 ${
+        touched[idx]?.nombre && !nombreValido ? "border-red-500" : "border-gray-300"
+      }`}
+      aria-invalid={!!touched[idx]?.nombre && !nombreValido}
+    />
+    {renderError("El nombre es obligatorio.", !!touched[idx]?.nombre && !nombreValido)}
+  </div>
+
+  <div className="flex flex-col min-w-0">
+    <label htmlFor={`apellido-${idx}`} className="block text-xs font-bold text-black mb-1">
+      Apellidos
+    </label>
+    <input
+      id={`apellido-${idx}`}
+      type="text"
+      placeholder="Apellidos"
+      autoComplete="family-name"
+      value={vis.apellido}
+      onChange={(e) => handleVis(idx, "apellido", e.target.value)}
+      onBlur={() => handleBlur(idx, "apellido")}
+      className={`border p-2 rounded w-full h-9 ${
+        touched[idx]?.apellido && !apellidoValido ? "border-red-500" : "border-gray-300"
+      }`}
+      aria-invalid={!!touched[idx]?.apellido && !apellidoValido}
+    />
+    {renderError("Este campo es obligatorio.", !!touched[idx]?.apellido && !apellidoValido)}
+  </div>
+
+  <div className="flex flex-col min-w-0">
+    <label htmlFor={`correo-${idx}`} className="block text-xs font-bold text-black mb-1">
+      Correo Electrónico <span className="text-[10px]">(Principal)</span>
+    </label>
+    <input
+      id={`correo-${idx}`}
+      type="email"
+      placeholder="Correo electrónico"
+      autoComplete="email"
+      value={vis.correo}
+      onChange={(e) => handleVis(idx, "correo", e.target.value)}
+      onBlur={() => handleBlur(idx, "correo")}
+      className={`border p-2 rounded w-full h-9 ${
+        touched[idx]?.correo && !correoValido ? "border-red-500" : "border-gray-300"
+      }`}
+      aria-invalid={!!touched[idx]?.correo && !correoValido}
+    />
+    {renderError("Correo electrónico inválido.", !!touched[idx]?.correo && !correoValido)}
+  </div>
+
+  <div className="flex flex-col min-w-0">
+    <label htmlFor={`celular-${idx}`} className="block text-xs font-bold text-black mb-1">
+      Celular WhatsAppaaaaaaaaaa
+    </label>
+    <input
+      id={`celular-${idx}`}
+      type="tel"
+      inputMode="numeric"
+      pattern="\d{10,}"
+      placeholder="Ej. 3312345678"
+      autoComplete="tel"
+      value={vis.celular}
+      onChange={(e) => handleVis(idx, "celular", e.target.value)}
+      onBlur={() => handleBlur(idx, "celular")}
+      className={`border p-2 rounded w-full h-9 ${
+        touched[idx]?.celular && !celularValido ? "border-red-500" : "border-gray-300"
+      }`}
+      aria-invalid={!!touched[idx]?.celular && !celularValido}
+    />
+    {renderError("Debe tener al menos 10 dígitos.", !!touched[idx]?.celular && !celularValido)}
+  </div>
+</div>
+
+
+
 
                                     {/* Fecha de nacimiento + País/Estado/Ciudad en un solo row */}
                                     <div className="flex flex-row gap-6">
