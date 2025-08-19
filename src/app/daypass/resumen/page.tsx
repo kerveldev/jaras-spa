@@ -145,15 +145,10 @@ export default function ConfirmacionReservaPage() {
 
                 {/* Detalles de la reserva */}
             <div className="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 p-5 shadow-sm">
-            <div className="font-bold text-slate-900 text-xl mb-2">Detalles de la Reserva</div>
             {/* mostrar el link que tengo guardado en localStorage del qr */}
             <div className="text-slate-700 mb-3">
               <p className="mb-1"><strong>Este es tu código QR de acceso: </strong></p>
                <a href={linkQr}> <img src={linkQr} alt="Código QR de acceso" width={160} height={160} className="mb-2" /></a>
-              <p className="text-slate-500 text-xs">
-                Escanea este código con tu dispositivo móvil para acceder a tu reserva.
-              </p>
-
               </div>
             </div>
           </div>    
