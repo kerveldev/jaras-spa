@@ -1618,7 +1618,7 @@ function getPrecioPorTipo(
                                 </div>
                             </div>
                           <button
-                                className="mt-20 w-full py-7 rounded-2xl font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b]"
+                                className="mt-20 w-full py-4 rounded-2xl font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b]"
                                 onClick={() => setPaso(1)}
                             >
                                 Volver
