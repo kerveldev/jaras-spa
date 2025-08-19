@@ -788,16 +788,16 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
 
   // Convierte de D/M/AAAA o DD/MM/AAAA (también acepta guiones)
   const m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
-  if (m) {
-    let [, dd, mm, yyyy] = m;
-    dd = dd.padStart(2, "0");
-    mm = mm.padStart(2, "0");
+    if (m) {
+        const [, ddRaw, mmRaw, yyyy] = m;
+        const dd = ddRaw.padStart(2, "0");
+        const mm = mmRaw.padStart(2, "0");
 
-    // Validación simple de fecha real
-    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-    if (
-      d.getFullYear() === Number(yyyy) &&
-      d.getMonth() === Number(mm) - 1 &&
+        // Validación simple de fecha real
+        const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+        if (
+            d.getFullYear() === Number(yyyy) &&
+            d.getMonth() === Number(mm) - 1 &&
       d.getDate() === Number(dd)
     ) {
       return `${yyyy}-${mm}-${dd}`;
