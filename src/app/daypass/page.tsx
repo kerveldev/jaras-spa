@@ -1127,20 +1127,19 @@ function getPrecioPorTipo(
                                     </div>
                             </div>
                             {ninos > 0 && (
-                            <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-20 text-sm text-gray-700 mt-2">
+                              <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 mb-4 text-sm text-gray-700 mt-2">
                                 Los niños de 2 a 13 años deben estar acompañados por un adulto. No incluye acceso al jardín termal, acceso GRATIS para niños menores de 2 años.
-                            </div>
+                              </div>
                             )}
-
                             {adultos60 > 0 && (
-                            <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-41 text-sm text-gray-700 mt-23">
-                            Los adultos mayores de 60 años de edad deberán presentar tarjeda del INAPAM actualizada, de lo contrario se cobrará la entrada a precio regular.
-                            </div>
+                              <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 mb-4 text-sm text-gray-700 mt-2">
+                                Los adultos mayores de 60 años de edad deberán presentar tarjeda del INAPAM actualizada, de lo contrario se cobrará la entrada a precio regular.
+                              </div>
                             )}
                             {adultos + adultos60 >= 12 && (
-                                <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 -mb-49 text-sm text-gray-700 mt-44">
-                                 Al reservar para 12 o más adultos, se aplicará automáticamente una tarifa preferencial. Para grupos de 15 personas o más, se otorgarán cortesías proporcionales según la cantidad total de asistentes (los precios y cortesias se veran reflejados en el calculo final).
-                                </div>
+                              <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 mb-4 text-sm text-gray-700 mt-2">
+                                Al reservar para 12 o más adultos, se aplicará automáticamente una tarifa preferencial. Para grupos de 15 personas o más, se otorgarán cortesías proporcionales según la cantidad total de asistentes (los precios y cortesias se veran reflejados en el calculo final).
+                              </div>
                             )}
                     </div>
                         
