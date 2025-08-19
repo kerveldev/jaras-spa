@@ -855,6 +855,10 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
     });
 
     const return_data = await res.json();
+    console.log("Respuesta de la API:", return_data.reservation.qr_code_url);
+
+    //guardar QR en localStorage
+    localStorage.setItem("qr_code_url", return_data.reservation.qr_code_url);
 
     const json = await res.json().catch(() => ({}));
 

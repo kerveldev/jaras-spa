@@ -48,6 +48,7 @@ export default function ConfirmacionReservaPage() {
     const [visitantes, setVisitantes] = useState<any[]>([]);
     const [cantidad, setCantidad] = useState(1);
     const [fecha, setFecha] = useState<string>("");
+    const [linkQr, setLinkQr] = useState<string>("");
     const [hora, setHora] = useState<string>("");
     const [horarioTransporte, setHorarioTransporte] = useState<any>(null);
     const [usaTransporte, setUsaTransporte] = useState(true);
@@ -58,7 +59,10 @@ export default function ConfirmacionReservaPage() {
     useEffect(() => {
         // Lee todo el objeto reserva guardado por la otra página
         const reserva = safeParse<any>(localStorage.getItem("reserva_data"), null);
+        const qrCodeUrl = localStorage.getItem("qr_code_url") || qrURL;
         if (reserva) {
+            console.log("Cargando datos de reserva desde localStorage:", qrCodeUrl);
+            setLinkQr(qrCodeUrl);
             setVisitantes(reserva.visitantes || []);
             setCantidad(reserva.visitantes?.length || 1);
             setFecha(reserva.fechaVisita || "");
@@ -141,28 +145,18 @@ export default function ConfirmacionReservaPage() {
 
                 {/* Detalles de la reserva */}
             <div className="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div className="font-bold text-slate-900 text-xl mb-2">Detalles de la Reserva</div>
+            {/* mostrar el link que tengo guardado en localStorage del qr */}
+            <div className="text-slate-700 mb-3">
+              <p className="mb-1"><strong>Este es tu código QR de acceso: </strong></p>
+               <a href={linkQr}> <img src={linkQr} alt="Código QR de acceso" width={160} height={160} className="mb-2" /></a>
+              <p className="text-slate-500 text-xs">
+                Escanea este código con tu dispositivo móvil para acceder a tu reserva.
+              </p>
 
-               <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <div className="text-slate-500">Fecha</div>
-                  <div className="font-semibold text-slate-900">{fechaLegible(fecha)}</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <div className="text-slate-500">Nombre</div>
-                  <div className="font-semibold text-slate-900">{visitantes.find((v:any) => v?.nombre || v?.correo || v?.celular)?.nombre || "-"}</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <div className="text-slate-500">Hora</div>
-                  <div className="font-semibold text-slate-900">{hora || "-"}</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <div className="text-slate-500">Pases</div>
-                  <div className="font-semibold text-slate-900">{totalPases}</div>
-                </div>
-                
               </div>
             </div>
-          </div>
+          </div>    
 
             </section>
 
