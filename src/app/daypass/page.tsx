@@ -1277,7 +1277,7 @@ function getPrecioPorTipo(
                                                                 onChange={(e) => handleVis(idx, "nombre", e.target.value)}
                                                                 onBlur={() => handleBlur(idx, "nombre")}
                                                                 
-                                                                className={`border p-2 rounded w-full h-8 ${
+                                                                className={`border p-2 rounded w-full h-9 ${
                                                                     touched[idx]?.nombre && !nombreValido
                                                                         ? "border-red-500"
                                                                         : "border-gray-300"
@@ -1298,7 +1298,7 @@ function getPrecioPorTipo(
                                                                 value={vis.apellido}
                                                                 onChange={(e) => handleVis(idx, "apellido", e.target.value)}
                                                                 onBlur={() => handleBlur(idx, "apellido")}
-                                                                className={`border p-2 rounded w-full  h-8 ${
+                                                                className={`border p-2 rounded w-full  h-9 ${
                                                                     touched[idx]?.apellido && !apellidoValido
                                                                         ? "border-red-500"
                                                                         : "border-gray-300"
@@ -1319,7 +1319,7 @@ function getPrecioPorTipo(
                                                                 value={vis.correo}
                                                                 onChange={(e) => handleVis(idx, "correo", e.target.value)}
                                                                 onBlur={() => handleBlur(idx, "correo")}
-                                                                className={`border p-2 rounded w-full  h-8 ${
+                                                                className={`border p-2 rounded w-full  h-9 ${
                                                                     touched[idx]?.correo && !correoValido
                                                                         ? "border-red-500"
                                                                         : "border-gray-300"
@@ -1342,7 +1342,7 @@ function getPrecioPorTipo(
                                                                 value={vis.celular}
                                                                 onChange={(e) => handleVis(idx, "celular", e.target.value)}
                                                                 onBlur={() => handleBlur(idx, "celular")}
-                                                                className={`border p-2 rounded w-full  h-8 ${
+                                                                className={`border p-2 rounded w-full  h-9 ${
                                                                     touched[idx]?.celular && !celularValido
                                                                         ? "border-red-500"
                                                                         : "border-gray-300"
@@ -1375,7 +1375,7 @@ function getPrecioPorTipo(
                                                     handleVis(idx, "cumple", formatted);
                                                 }}
                                                 onBlur={() => handleBlur(idx, "cumple")}
-                                                className={`border p-2 rounded w-full  h-8 ${
+                                                className={`border p-2 rounded w-full  h-9 ${
                                                     touched[idx]?.cumple && !cumpleValido
                                                         ? "border-red-500"
                                                         : "border-gray-300"
@@ -1394,7 +1394,7 @@ function getPrecioPorTipo(
                                                 value={vis.pais}
                                                 onChange={(e) => handlePaisChange(idx, e.target.value)}
                                                 onBlur={() => handleBlur(idx, "pais")}
-                                                className={`border p-2 rounded w-full  h-8 text-black ${
+                                                className={`border p-2 rounded w-full  h-9 text-black ${
                                                     touched[idx]?.pais && !paisValido
                                                         ? "border-red-500"
                                                         : "border-gray-300"
@@ -1421,7 +1421,7 @@ function getPrecioPorTipo(
                                                 onChange={(e) => handleEstadoChange(idx, e.target.value)}
                                                 onBlur={() => handleBlur(idx, "estado")}
                                                 disabled={!vis.pais}
-                                                className={`border p-2 rounded w-full  h-8 text-black ${
+                                                className={`border p-2 rounded w-full  h-9 text-black ${
                                                     touched[idx]?.estado && !estadoValido
                                                         ? "border-red-500"
                                                         : "border-gray-300"
@@ -1448,7 +1448,7 @@ function getPrecioPorTipo(
                                                 onChange={(e) => handleCiudadChange(idx, e.target.value)}
                                                 onBlur={() => handleBlur(idx, "ciudad")}
                                                 disabled={!vis.estado}
-                                                className={`border p-2 rounded w-full  h-8 text-black ${
+                                                className={`border p-2 rounded w-full  h-9 text-black ${
                                                     touched[idx]?.ciudad && !ciudadValido
                                                         ? "border-red-500"
                                                         : "border-gray-300"
@@ -1472,96 +1472,90 @@ function getPrecioPorTipo(
                             })()}
                         </form>
 
-
-                              {/* Resumen solo en mobile */}
-                            <div className=" mt-8 p-6 bg-white rounded shadow">
-                                <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
-                                <div className="flex items-center gap-2 text-sm mb-2">
-                                    <span>📅</span>
-                                    <span className="capitalize">{fechaDisplay}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm mb-2">
-                                    <span>⏰</span>
-                                    <span>{selectedTime}</span>
-                                </div>
-                                <div className="text-sm text-gray-500 mb-4">
-                                    Disponibilidad confirmada para {visitantes.length} pase{visitantes.length > 1 ? "s" : ""}<br />
-
-                                </div>
-                                {cortesias > 0 && (
-                                <div className="text-sm text-gray-500 mb-4">
-                                    
-                                    {cortesias} Cortesía{cortesias > 1 ? "s" : ""} agregada{cortesias > 1 ? "s" : ""} gratis
-                                    
-                                </div>
-                                )}
-                                <div className="flex flex-col gap-1 text-sm mb-2">
-                                    <div className="flex justify-between text-sm">
-                                        <span>Precio Adultos 14+</span>
-                                        <span>${precioAdulto} MXN</span>
-                                    </div>
-                                    {cantidadAdultos60 > 0 && (
-                                    <div className="flex justify-between text-sm">
-                                        <span>Precio Adultos 60+</span>
-                                        <span>${precioAdulto60} MXN</span>
-                                    </div>
-                                    )}
-                                    {cantidadNinos > 0 && (
-                                    <div className="flex justify-between text-sm">
-                                        <span>PrecioNiños 2-13</span>
-                                        <span>$70 MXN</span>
-                                    </div>
-                                    )}
-                                </div>
-                                 <div className="flex justify-between text-sm mb-2">
-                                <span>Plataforma (5%)</span>
-                                <span>${montoPlataforma.toFixed(2)} MXN</span>
+                        <div className=" mt-8 p-6 bg-white rounded shadow">
+                            {/* 1ERA COLUMNA*/}
+                            <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
+                            <div className="flex items-center gap-2 text-sm mb-2">
+                                <span>📅</span>
+                                <span className="capitalize">{fechaDisplay}</span>
                             </div>
-                            
-                                {promoAplicado && (
-                                    <div className="flex justify-between text-sm text-green-700 font-bold">
-                                    <span>Descuento aplicado</span>
-                                    <span>-${DESCUENTO_PROMO} MXN</span>
-                                    </div>
-                                )}
+                            <div className="flex items-center gap-2 text-sm mb-2">
+                                <span>⏰</span>
+                                <span>{selectedTime}</span>
+                            </div>
+                            <div className="text-sm text-gray-500 mb-4">
+                                Disponibilidad confirmada para {visitantes.length} pase{visitantes.length > 1 ? "s" : ""}<br />
+
+                            </div>
+                            {cortesias > 0 && (
+                            <div className="text-sm text-gray-500 mb-4">
+                                
+                                {cortesias} Cortesía{cortesias > 1 ? "s" : ""} agregada{cortesias > 1 ? "s" : ""} gratis
+                                
+                            </div>
+                            )}
+                            <div className="flex flex-col gap-1 text-sm mb-2">
                                 <div className="flex justify-between text-sm">
-                                <span>Subtotal</span>
-                                <span>${subtotalConDescuento} MXN</span>
+                                    <span>Precio Adultos 14+</span>
+                                    <span>${precioAdulto} MXN</span>
+                                </div>
+                                {cantidadAdultos60 > 0 && (
+                                <div className="flex justify-between text-sm">
+                                    <span>Precio Adultos 60+</span>
+                                    <span>${precioAdulto60} MXN</span>
+                                </div>
+                                )}
+                                {cantidadNinos > 0 && (
+                                <div className="flex justify-between text-sm">
+                                    <span>PrecioNiños 2-13</span>
+                                    <span>$70 MXN</span>
+                                </div>
+                                )}
+                            </div>
+                                <div className="flex justify-between text-sm mb-2">
+                            <span>Plataforma (5%)</span>
+                            <span>${montoPlataforma.toFixed(2)} MXN</span>
+                            </div>
+                        
+                            {promoAplicado && (
+                                <div className="flex justify-between text-sm text-green-700 font-bold">
+                                <span>Descuento aplicado</span>
+                                <span>-${DESCUENTO_PROMO} MXN</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between text-sm">
+                            <span>Subtotal</span>
+                            <span>${subtotalConDescuento} MXN</span>
                             </div>
                             <div className="flex justify-between font-bold text-base">
-                                <span>Total</span>
-                                <span>${totalConCargos.toFixed(2)} MXN</span>
+                            <span>Total</span>
+                            <span>${totalConCargos.toFixed(2)} MXN</span>
+                        </div>
+                        {/* Código promocional */}
+                        <input
+                            className="mt-4 w-full border rounded px-2 py-1 text-sm"
+                            placeholder="Código promocional"
+                            value={codigoPromo}
+                            onChange={e => setCodigoPromo(e.target.value)}
+                            disabled={promoAplicado}
+                        />
+                        <button
+                            type="button"
+                            className="mt-2 w-full text-xs font-semibold text-black py-2 border border-gray-300 rounded hover:bg-gray-100"
+                            onClick={aplicarPromo}
+                            disabled={promoAplicado}
+                        >
+                            Aplicar
+                        </button>
+                        {msgPromo && (
+                            <div className={`text-xs mt-2 ${promoAplicado ? "text-green-700" : "text-red-600"}`}>
+                            {msgPromo}
                             </div>
-                                {/* Código promocional */}
-                                <input
-                                    className="mt-4 w-full border rounded px-2 py-1 text-sm"
-                                    placeholder="Código promocional"
-                                    value={codigoPromo}
-                                    onChange={e => setCodigoPromo(e.target.value)}
-                                    disabled={promoAplicado}
-                                />
-                                <button
-                                    type="button"
-                                    className="mt-2 w-full text-xs font-semibold text-black py-2 border border-gray-300 rounded hover:bg-gray-100"
-                                    onClick={aplicarPromo}
-                                    disabled={promoAplicado}
-                                >
-                                    Aplicar
-                                </button>
-                                {msgPromo && (
-                                    <div className={`text-xs mt-2 ${promoAplicado ? "text-green-700" : "text-red-600"}`}>
-                                    {msgPromo}
-                                    </div>
-                                )}
-                                 <h4 className="font-bold mb-3 mt-8">Resumen de reserva</h4>
-                            {/* Total visible siempre */}
-                            <div className="flex justify-between font-bold text-lg mb-4">
-                                <span>Total:</span>
-                                <span>${totalConCargos.toFixed(2)} MXN</span>
-                            </div>
-                             {/* NUEVO: Método de pago */}
-                            <div className="flex gap-3 mb-4">
-                                <label className="flex items-center cursor-pointer">
+                        )}
+
+                        {/* NUEVO: Método de pago ESTO SERIA LA SEGUNDA COLUMNA */}
+                        <div className="flex gap-3 mb-3 mt-8">
+                            <label className="flex items-center cursor-pointer">
                                     <input
                                         type="radio"
                                         className="mr-2"
@@ -1577,54 +1571,53 @@ function getPrecioPorTipo(
                                 </label>
 
                             </div>
-                               {paid && metodoPago === "efectivo" && (
-                                <div className="mt-4 text-yellow-700 text-center font-bold">
-                                    Presenta este resumen y paga en taquilla.
-                                </div>
+                                {paid && metodoPago === "efectivo" && (
+                            <div className="mt-4 text-yellow-700 text-center font-bold">
+                                Presenta este resumen y paga en taquilla.
+                            </div>
                             )}
 
-
-                                                                {/* Botones Finalizar y Volver en el mismo row */}
-                                                                <div className="flex flex-row gap-4 mt-6">
-                                                                    <button
-                                                                        className={`w-1/2 py-2 rounded font-bold text-white flex items-center justify-center transition-all duration-200 ${
-                                                                            (metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid) && !isProcessingReservation
-                                                                                ? "bg-[#18668b] hover:bg-[#14526d]"
-                                                                                : "bg-gray-300 cursor-not-allowed"
-                                                                        }`}
-                                                                        onClick={() => {
-                                                                            if (!isProcessingReservation) {
-                                                                                handleContinuar();
-                                                                            }
-                                                                        }}
-                                                                        disabled={isProcessingReservation || (metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid)}
-                                                                    >
-                                                                        {isProcessingReservation ? (
-                                                                            <>
-                                                                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                                                </svg>
-                                                                                Procesando reservación...
-                                                                            </>
-                                                                        ) : (
-                                                                            metodoPago === "efectivo"
-                                                                                ? "Finalizar y ver resumen para pago en efectivo"
-                                                                                : "Continuar al resumen"
-                                                                        )}
-                                                                    </button>
-                                                                    <button
-                                                                        className="w-1/2 py-2 rounded font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b] transition-all duration-200"
-                                                                        onClick={() => setPaso(1)}
-                                                                    >
-                                                                        Volver
-                                                                    </button>
-                                                                </div>
-                                <div className="mt-4 text-xs text-gray-500">
-                                    Los pases son válidos para la fecha y hora seleccionada.<br />
-                                    Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
-                                </div>
+                            {/* Botones Finalizar y Volver en el mismo row */}
+                            <div className="flex flex-row gap-4 mt-6">
+                                <button
+                                    className={`w-1/2 py-2 rounded font-bold text-white flex items-center justify-center transition-all duration-200 ${
+                                        (metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid) && !isProcessingReservation
+                                            ? "bg-[#18668b] hover:bg-[#14526d]"
+                                            : "bg-gray-300 cursor-not-allowed"
+                                    }`}
+                                    onClick={() => {
+                                        if (!isProcessingReservation) {
+                                            handleContinuar();
+                                        }
+                                    }}
+                                    disabled={isProcessingReservation || (metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid)}
+                                >
+                                    {isProcessingReservation ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Procesando reservación...
+                                        </>
+                                    ) : (
+                                        metodoPago === "efectivo"
+                                            ? "Finalizar y ver resumen para pago en efectivo"
+                                            : "Continuar al resumen"
+                                    )}
+                                </button>
+                                <button
+                                    className="w-1/2 py-2 rounded font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b] transition-all duration-200"
+                                    onClick={() => setPaso(1)}
+                                >
+                                    Volver
+                                </button>
                             </div>
+                            <div className="mt-4 text-xs text-gray-500">
+                                Los pases son válidos para la fecha y hora seleccionada.<br />
+                                Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
+                            </div>
+                        </div>
                           
                         </div>
                     </div>
@@ -1642,14 +1635,6 @@ function getPrecioPorTipo(
                         sizes="100vw"
                     />
                     {/* Overlay y resumen solo para paso 2 */}
-                    {paso === 2 && (
-                        <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-auto">
-                            <div className="w-full max-w-lg bg-white/90 rounded-lg shadow-lg p-6 max-h-[90vh] overflow-y-auto">
-                                <h4 className="font-bold text-black mb-3">Resumen de tu reserva</h4>
-                                {/* ...contenido del resumen aquí... */}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </aside>
 
