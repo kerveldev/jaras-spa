@@ -146,96 +146,18 @@ export default function ConfirmacionReservaPage() {
                 {/* Detalles de la reserva */}
             <div className="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 p-5 shadow-sm">
             {/* mostrar el link que tengo guardado en localStorage del qr */}
-            <div className="text-slate-700 mb-3">
+            <div className="text-slate-700 mb-3 flex flex-col items-center">
               <p className="mb-1"><strong>Este es tu código QR de acceso: </strong></p>
-               <a href={linkQr}> <img src={linkQr} alt="Código QR de acceso" width={160} height={160} className="mb-2" /></a>
-              </div>
+              <a href={linkQr} className="flex justify-center">
+                <img src={linkQr} alt="Código QR de acceso" width={160} height={160} className="mb-2" />
+              </a>
+            </div>
             </div>
           </div>    
 
             </section>
 
 
-                {/* Boletos de acceso y autobús */}
-                {/*<section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">*/}
-                {/*    <div className="bg-white border rounded p-6 flex flex-col items-center">*/}
-                {/*        <div className="font-bold text-black mb-2">Boletos de Acceso</div>*/}
-                {/*        <div className="mb-2 text-xs text-gray-600">Presenta este código QR en la entrada principal</div>*/}
-                {/*        <Image*/}
-                {/*            src={qrURL}*/}
-                {/*            alt="Código QR acceso"*/}
-                {/*            width={160}*/}
-                {/*            height={160}*/}
-                {/*            className="mb-2"*/}
-                {/*        />*/}
-                {/*        <div className="text-xs text-center text-gray-500">*/}
-                {/*            Válido para {tipoBoletos}<br />*/}
-                {/*            Incluye acceso a todas las instalaciones*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*    <div className="bg-white border rounded p-6 flex flex-col items-center">*/}
-                {/*        <div className="font-bold text-black mb-2">Boletos de Autobús</div>*/}
-                {/*        <div className="mb-2 text-xs text-gray-600">Presenta este código QR al abordar el autobús</div>*/}
-                {/*        <Image*/}
-                {/*            src={qrURLMapa}*/}
-                {/*            alt="Boleto autobús"*/}
-                {/*            width={160}*/}
-                {/*            height={160}*/}
-                {/*            className="mb-2 w-40 h-40 object-contain"*/}
-                {/*        />*/}
-                {/*        {usaTransporte ? (*/}
-                {/*            <div className="text-xs text-center text-gray-500">*/}
-                {/*                Ruta: {horarioTexto}<br />*/}
-                {/*                Asientos: General <br />*/}
-                {/*                {totalPases} reservados*/}
-                {/*            </div>*/}
-                {/*        ) : (*/}
-                {/*            <div className="text-xs text-center text-gray-400">*/}
-                {/*                No reservaste autobús*/}
-                {/*            </div>*/}
-                {/*        )}*/}
-                {/*    </div>*/}
-                {/*</section>*/}
-
-
-
-                {/* Detalles y extras */}
-                {/* <section className="flex flex-col md:flex-row gap-6 md:gap-8 mb-10 text-sm justify-center items-stretch">
-                    <div className="bg-white border rounded-lg shadow-md p-6 flex-1 min-w-[280px] max-w-md flex flex-col justify-center items-center">
-                        <div className="font-bold text-black mb-4 text-lg flex items-center gap-2">⭐ Resumen de Orden</div>
-                        <div className="mb-1 text-black">
-                            Pases de entrada: {totalPases} x ${PRECIO_PASE} = <b>${totalBase} MXN</b>
-                        </div>
-                        {promo.aplicado && (
-                            <div className="mb-1 text-green-700 font-bold">
-                                Descuento ({promo.codigo || "PROMO"}): -${promo.valor} MXN
-                            </div>
-                        )}
-                        <div className="mb-1 text-black">
-                            {usaTransporte ? (
-                                <>
-                                    Transporte: {totalPases} x ${PRECIO_TRANSPORTE} = <b>${totalTransporte} MXN</b>
-                                </>
-                            ) : "Sin transporte"}
-                        </div>
-                        <div className="font-bold text-black mt-2 text-base">
-                            Total: ${total} MXN
-                        </div>
-                    </div>
-                    <div className="bg-white border rounded-lg shadow-md p-6 flex-1 min-w-[280px] max-w-md flex flex-col justify-center items-center text-center">
-                        <div className="font-bold text-black mb-4 text-lg flex items-center gap-2 justify-center">📩 Contacto</div>
-                        {visitantes.length > 0 && (
-                            <>
-                                <div className="mb-1 text-black">Nombre: {visitantes[0]?.nombre}</div>
-                                <div className="mb-1 text-black">Email: {visitantes[0]?.correo}</div>
-                                <div className="mb-1 text-black">Celular: {visitantes[0]?.celular}</div>
-                            </>
-                        )}
-                        <div className="mt-1 text-xs text-gray-400">
-                            Recibirás un correo de confirmación y tu código de acceso.
-                        </div>
-                    </div>
-                </section> */}
                 <div className="flex justify-center my-8">
                     <button
                         className="bg-[#18668b] hover:bg-[#14526d] text-white font-bold px-6 py-3 rounded-lg shadow transition"
@@ -243,7 +165,7 @@ export default function ConfirmacionReservaPage() {
                             router.push("/daypass");
                         }}
                     >
-                        Crear nueva venta
+                        Adquirir otro Day Pass
                     </button>
                 </div>
             </main>
