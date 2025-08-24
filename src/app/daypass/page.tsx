@@ -1172,9 +1172,10 @@ function getPrecioPorTipo(
                                                                         ← Mes anterior
                                                                     </button>
                                                                     <span className="text-base md:text-lg font-bold capitalize">
-                                                                        {new Date(year, mes).toLocaleDateString("es-MX", {
+                                                                        {new Date(year, mes, 1).toLocaleDateString("es-MX", {
                                                                             month: "long",
                                                                             year: "numeric",
+                                                                            timeZone: "America/Mexico_City", // Fuerza la zona horaria de México
                                                                         })}
                                                                     </span>
                                                                     <button
