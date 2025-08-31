@@ -1184,8 +1184,8 @@ function getPrecioPorTipo(
 
                 {/* Paso 2 */}
               {paso === 2 && (
-                    <div className="relative h-[800px] overflow-hidden">
-                        <div className="overflow-y-auto h-full">
+                    <div className="relative">
+                        <div>
                         <div className="text-gray-700 text-2xl font-bold mb-5 overflow-hidden">
                             Detalles de la reserva
                         </div>
