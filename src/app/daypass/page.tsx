@@ -1470,7 +1470,7 @@ function getPrecioPorTipo(
                                 )}
                             </div>
                                 <div className="flex justify-between text-sm mb-2">
-                            <span>Plataforma (5%)</span>
+                            <span>Servicio en Línea (5%)</span>
                             <span>${montoPlataforma.toFixed(2)} MXN</span>
                             </div>
                         
@@ -1489,45 +1489,8 @@ function getPrecioPorTipo(
                             <span>${totalConCargos.toFixed(2)} MXN</span>
                         </div>
                         {/* Código promocional */}
-                        <input
-                            className="mt-4 w-full border rounded px-2 py-1 text-sm"
-                            placeholder="Código promocional"
-                            value={codigoPromo}
-                            onChange={e => setCodigoPromo(e.target.value)}
-                            disabled={promoAplicado}
-                        />
-                        <button
-                            type="button"
-                            className="mt-2 w-full text-xs font-semibold text-black py-2 border border-gray-300 rounded hover:bg-gray-100"
-                            onClick={aplicarPromo}
-                            disabled={promoAplicado}
-                        >
-                            Aplicar
-                        </button>
-                        {msgPromo && (
-                            <div className={`text-xs mt-2 ${promoAplicado ? "text-green-700" : "text-red-600"}`}>
-                            {msgPromo}
-                            </div>
-                        )}
+                       
 
-                        {/* NUEVO: Método de pago ESTO SERIA LA SEGUNDA COLUMNA */}
-                        <div className="flex gap-3 mb-3 mt-8">
-                            <label className="flex items-center cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        className="mr-2"
-                                        name="metodoPago"
-                                        value="efectivo"
-                                        checked={metodoPago === "efectivo"}
-                                        onChange={() => {
-                                            setMetodoPago("efectivo");
-                                            setPaid(true);
-                                        }}
-                                    />
-                                    <span>Efectivo</span>
-                                </label>
-
-                            </div>
                                 {paid && metodoPago === "efectivo" && (
                             <div className="mt-4 text-yellow-700 text-center font-bold">
                                 Presenta este resumen y paga en taquilla.
