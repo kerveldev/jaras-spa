@@ -158,14 +158,28 @@ export default function ConfirmacionReservaPage() {
             </section>
 
 
-                <div className="flex justify-center my-8">
+                <div className="flex flex-col items-center my-12 px-4">
+                    <div className="text-center mb-6">
+                        <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
+                            Continúa disfrutando la experiencia
+                        </h3>
+                        <p className="text-gray-600 text-sm md:text-base">
+                            Reserva tu próximo day pass con facilidad
+                        </p>
+                    </div>
+                    
                     <button
-                        className="bg-[#18668b] hover:bg-[#14526d] text-white font-bold px-6 py-3 rounded-lg shadow transition"
+                        className="group relative bg-white hover:bg-gray-50 text-[#18668b] hover:text-[#14526d] font-bold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out w-full max-w-sm border border-gray-200 hover:border-[#18668b]"
                         onClick={() => {
                             router.push("/daypass");
                         }}
                     >
-                        Adquirir otro Day Pass
+                        <div className="flex items-center justify-center gap-3">
+                            <svg className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-lg">Nueva reservación</span>
+                        </div>
                     </button>
                 </div>
             </main>
