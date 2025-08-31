@@ -1073,9 +1073,9 @@ function getPrecioPorTipo(
                                                         <div className="w-full md:w-1/2">
                                                             <div className="bg-white border rounded-lg p-4 md:p-6 shadow-md">
                                                                 {/* Navegación */}
-                                                                <div className="flex items-center justify-between mb-4 md:mb-6">
+                                                                <div className="flex items-center justify-between mb-4 md:mb-6 gap-2">
                                                                     <button
-                                                                        className={`text-sm font-bold hover:underline ${
+                                                                        className={`text-xs md:text-sm font-bold hover:underline flex-shrink-0 ${
                                                                             puedeIrMesAnterior
                                                                                 ? "text-[#688b18] cursor-pointer"
                                                                                 : "text-gray-400 cursor-not-allowed"
@@ -1084,9 +1084,9 @@ function getPrecioPorTipo(
                                                                         type="button"
                                                                         disabled={!puedeIrMesAnterior}
                                                                     >
-                                                                        ← Mes anterior
+                                                                        ← Anterior
                                                                     </button>
-                                                                    <span className="text-base md:text-lg font-bold capitalize">
+                                                                    <span className="text-sm md:text-lg font-bold capitalize text-center flex-1 px-2">
                                                                         {new Date(year, mes, 1).toLocaleDateString("es-MX", {
                                                                             month: "long",
                                                                             year: "numeric",
@@ -1094,11 +1094,11 @@ function getPrecioPorTipo(
                                                                         })}
                                                                     </span>
                                                                     <button
-                                                                        className="text-sm text-[#18668b] font-bold hover:underline"
+                                                                        className="text-xs md:text-sm text-[#18668b] font-bold hover:underline flex-shrink-0"
                                                                         onClick={handleNextMonth}
                                                                         type="button"
                                                                     >
-                                                                        Mes siguiente →
+                                                                        Siguiente →
                                                                     </button>
                                                                 </div>
                                                                 {/* Días de la semana */}
