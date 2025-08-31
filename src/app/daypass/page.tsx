@@ -1,4 +1,3 @@
-// Tipo explícito para archivos INE
 "use client";
 
 type IneFiles = { frente: File | null, reverso: File | null };
@@ -16,36 +15,6 @@ const CODIGO_PROMO = "PROMO100";
 const DESCUENTO_PROMO = 100;
 const PRECIO_PASE = 350;
 
-
-// function getPrecioPase(fecha: string, categoria: string = "general") {
-//     // Obtén el día de la semana: 0=Domingo, 1=Lunes, ..., 6=Sábado
-//     const diaSemana = new Date(fecha).getDay();
-//     // Lunes a Jueves: 1-4, Viernes a Niños menores de 13 años entran gratis.Domingo: 0, 5, 6
-//     if ([1, 2, 3, 4].includes(diaSemana)) {
-//         // Lunes a Jueves
-//         switch (categoria) {
-//             case "general": return 350;
-//             case "grupos": return 325;
-//             case "inapam": return 300;
-//             case "convenios": return 300;
-//             case "locales": return 250;
-//             case "discapacidad": return 250;
-//             default: return 350;
-//         }
-//     } else {
-//         // Viernes a Domingo
-//         switch (categoria) {
-//             case "general": return 420;
-//             case "grupos": return 390;
-//             case "inapam": return 360;
-//             case "convenios": return 360;
-//             case "locales": return 300;
-//             case "discapacidad": return 300;
-//             default: return 420;
-//         }
-//     }
-// }
-
 const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -54,7 +23,7 @@ const horarios = [
 ];
 
 function getDiasMes(year: number, month: number) {
-    const firstDay = new Date(year, month, 1).getDay(); // 0=domingo
+    const firstDay = new Date(year, month, 1).getDay();
     const lastDate = new Date(year, month + 1, 0).getDate();
     const primerDia = firstDay === 0 ? 6 : firstDay - 1;
     return {
@@ -100,17 +69,15 @@ useEffect(() => {
       const res = await fetch("https://ipapi.co/json/");
       const data = await res.json();
 
-      const pais = data.country_name;      // ej. "Mexico"
-      const estado = data.region;          // ej. "Jalisco"
-      const ciudad = data.city;            // ej. "Zapopan"
+      const pais = data.country_name;
+      const estado = data.region;
+      const ciudad = data.city;
 
       console.log("Detectado por IP:", pais, estado, ciudad);
 
-      // Cargamos estados y ciudades según país/estado detectados
       await fetchEstadosDePais(pais);
       await fetchCiudadesDeEstado(pais, estado);
 
-      // Asignamos la ubicación detectada al visitante 0
       setVisitantes((prev) => {
         const copia = [...prev];
         copia[0].pais = pais;
@@ -191,7 +158,7 @@ const handlePaisChange = (idx: number, paisNombre: string) => {
 const handleEstadoChange = (idx: number, estadoNombre: string) => {
   setVisitantes((prev) => {
     const copia = [...prev];
-    const paisActual = copia[idx].pais; // usamos la copia ya actualizada
+    const paisActual = copia[idx].pais;
     copia[idx].estado = estadoNombre;
     copia[idx].ciudad = "";
 
@@ -231,7 +198,6 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
     ine: false,
   },
     ]);
-    // Estado para archivos INE por visitante
     const [ineFiles, setIneFiles] = useState<IneFiles[]>(
         visitantes.map(() => ({ frente: null, reverso: null }))
     );
@@ -244,7 +210,7 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
     const [mes, setMes] = useState(today.getMonth());
     const [year, setYear] = useState(today.getFullYear());
     const [selectedDay, setSelectedDay] = useState(today.getDate());
-    const [selectedTime, setSelectedTime] = useState(""); // Inicializar vacío para forzar selección
+    const [selectedTime, setSelectedTime] = useState("");
     const [errores, setErrores] = useState(
     visitantes.map(() => ({
         nombre: "",
@@ -280,17 +246,14 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
     const validatePais = (pais: string) => pais.trim() !== "";
     const validateIne = (ine: string) => ine.trim() !== "";
 
-    // Función para verificar si un horario ya pasó cuando es el día de hoy
     function isHorarioPasado(horario: string): boolean {
         const fechaSeleccionada = new Date(year, mes, selectedDay);
         const hoy = new Date();
 
-        // Si no es el día de hoy, el horario está disponible
         if (fechaSeleccionada.toDateString() !== hoy.toDateString()) {
             return false;
         }
 
-        // Convertir el horario a formato 24 horas para comparar
         const [tiempo, periodo] = horario.split(' ');
         const [horas, minutos] = tiempo.split(':').map(Number);
 
@@ -301,14 +264,11 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
             horaEn24 = 0;
         }
 
-        // Crear fecha con el horario seleccionado
         const fechaHorario = new Date(year, mes, selectedDay, horaEn24, minutos);
 
-        // Comparar con la hora actual
         return fechaHorario <= hoy;
     }
 
-    // Función para verificar si se puede continuar al paso 3
     function puedeAvanzarPaso2(): boolean {
         console.log('Debug puedeAvanzarPaso2:', {
             selectedDay,
@@ -317,12 +277,10 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
             isEmpty: selectedTime === "" || selectedTime === null || selectedTime === undefined
         });
 
-        // Verificar que hay un día y horario seleccionado
         if (!selectedDay || !selectedTime || selectedTime.trim() === "") {
             return false;
         }
 
-        // Verificar que el horario seleccionado no haya pasado
         return !isHorarioPasado(selectedTime);
     }
 
@@ -334,7 +292,7 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
                 validateCelular(v.celular) &&
                 validateCorreo(v.correo, i === 0)
         ) &&
-        puedeAvanzarPaso2(); // Usar la función que ya verifica día, horario y que no haya pasado
+        puedeAvanzarPaso2();
 type Visitante = {
   nombre: string;
   apellido: string;
@@ -344,10 +302,9 @@ type Visitante = {
   ciudad: string;
   estado: string;
   pais: string;
-  tipo: "adulto" | "nino"; // ← agrega esto
+  tipo: "adulto" | "nino";
 };
 
-    // Agregar visitante
     const handleAddVisitante = () => {
         if (visitantes.length >= 10) return;
         setVisitantes((prev) => [
@@ -374,7 +331,6 @@ type Visitante = {
         ]);
     };
 
-    // Cambios por visitante
     const handleVis = (idx: number, campo: 'nombre' |'apellido'| 'correo' | 'celular'| 'cumple'| 'ciudad' | 'estado'| 'pais', valor: string) => {
         setVisitantes((prev) => {
             const copia = [...prev];
@@ -434,7 +390,7 @@ const handleBlur = (idx: number, campo: Campo) => {
     const cantidadAdultos = adultos;
     const cantidadAdultos60 = adultos60;
     const cantidadNinos = ninos;
-    const cantidadMenores2 = 0; // Si manejas menores de 2 años, ajusta aquí
+    const cantidadMenores2 = 0;
     const esGrupo = (cantidadAdultos + cantidadAdultos60) >= 12;
 
 
@@ -452,18 +408,11 @@ const subtotalMenores2 = cantidadMenores2 * precioMenor2;
 
 const subtotal = subtotalAdultos + subtotalAdultos60 + subtotalNinos + subtotalMenores2;
 const total = Math.max(subtotal - descuento, 0);
-// Porcentajes
-const porcentajePlataforma = 0.05;  // 5%
-// const porcentajeIVA = 0.16;         // 16%
-
-// Descuento aplicado al subtotal
+const porcentajePlataforma = 0.05;
 const subtotalConDescuento = Math.max(subtotal - descuento, 0);
 
-// Montos adicionales
 const montoPlataforma = subtotalConDescuento * porcentajePlataforma;
-// const montoIVA = subtotalConDescuento * porcentajeIVA;
 
-// Total final
 const totalConCargos = subtotalConDescuento + montoPlataforma;
 function calcularCortesias(totalAdultos: number): number {
   if (totalAdultos >= 60) return 4;
@@ -476,7 +425,6 @@ const totalAdultosUnicos = cantidadAdultos + cantidadAdultos60;
 const cortesias = calcularCortesias(totalAdultosUnicos);
 
 
-    // Prepara los datos del formulario para enviar por correo electrónico
     function prepararDatosParaCorreo() {
         const data = {
             visitantes: visitantes.map((v, idx) => ({
@@ -501,7 +449,6 @@ const cortesias = calcularCortesias(totalAdultosUnicos);
         return data;
     }
 
-    // Genera el cuerpo del correo electrónico en texto plano
     function generarCuerpoCorreo(data: ReturnType<typeof prepararDatosParaCorreo>) {
         const visitantesTxt = data.visitantes.map((v, idx) =>
             `Visitante ${idx + 1}:\n- Nombre: ${v.nombre} \n- Apellido: ${v.apellido}\n- Correo: ${v.correo}\n- Celular: ${v.celular}\n`
@@ -528,7 +475,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         `.trim();
     }
 
-    // Guardar y continuar
     const handleSiguiente = () => {
         localStorage.setItem("visitantes", JSON.stringify(visitantes));
         localStorage.setItem("cantidad", visitantes.length.toString());
@@ -537,7 +483,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         window.location.href = "/daypass/extras";
     };
 
-    // Métodos de pago y simulación de pago
     const [metodoPago, setMetodoPago] = useState("efectivo");
     const [paid, setPaid] = useState(true);
     const [card, setCard] = useState({ name: "", num: "", exp: "", cvc: "" });
@@ -545,7 +490,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     const [isProcessingReservation, setIsProcessingReservation] = useState(false);
 
     function isExpValid(exp: string) {
-        // MM/AA
         if (!/^\d{2}\/\d{2}$/.test(exp)) return false;
         const [mm, aa] = exp.split("/").map(Number);
         if (mm < 1 || mm > 12) return false;
@@ -599,22 +543,17 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         }
         setSelectedDay(1);
     };
-    // Para eliminar visitante
     const handleRemoveVisitante = (idx: number) => {
         setVisitantes((prev) => prev.filter((_, i) => i !== idx));
         setTouched((prev) => prev.filter((_, i) => i !== idx));
         setIneFiles((prev) => prev.filter((_, i) => i !== idx));
     };
-    // Puede finalizar en efectivo
     const puedeFinalizarEfectivo =
       validateNombre(visitantes[0]?.nombre) &&
       validateNombre(visitantes[0]?.apellido) &&
       validateCelular(visitantes[0]?.celular) &&
       validateCorreo(visitantes[0]?.correo, true);
-    //   ineFiles[0]?.frente &&
-    //   ineFiles[0]?.reverso;
 
-    // Guardar automáticamente visitantes, total, fechaVisita y horaVisita en localStorage
     useEffect(() => {
         const data = {
             visitantes,
@@ -626,7 +565,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         console.log("Datos de la reserva guardados en localStorage:", data);
     }, [visitantes, total, fechaSeleccionada, selectedTime]);
 
-    // Handler para cambios de archivo INE
     const handleIneFileChange = (idx: number, tipo: 'frente' | 'reverso', file: File | null) => {
         setIneFiles((prev) => {
             const copia = [...prev];
@@ -643,8 +581,8 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     ];
 
     const imagenes = [
-        "/assets/img-4.webp",      // Paso 1
-        "/assets/img-5.webp",        // Paso 2
+        "/assets/img-4.webp",
+        "/assets/img-5.webp",
     ];
 
 
@@ -653,13 +591,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 
     const prevMonth = mes === 0 ? 11 : mes - 1;
     const prevYear = mes === 0 ? year - 1 : year;
-    const lastDayPrevMonth = new Date(prevYear, prevMonth + 1, 0); // último día del mes anterior
+    const lastDayPrevMonth = new Date(prevYear, prevMonth + 1, 0);
     lastDayPrevMonth.setHours(0,0,0,0);
 
     const puedeIrMesAnterior = lastDayPrevMonth >= hoy;
-    // --- helpers ---
 function normalizeTimeTo24(label: string) {
-  // "10:00 AM" -> "10:00", "01:00 PM" -> "13:00"
   if (!label) return "";
   const [time, meridiem] = label.split(" ");
   if (!time) return "";
@@ -671,7 +607,6 @@ function normalizeTimeTo24(label: string) {
   return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
 }
 
-// ======== CORRECCIÓN: buildVisitorsForApi ========
 function buildVisitorsForApi() {
   const list: Array<{
     name: string;
@@ -695,11 +630,10 @@ function buildVisitorsForApi() {
 
   const checkin = normalizeTimeTo24(selectedTime);
 
-  // Titular (adulto)
   list.push({
     name: titular.nombre || "Titular",
     lastname: titular.apellido || "Reserva",
-    birthdate: titular.cumple || "1990-01-01", // default válido
+    birthdate: titular.cumple || "1990-01-01",
     email: titular.correo || "",
     phone: titular.celular || "",
     visitor_type_id: "1",
@@ -708,7 +642,6 @@ function buildVisitorsForApi() {
 
   let consecutivo = 2;
 
-  // Adultos extra (no 60+)
   for (let i = 0; i < Math.max(0, adultos - 1); i++, consecutivo++) {
     list.push({
       name: `Invitado ${consecutivo}`,
@@ -721,7 +654,6 @@ function buildVisitorsForApi() {
     });
   }
 
-  // Adultos 60+
   for (let i = 0; i < adultos60; i++, consecutivo++) {
     list.push({
       name: `Invitado ${consecutivo}`,
@@ -729,12 +661,11 @@ function buildVisitorsForApi() {
       birthdate: "1950-01-01",
       email: "",
       phone: "",
-      visitor_type_id: "1", // cambia si tu API usa otro id para 60+
+      visitor_type_id: "1",
       checkin_time: checkin,
     });
   }
 
-  // Niños
   for (let i = 0; i < ninos; i++, consecutivo++) {
     list.push({
       name: `Invitado ${consecutivo}`,
@@ -750,7 +681,6 @@ function buildVisitorsForApi() {
   return list;
 }
 
-// ======== CORRECCIÓN: handleContinuar ========
 async function handleContinuar() {
   setIsProcessingReservation(true);
   toast.loading("Procesando tu reservación...", { id: "reservation-processing" });
@@ -758,21 +688,19 @@ async function handleContinuar() {
   try {
     const formData = new FormData();
 
-    // Cliente principal
     formData.append("client[name]", visitantes[0]?.nombre || "Titular");
     formData.append("client[lastname]", visitantes[0]?.apellido || "Reserva");
     formData.append("client[email]", visitantes[0]?.correo || "");
     formData.append("client[phone]", visitantes[0]?.celular || "");
     formData.append("client[birthdate]", visitantes[0]?.cumple || "1990-01-01");
 
-    // Datos generales
     formData.append("visit_date", fechaSeleccionada || "");
     formData.append("origin_city", visitantes[0]?.ciudad || "");
     if (visitantes[0]?.estado) formData.append("origin_state", visitantes[0].estado);
     if (visitantes[0]?.pais) formData.append("origin_country", visitantes[0].pais);
     formData.append("payment_method", metodoPago || "");
 const normalizeBirthdate = (input?: string | Date | null): string => {
-  if (!input) return ""; // o devuelve "null" si tu API lo prefiere
+  if (!input) return "";
 
   if (input instanceof Date) {
     const yyyy = String(input.getFullYear());
@@ -783,17 +711,14 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
 
   const s = String(input).trim();
 
-  // Ya viene en ISO
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
 
-  // Convierte de D/M/AAAA o DD/MM/AAAA (también acepta guiones)
   const m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
     if (m) {
         const [, ddRaw, mmRaw, yyyy] = m;
         const dd = ddRaw.padStart(2, "0");
         const mm = mmRaw.padStart(2, "0");
 
-        // Validación simple de fecha real
         const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
         if (
             d.getFullYear() === Number(yyyy) &&
@@ -805,27 +730,24 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
   }
 
   console.warn(`Formato de fecha no reconocido para birthdate: "${s}"`);
-  return s; // fallback: envía tal cual (o decide omitir/cortar)
+  return s;
 };
 
-    // Totales y promo (muchas APIs los requieren)
     formData.append("totals[total]", String(Number(totalConCargos.toFixed(2))));
     formData.append("promo", promoAplicado ? JSON.stringify({ code: codigoPromo }) : "[]");
 
-    // Visitors a partir de contadores
     const visitors = buildVisitorsForApi();
 
     visitors.forEach((v, i) => {
       formData.append(`visitors[${i}][name]`, v.name);
       formData.append(`visitors[${i}][lastname]`, v.lastname);
-        formData.append(`visitors[${i}][birthdate]`, normalizeBirthdate(v.birthdate)); // << aquí el ajuste
+        formData.append(`visitors[${i}][birthdate]`, normalizeBirthdate(v.birthdate));
       formData.append(`visitors[${i}][email]`, v.email);
       formData.append(`visitors[${i}][phone]`, v.phone);
       formData.append(`visitors[${i}][visitor_type_id]`, v.visitor_type_id);
       formData.append(`visitors[${i}][checkin_time]`, v.checkin_time);
     });
 
-    // Documentos solo para el visitante 0 (titular)
     if (ineFiles?.[0]?.frente) {
       formData.append(`visitors[0][document_type]`, "INE");
       formData.append(
@@ -843,7 +765,6 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
       );
     }
 
-    // DEBUG
     for (const pair of formData.entries()) {
       console.log(pair[0] + ": ", pair[1]);
     }
@@ -857,7 +778,6 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
     const return_data = await res.json();
     console.log("Respuesta de la API:", return_data.reservation.qr_code_url);
 
-    //guardar QR en localStorage
     localStorage.setItem("qr_code_url", return_data.reservation.qr_code_url);
 
     const json = await res.json().catch(() => ({}));
@@ -865,7 +785,6 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
     if (!res.ok) {
       toast.dismiss("reservation-processing");
       
-      // Determinar el mensaje de error apropiado
       let errorMessage = "Error al enviar la reservación. Intenta nuevamente.";
       
       if (json?.message) {
@@ -889,7 +808,7 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
   } catch (error: any) {
     console.error("Error inesperado:", error);
     toast.dismiss("reservation-processing");
-    toast.error(error.message || "Error al procesar la reservación. Intenta nuevsssamente.");
+    toast.error(error.message || "Error al procesar la reservación. Intenta nuevamente.");
   } finally {
     setIsProcessingReservation(false);
   }
@@ -902,7 +821,7 @@ function getPrecioPorTipo(
 ) {
   const [year, month, day] = fecha.split("-");
   const fechaLocal = new Date(Number(year), Number(month) - 1, Number(day));
-  const diaSemana = fechaLocal.getDay(); // 0=Domingo, ..., 6=Sábado
+  const diaSemana = fechaLocal.getDay();
 
   const esLunesAJueves = diaSemana >= 1 && diaSemana <= 4;
 
@@ -924,7 +843,6 @@ function getPrecioPorTipo(
 
 
 
-// ------------------------------------------------------------ RETURN --------------------------------------------------------------
     return (
 
 
@@ -1002,7 +920,6 @@ function getPrecioPorTipo(
                                                     setAdultos(adultos - 1);
                                                     setVisitantes((prev) => {
                                                         const nuevo = prev.slice(0, prev.length - 1);
-                                                        // Siempre deja al menos un visitante
                                                         return nuevo.length === 0 ? [{ nombre: "", apellido:"", correo: "", celular: "", cumple: "", ciudad:"", estado:"", pais:"",tipo: "adulto",}] : nuevo;
                                                     });
                                                     setTouched((prev) => {
@@ -1013,7 +930,6 @@ function getPrecioPorTipo(
                                                         const nuevo = prev.slice(0, prev.length - 1);
                                                         return nuevo.length === 0 ? [{ frente: null, reverso: null }] : nuevo;
                                                     });
-                                                    // Si al bajar adultos hay más niños que el nuevo máximo, ajusta niños
                                                     if (ninos > (adultos - 1) * 2) setNinos((adultos - 1) * 2);
                                                 }
                                             }}
@@ -1089,7 +1005,6 @@ function getPrecioPorTipo(
                                             if (ninos > 0) {
                                                 setNinos(ninos - 1);
 
-                                                // Filtrar visitantes para eliminar el último niño
                                                 setVisitantes((prev) => {
                                                     const sinUltimoNino = [...prev];
                                                     const idxUltimoNino = [...prev].map(v => v.tipo).lastIndexOf("nino");
@@ -1109,7 +1024,7 @@ function getPrecioPorTipo(
                                                     setNinos(ninos + 1);
                                                     setVisitantes((prev) => [
                                                         ...prev,
-                                                        { nombre: "",apellido: "", correo: "", celular: "" , cumple:"", ciudad:"", estado:"", pais:"",tipo: "nino" } // Solo nombre y cumpleaños para niños
+                                                        { nombre: "",apellido: "", correo: "", celular: "" , cumple:"", ciudad:"", estado:"", pais:"",tipo: "nino" }
                                                     ]);
                                                     setTouched((prev) => [
                                                         ...prev,
@@ -1133,12 +1048,12 @@ function getPrecioPorTipo(
                             )}
                             {adultos60 > 0 && (
                               <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 mb-4 text-sm text-gray-700 mt-2">
-                                Los adultos mayores de 60 años de edad deberán presentar tarjeda del INAPAM actualizada, de lo contrario se cobrará la entrada a precio regular.
+                                Los adultos mayores de 60 años de edad deberán presentar tarjeta del INAPAM actualizada, de lo contrario se cobrará la entrada a precio regular.
                               </div>
                             )}
                             {adultos + adultos60 >= 12 && (
                               <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 mb-4 text-sm text-gray-700 mt-2">
-                                Al reservar para 12 o más adultos, se aplicará automáticamente una tarifa preferencial. Para grupos de 15 personas o más, se otorgarán cortesías proporcionales según la cantidad total de asistentes (los precios y cortesias se veran reflejados en el calculo final).
+                                Al reservar para 12 o más adultos, se aplicará automáticamente una tarifa preferencial. Para grupos de 15 personas o más, se otorgarán cortesías proporcionales según la cantidad total de asistentes (los precios y cortesías se verán reflejados en el cálculo final).
                               </div>
                             )}
                     </div>
@@ -1175,7 +1090,7 @@ function getPrecioPorTipo(
                                                                         {new Date(year, mes, 1).toLocaleDateString("es-MX", {
                                                                             month: "long",
                                                                             year: "numeric",
-                                                                            timeZone: "America/Mexico_City", // Fuerza la zona horaria de México
+                                                                            timeZone: "America/Mexico_City",
                                                                         })}
                                                                     </span>
                                                                     <button
@@ -1292,7 +1207,7 @@ function getPrecioPorTipo(
 
                                 const nombreValido = validateNombre(vis.nombre);
                                 const apellidoValido = validateApellido(vis.apellido);
-                                const correoValido = validateCorreo(vis.correo, true); // obligatorio para el principal
+                                const correoValido = validateCorreo(vis.correo, true);
                                 const celularValido = validateCelular(vis.celular);
                                 const cumpleValido = validateCumple(vis.cumple);
                                 const ciudadValido = validateCiudad(vis.ciudad);
@@ -1549,7 +1464,7 @@ function getPrecioPorTipo(
                                 )}
                                 {cantidadNinos > 0 && (
                                 <div className="flex justify-between text-sm">
-                                    <span>PrecioNiños 2-13</span>
+                                    <span>Precio Niños 2-13</span>
                                     <span>$70 MXN</span>
                                 </div>
                                 )}
@@ -1606,7 +1521,7 @@ function getPrecioPorTipo(
                                         checked={metodoPago === "efectivo"}
                                         onChange={() => {
                                             setMetodoPago("efectivo");
-                                            setPaid(true); // Efectivo se considera "pagado"
+                                            setPaid(true);
                                         }}
                                     />
                                     <span>Efectivo</span>
