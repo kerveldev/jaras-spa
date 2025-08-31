@@ -466,9 +466,9 @@ Cantidad de personas: ${data.cantidad}
 
 ${visitantesTxt}
 
-Subtotal: $${data.subtotal} MXN
-${data.promoAplicado ? `Descuento aplicado: -$${data.descuento} MXN\n` : ""}
-Total a pagar: $${data.total} MXN
+Subtotal: $${data.subtotal.toFixed(2)} MXN
+${data.promoAplicado ? `Descuento aplicado: -$${data.descuento.toFixed(2)} MXN\n` : ""}
+Total a pagar: $${data.total.toFixed(2)} MXN
 
 Método de pago: ${data.metodoPago === "tarjeta" ? "Tarjeta" : "Efectivo"}
 ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
@@ -1454,18 +1454,18 @@ function getPrecioPorTipo(
                             <div className="flex flex-col gap-1 text-sm mb-2">
                                 <div className="flex justify-between text-sm">
                                     <span>Precio Adultos 14+</span>
-                                    <span>${precioAdulto} MXN</span>
+                                    <span>${precioAdulto.toFixed(2)} MXN</span>
                                 </div>
                                 {cantidadAdultos60 > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span>Precio Adultos 60+</span>
-                                    <span>${precioAdulto60} MXN</span>
+                                    <span>${precioAdulto60.toFixed(2)} MXN</span>
                                 </div>
                                 )}
                                 {cantidadNinos > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span>Precio Niños 2-13</span>
-                                    <span>$70 MXN</span>
+                                    <span>$70.00 MXN</span>
                                 </div>
                                 )}
                             </div>
@@ -1477,12 +1477,12 @@ function getPrecioPorTipo(
                             {promoAplicado && (
                                 <div className="flex justify-between text-sm text-green-700 font-bold">
                                 <span>Descuento aplicado</span>
-                                <span>-${DESCUENTO_PROMO} MXN</span>
+                                <span>-${DESCUENTO_PROMO.toFixed(2)} MXN</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-sm">
                             <span>Subtotal</span>
-                            <span>${subtotalConDescuento} MXN</span>
+                            <span>${subtotalConDescuento.toFixed(2)} MXN</span>
                             </div>
                             <div className="flex justify-between font-bold text-base">
                             <span>Total</span>
