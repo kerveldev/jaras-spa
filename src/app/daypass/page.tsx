@@ -19,7 +19,9 @@ const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const horarios = [
-    "10:00 AM", "01:00 PM", "04:00 PM"
+    "07:00 AM", "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
+    "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM",
+    "07:00 PM", "08:00 PM", "09:00 PM", "10:00 PM"
 ];
 
 function getDiasMes(year: number, month: number) {
@@ -1146,21 +1148,19 @@ function getPrecioPorTipo(
                                                             <p className="mb-3 md:mb-4 text-gray-800 text-sm md:text-base font-bold">
                                                                 Selecciona tu horario de llegada.
                                                             </p>
-                                                            <div className="grid grid-cols-2 md:grid-cols-1 gap-2 md:gap-4">
-                                                                {horarios.map((hora) => (
-                                                                    <button
-                                                                        key={hora}
-                                                                        type="button"
-                                                                        className={`rounded border py-2 font-semibold text-xs md:text-sm w-full ${
-                                                                            selectedTime === hora
-                                                                                ? "bg-[#18668b] text-white border-[#18668b]"
-                                                                                : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
-                                                                        }`}
-                                                                        onClick={() => setSelectedTime(hora)}
-                                                                    >
-                                                                        {hora}
-                                                                    </button>
-                                                                ))}
+                                                            <div className="space-y-4">
+                                                                <select
+                                                                    value={selectedTime}
+                                                                    onChange={(e) => setSelectedTime(e.target.value)}
+                                                                    className="w-full p-3 border border-gray-300 rounded-lg text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#18668b] focus:border-[#18668b] bg-white shadow-sm"
+                                                                >
+                                                                    <option value="">Selecciona tu horario de llegada</option>
+                                                                    {horarios.map((hora) => (
+                                                                        <option key={hora} value={hora}>
+                                                                            {hora}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
                                                             </div>
                                                             <button
                                                                 className="w-full py-2 mt-4 rounded font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b] transition-all duration-200"
