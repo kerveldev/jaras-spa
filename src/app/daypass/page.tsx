@@ -491,6 +491,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     const [isPaying, setIsPaying] = useState(false);
     const [isProcessingReservation, setIsProcessingReservation] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
+    const [expandedInfo, setExpandedInfo] = useState({
+        ninos: false,
+        adultos60: false,
+        grupos: false
+    });
 
     function isExpValid(exp: string) {
         if (!/^\d{2}\/\d{2}$/.test(exp)) return false;
@@ -1044,21 +1049,101 @@ function getPrecioPorTipo(
                                         </div>
                                     </div>
                             </div>
-                            {ninos > 0 && (
-                              <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 mb-4 text-sm text-gray-700 mt-2">
-                                Los niños de 2 a 13 años deben estar acompañados por un adulto. No incluye acceso al jardín termal, acceso GRATIS para niños menores de 2 años.
+                            {/* Acordeón de información */}
+                            <div className="mt-6 space-y-3">
+                              {/* Información sobre niños */}
+                              <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg overflow-hidden">
+                                <button
+                                  onClick={() => setExpandedInfo(prev => ({ ...prev, ninos: !prev.ninos }))}
+                                  className="w-full p-4 text-left hover:bg-blue-100 transition-colors"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                      </svg>
+                                      <h4 className="font-semibold text-gray-800 text-sm">Información sobre niños</h4>
+                                    </div>
+                                    <svg 
+                                      className={`w-5 h-5 text-blue-400 transition-transform duration-200 ${expandedInfo.ninos ? 'rotate-180' : ''}`} 
+                                      fill="currentColor" 
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                </button>
+                                {expandedInfo.ninos && (
+                                  <div className="px-4 pb-4">
+                                    <p className="text-sm text-gray-700 pl-8">
+                                      Los niños de 2 a 13 años deben estar acompañados por un adulto. No incluye acceso al jardín termal. <span className="font-semibold text-green-600">Acceso GRATIS para niños menores de 2 años.</span>
+                                    </p>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                            {adultos60 > 0 && (
-                              <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 mb-4 text-sm text-gray-700 mt-2">
-                                Los adultos mayores de 60 años de edad deberán presentar tarjeta del INAPAM actualizada, de lo contrario se cobrará la entrada a precio regular.
+                              
+                              {/* Adultos mayores */}
+                              <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg overflow-hidden">
+                                <button
+                                  onClick={() => setExpandedInfo(prev => ({ ...prev, adultos60: !prev.adultos60 }))}
+                                  className="w-full p-4 text-left hover:bg-amber-100 transition-colors"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                      </svg>
+                                      <h4 className="font-semibold text-gray-800 text-sm">Adultos mayores (60+)</h4>
+                                    </div>
+                                    <svg 
+                                      className={`w-5 h-5 text-amber-400 transition-transform duration-200 ${expandedInfo.adultos60 ? 'rotate-180' : ''}`} 
+                                      fill="currentColor" 
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                </button>
+                                {expandedInfo.adultos60 && (
+                                  <div className="px-4 pb-4">
+                                    <p className="text-sm text-gray-700 pl-8">
+                                      Los adultos mayores de 60 años de edad deberán presentar <span className="font-semibold">tarjeta del INAPAM actualizada</span>, de lo contrario se cobrará la entrada a precio regular.
+                                    </p>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                            {adultos + adultos60 >= 12 && (
-                              <div className="bg-[#ffff0009] border-l-4 border-yellow-400 p-4 mb-4 text-sm text-gray-700 mt-2">
-                                Al reservar para 12 o más adultos, se aplicará automáticamente una tarifa preferencial. Para grupos de 15 personas o más, se otorgarán cortesías proporcionales según la cantidad total de asistentes (los precios y cortesías se verán reflejados en el cálculo final).
+                              
+                              {/* Descuentos de grupo */}
+                              <div className="bg-green-50 border-l-4 border-green-400 rounded-r-lg overflow-hidden">
+                                <button
+                                  onClick={() => setExpandedInfo(prev => ({ ...prev, grupos: !prev.grupos }))}
+                                  className="w-full p-4 text-left hover:bg-green-100 transition-colors"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                      </svg>
+                                      <h4 className="font-semibold text-gray-800 text-sm">Descuentos de grupo</h4>
+                                    </div>
+                                    <svg 
+                                      className={`w-5 h-5 text-green-400 transition-transform duration-200 ${expandedInfo.grupos ? 'rotate-180' : ''}`} 
+                                      fill="currentColor" 
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                </button>
+                                {expandedInfo.grupos && (
+                                  <div className="px-4 pb-4">
+                                    <p className="text-sm text-gray-700 pl-8">
+                                      Al reservar para 12 o más adultos, se aplicará automáticamente una <span className="font-semibold text-green-600">tarifa preferencial</span>. Para grupos de 15 personas o más, se otorgarán cortesías proporcionales según la cantidad total de asistentes (los precios y cortesías se verán reflejados en el cálculo final).
+                                    </p>
+                                  </div>
+                                )}
                               </div>
-                            )}
+                            </div>
                     </div>
                         
 
