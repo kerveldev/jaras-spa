@@ -490,6 +490,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     const [card, setCard] = useState({ name: "", num: "", exp: "", cvc: "" });
     const [isPaying, setIsPaying] = useState(false);
     const [isProcessingReservation, setIsProcessingReservation] = useState(false);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
 
     function isExpValid(exp: string) {
         if (!/^\d{2}\/\d{2}$/.test(exp)) return false;
@@ -1497,11 +1498,26 @@ function getPrecioPorTipo(
                             </div>
                             )}
 
+                            {/* Checkbox términos y condiciones */}
+                            <div className="mt-6">
+                                <label className="flex items-start gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={acceptedTerms}
+                                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                        className="mt-1 h-4 w-4 text-[#18668b] focus:ring-[#18668b] border-gray-300 rounded"
+                                    />
+                                    <span className="text-sm text-gray-600 leading-relaxed">
+                                        Acepto y confirmo que la información proporcionada es correcta.
+                                    </span>
+                                </label>
+                            </div>
+
                             {/* Botones Finalizar y Volver en el mismo row */}
                             <div className="flex flex-row gap-4 mt-6">
                                 <button
                                     className={`w-1/2 py-2 rounded font-bold text-white flex items-center justify-center transition-all duration-200 ${
-                                        (metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid) && !isProcessingReservation
+                                        (metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid) && !isProcessingReservation && acceptedTerms
                                             ? "bg-[#18668b] hover:bg-[#14526d]"
                                             : "bg-gray-300 cursor-not-allowed"
                                     }`}
@@ -1510,7 +1526,7 @@ function getPrecioPorTipo(
                                             handleContinuar();
                                         }
                                     }}
-                                    disabled={isProcessingReservation || (metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid)}
+                                    disabled={isProcessingReservation || !acceptedTerms || (metodoPago === "efectivo" ? !puedeFinalizarEfectivo : !paid)}
                                 >
                                     {isProcessingReservation ? (
                                         <>
@@ -1522,7 +1538,7 @@ function getPrecioPorTipo(
                                         </>
                                     ) : (
                                         metodoPago === "efectivo"
-                                            ? "Finalizar y ver resumen para pago en efectivo"
+                                            ? "Generar Reserva"
                                             : "Continuar al resumen"
                                     )}
                                 </button>
