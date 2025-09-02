@@ -977,13 +977,15 @@ function getPrecioPorTipo(
                         <div className="text-gray-700 text-3xl font-bold mb-6 mt-2 text-center ">
                                 ¿Cuántos visitantes son?
                             </div>
-                            <p className="mb-10 text-gray-600 text-1xl">
-                            El precio varía según el horario. Niños menores de 2 años entran gratis.
-                            </p>
                             <div className="space-y-6 mb-0 mt-auto">
                                 {/* Adultos */}
                                 <div className="flex items-center justify-between bg-white rounded shadow p-2 mb-8 rounded-2xl">
-                                    <span className="font-semibold text-lg">Adultos 14 +</span>
+                                    <div>
+                                        <span className="font-semibold text-lg">Adultos 14 +</span>
+                                        <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-full inline-block mt-1">
+                                            ${precioAdulto.toFixed(2)} MXN
+                                        </div>
+                                    </div>
                                     <div className="flex items-center gap-2">
                                         <button
                                             type="button"
@@ -1025,7 +1027,12 @@ function getPrecioPorTipo(
                                 </div>
                                 {/* Adultos 60+ */}
                                 <div className="flex items-center justify-between bg-white rounded shadow p-2 mb-8 rounded-2xl">
-                                    <span className="font-semibold text-lg">Adultos 60 +</span>
+                                    <div>
+                                        <span className="font-semibold text-lg">Adultos 60 +</span>
+                                        <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-full inline-block mt-1">
+                                            ${precioAdulto60.toFixed(2)} MXN
+                                        </div>
+                                    </div>
                                     <div className="flex items-center gap-2">
                                         <button
                                             type="button"
@@ -1069,7 +1076,12 @@ function getPrecioPorTipo(
                                 </div>
                                 {/* Niños */}
                                 <div className="flex items-center justify-between bg-white rounded shadow p-2 rounded-2xl">
-                                        <span className="font-semibold text-lg">Niños 2 - 13</span>
+                                        <div>
+                                            <span className="font-semibold text-lg">Niños 2 - 13</span>
+                                            <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-full inline-block mt-1">
+                                                ${precioNino.toFixed(2)} MXN
+                                            </div>
+                                        </div>
                                         <div className="flex items-center gap-2">
                                         <button
                                             type="button"
@@ -1576,23 +1588,38 @@ function getPrecioPorTipo(
                                 
                             </div>
                             )}
-                            <div className="flex flex-col gap-1 text-sm mb-2">
+                            <div className="flex flex-col gap-3 text-sm mb-2">
                                 {cantidadAdultos > 0 && (
-                                <div className="flex justify-between text-sm">
-                                    <span>Adultos 14+ ({cantidadAdultos})</span>
-                                    <span>${subtotalAdultos.toFixed(2)} MXN</span>
+                                <div>
+                                    <div className="flex justify-between text-sm">
+                                        <span>Adultos 14+ ({cantidadAdultos})</span>
+                                        <span>${subtotalAdultos.toFixed(2)} MXN</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500 ml-2">
+                                        ${precioAdulto.toFixed(2)} MXN c/u
+                                    </div>
                                 </div>
                                 )}
                                 {cantidadAdultos60 > 0 && (
-                                <div className="flex justify-between text-sm">
-                                    <span>Adultos 60+ ({cantidadAdultos60})</span>
-                                    <span>${subtotalAdultos60.toFixed(2)} MXN</span>
+                                <div>
+                                    <div className="flex justify-between text-sm">
+                                        <span>Adultos 60+ ({cantidadAdultos60})</span>
+                                        <span>${subtotalAdultos60.toFixed(2)} MXN</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500 ml-2">
+                                        ${precioAdulto60.toFixed(2)} MXN c/u
+                                    </div>
                                 </div>
                                 )}
                                 {cantidadNinos > 0 && (
-                                <div className="flex justify-between text-sm">
-                                    <span>Niños 2-13 años ({cantidadNinos})</span>
-                                    <span>${subtotalNinos.toFixed(2)} MXN</span>
+                                <div>
+                                    <div className="flex justify-between text-sm">
+                                        <span>Niños 2-13 años ({cantidadNinos})</span>
+                                        <span>${subtotalNinos.toFixed(2)} MXN</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500 ml-2">
+                                        ${precioNino.toFixed(2)} MXN c/u
+                                    </div>
                                 </div>
                                 )}
                             </div>
