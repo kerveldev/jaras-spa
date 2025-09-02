@@ -55,12 +55,22 @@ export default function DaypassUnicaPage() {
 useEffect(() => {
   async function cargarPaises() {
     try {
-      const res = await fetch("https://countriesnow.space/api/v0.1/countries/positions");
+      const res = await fetch("https://lasjaras-api.kerveldev.com/api/catalog/countries");
       const data = await res.json();
-      const nombres = Array.isArray(data.data)
-        ? data.data.map((p: any) => p.name)
+      const nombres = Array.isArray(data)
+        ? data.map((p: any) => p.name)
         : [];
       setPaises(nombres);
+      
+      // Set Mexico as default if it exists in the list
+      const mexico = data.find((p: any) => p.catalog_country_id === 110);
+      if (mexico && visitantes.length > 0) {
+        setVisitantes((prev) => {
+          const copia = [...prev];
+          copia[0].pais = mexico.name;
+          return copia;
+        });
+      }
     } catch (error) {
       console.error("Error al cargar países:", error);
     }
