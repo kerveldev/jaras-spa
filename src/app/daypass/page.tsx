@@ -50,7 +50,7 @@ export default function DaypassUnicaPage() {
 
     const [paises, setPaises] = useState<any[]>([]);
     const [estados, setEstados] = useState<any[]>([]);
-    const [ciudades, setCiudades] = useState<string[]>([]);
+    const [ciudades, setCiudades] = useState<any[]>([]);
 
 useEffect(() => {
   async function cargarPaises() {
@@ -68,8 +68,8 @@ useEffect(() => {
             copia[0].pais = mexico.name;
             return copia;
           });
-          // Load states for Mexico by default
-          await fetchEstadosDePais(mexico.catalog_country_id);
+          // Load states for Mexico by default, and try to load Jalisco cities if it exists
+          await fetchEstadosDePais(mexico.catalog_country_id, "Jalisco");
         }
         
         // Call IP detection with the loaded countries data
@@ -94,8 +94,7 @@ useEffect(() => {
       // Find country in our catalog by name
       const country = catalogoPaises.find((p: any) => p.name === pais);
       if (country) {
-        await fetchEstadosDePais(country.catalog_country_id);
-        await fetchCiudadesDeEstado(pais, estado);
+        await fetchEstadosDePais(country.catalog_country_id, estado);
       }
 
       setVisitantes((prev) => {
@@ -113,7 +112,7 @@ useEffect(() => {
   cargarPaises();
 }, []);
 
-const fetchEstadosDePais = async (countryId: number) => {
+const fetchEstadosDePais = async (countryId: number, estadoParaCargar?: string) => {
   if (!countryId) return;
 
   try {
@@ -122,6 +121,22 @@ const fetchEstadosDePais = async (countryId: number) => {
 
     if (Array.isArray(data)) {
       setEstados(data);
+      
+      // If we have a specific state to load cities for, do it after states are loaded
+      if (estadoParaCargar) {
+        const stateToLoad = data.find((s: any) => s.name === estadoParaCargar);
+        if (stateToLoad) {
+          // Set the state in visitantes
+          setVisitantes((prev) => {
+            const copia = [...prev];
+            if (copia[0]) {
+              copia[0].estado = estadoParaCargar;
+            }
+            return copia;
+          });
+          await fetchCiudadesDeEstado(stateToLoad.catalog_state_id);
+        }
+      }
     } else {
       console.warn("No se encontraron estados para el país ID:", countryId);
       setEstados([]);
@@ -132,22 +147,17 @@ const fetchEstadosDePais = async (countryId: number) => {
   }
 };
 
-const fetchCiudadesDeEstado = async (paisNombre: string, estadoNombre: string) => {
-  if (!paisNombre || !estadoNombre) return;
+const fetchCiudadesDeEstado = async (stateId: number) => {
+  if (!stateId) return;
 
   try {
-    const res = await fetch("https://countriesnow.space/api/v0.1/countries/state/cities", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ country: paisNombre, state: estadoNombre }),
-    });
-
+    const res = await fetch(`https://lasjaras-api.kerveldev.com/api/catalog/cities?state_id=${stateId}`);
     const data = await res.json();
 
-    if (Array.isArray(data.data)) {
-      setCiudades(data.data);
+    if (Array.isArray(data)) {
+      setCiudades(data);
     } else {
-      console.warn(`No se encontraron ciudades para ${estadoNombre}, ${paisNombre}`);
+      console.warn(`No se encontraron ciudades para el estado ID: ${stateId}`);
       setCiudades([]);
     }
   } catch (error) {
@@ -175,14 +185,16 @@ const handlePaisChange = (idx: number, paisNombre: string) => {
 const handleEstadoChange = (idx: number, estadoNombre: string) => {
   setVisitantes((prev) => {
     const copia = [...prev];
-    const paisActual = copia[idx].pais;
     copia[idx].estado = estadoNombre;
     copia[idx].ciudad = "";
-
-    fetchCiudadesDeEstado(paisActual, estadoNombre);
-
     return copia;
   });
+
+  // Find state ID by name
+  const state = estados.find((s: any) => s.name === estadoNombre);
+  if (state) {
+    fetchCiudadesDeEstado(state.catalog_state_id);
+  }
 };
 const handleCiudadChange = (idx: number, ciudadNombre: string) => {
   setVisitantes((prev) => {
@@ -1483,8 +1495,8 @@ function getPrecioPorTipo(
     >
       <option value="">Selecciona ciudad</option>
       {(ciudades ?? []).map((ciudad) => (
-        <option key={ciudad} value={ciudad}>
-          {ciudad}
+        <option key={ciudad.catalog_city_id} value={ciudad.name}>
+          {ciudad.name}
         </option>
       ))}
     </select>
