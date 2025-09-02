@@ -317,10 +317,18 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
             selectedDay,
             selectedTime,
             selectedTimeLength: selectedTime?.length,
-            isEmpty: selectedTime === "" || selectedTime === null || selectedTime === undefined
+            isEmpty: selectedTime === "" || selectedTime === null || selectedTime === undefined,
+            adultos,
+            adultos60,
+            tieneAdultoOSenior: (adultos + adultos60) > 0
         });
 
         if (!selectedDay || !selectedTime || selectedTime.trim() === "") {
+            return false;
+        }
+
+        // Validar que hay al menos un adulto o adulto mayor
+        if ((adultos + adultos60) === 0) {
             return false;
         }
 
@@ -1295,8 +1303,13 @@ function getPrecioPorTipo(
                                                                 </select>
                                                             </div>
                                                             <button
-                                                                className="w-full py-2 mt-4 rounded font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b] transition-all duration-200"
-                                                                onClick={() => setPaso(2)}
+                                                                className={`w-full py-2 mt-4 rounded font-bold transition-all duration-200 ${
+                                                                    puedeAvanzarPaso2() 
+                                                                        ? "text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b] cursor-pointer" 
+                                                                        : "text-gray-400 bg-gray-200 border border-gray-300 cursor-not-allowed"
+                                                                }`}
+                                                                onClick={() => puedeAvanzarPaso2() && setPaso(2)}
+                                                                disabled={!puedeAvanzarPaso2()}
                                                             >
                                                                 Continuar
                                                             </button>
