@@ -451,9 +451,12 @@ const subtotalMenores2 = cantidadMenores2 * precioMenor2;
 
 const subtotal = subtotalAdultos + subtotalAdultos60 + subtotalNinos + subtotalMenores2;
 const total = Math.max(subtotal - descuento, 0);
+const porcentajePlataforma = 0;
 const subtotalConDescuento = Math.max(subtotal - descuento, 0);
 
-const totalConCargos = subtotalConDescuento;
+const montoPlataforma = subtotalConDescuento * porcentajePlataforma;
+
+const totalConCargos = subtotalConDescuento + montoPlataforma;
 function calcularCortesias(totalAdultos: number): number {
   if (totalAdultos >= 60) return 4;
   if (totalAdultos >= 45) return 3;
@@ -739,6 +742,13 @@ async function handleContinuar() {
   toast.loading("Procesando tu reservación...", { id: "reservation-processing" });
   
   try {
+    // Validate that we have a valid date and time
+    if (!selectedDay || !selectedTime || !fechaSeleccionada) {
+      toast.dismiss("reservation-processing");
+      toast.error("Por favor selecciona una fecha y horario válidos.");
+      setIsProcessingReservation(false);
+      return;
+    }
     const formData = new FormData();
 
     formData.append("client[name]", visitantes[0]?.nombre || "Titular");
@@ -747,7 +757,10 @@ async function handleContinuar() {
     formData.append("client[phone]", visitantes[0]?.celular || "");
     formData.append("client[birthdate]", visitantes[0]?.cumple || "1990-01-01");
 
-    formData.append("visit_date", fechaSeleccionada || "");
+    // Ensure proper date format (YYYY-MM-DD)
+    const formattedDate = `${year}-${(mes + 1).toString().padStart(2, "0")}-${selectedDay.toString().padStart(2, "0")}`;
+    formData.append("visit_date", formattedDate);
+    console.log("Date being sent:", formattedDate, "Original fechaSeleccionada:", fechaSeleccionada);
     formData.append("origin_city", visitantes[0]?.ciudad || "");
     if (visitantes[0]?.estado) formData.append("origin_state", visitantes[0].estado);
     if (visitantes[0]?.pais) formData.append("origin_country", visitantes[0].pais);
