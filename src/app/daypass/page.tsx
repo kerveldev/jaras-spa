@@ -832,11 +832,6 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
       body: formData,
     });
 
-    const return_data = await res.json();
-    console.log("Respuesta de la API:", return_data.reservation.qr_code_url);
-
-    localStorage.setItem("qr_code_url", return_data.reservation.qr_code_url);
-
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok) {
@@ -844,7 +839,10 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
       
       let errorMessage = "Error al enviar la reservación. Intenta nuevamente.";
       
-      if (json?.message) {
+      // Handle 422 status code specifically
+      if (res.status === 422 && json?.message) {
+        errorMessage = json.message;
+      } else if (json?.message) {
         errorMessage = json.message;
       } else if (json?.error) {
         errorMessage = json.error;
@@ -855,6 +853,13 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
       
       toast.error(errorMessage);
       return;
+    }
+
+    // Success case
+    console.log("Respuesta de la API:", json.reservation?.qr_code_url);
+    
+    if (json.reservation?.qr_code_url) {
+      localStorage.setItem("qr_code_url", json.reservation.qr_code_url);
     }
 
     toast.dismiss("reservation-processing");
