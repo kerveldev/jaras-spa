@@ -1005,7 +1005,6 @@ function getPrecioPorTipo(
                                                         const nuevo = prev.slice(0, prev.length - 1);
                                                         return nuevo.length === 0 ? [{ frente: null, reverso: null }] : nuevo;
                                                     });
-                                                    if (ninos > (adultos - 1) * 2) setNinos((adultos - 1) * 2);
                                                 }
                                             }}
                                             disabled={adultos <= 1}
@@ -1105,23 +1104,20 @@ function getPrecioPorTipo(
                                             type="button"
                                             className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                             onClick={() => {
-                                                if (ninos < adultos * 2) {
-                                                    setNinos(ninos + 1);
-                                                    setVisitantes((prev) => [
-                                                        ...prev,
-                                                        { nombre: "",apellido: "", correo: "", celular: "" , cumple:"", ciudad:"", estado:"", pais:"",tipo: "nino" }
-                                                    ]);
-                                                    setTouched((prev) => [
-                                                        ...prev,
-                                                        {nombre: false,apellido: false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}
-                                                    ]);
-                                                    setIneFiles((prev) => [
-                                                        ...prev,
-                                                        { frente: null, reverso: null }
-                                                    ]);
-                                                }
+                                                setNinos(ninos + 1);
+                                                setVisitantes((prev) => [
+                                                    ...prev,
+                                                    { nombre: "",apellido: "", correo: "", celular: "" , cumple:"", ciudad:"", estado:"", pais:"",tipo: "nino" }
+                                                ]);
+                                                setTouched((prev) => [
+                                                    ...prev,
+                                                    {nombre: false,apellido: false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}
+                                                ]);
+                                                setIneFiles((prev) => [
+                                                    ...prev,
+                                                    { frente: null, reverso: null }
+                                                ]);
                                             }}
-                                            disabled={ninos >= adultos * 2}
                                         >+</button>
                                         </div>
                                     </div>
