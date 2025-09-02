@@ -426,7 +426,7 @@ const handleBlur = (idx: number, campo: Campo) => {
     const fechaSeleccionada = `${year}-${(mes + 1).toString().padStart(2, "0")}-${selectedDay.toString().padStart(2, "0")}`;
     const fechaDisplay = formatFechaEs(year, mes, selectedDay);
 
-    const [adultos, setAdultos] = useState(1);
+    const [adultos, setAdultos] = useState(0);
     const [ninos, setNinos] = useState(0);
     const [adultos60, setAdultos60] = useState(0);
 
@@ -991,35 +991,33 @@ function getPrecioPorTipo(
                                             type="button"
                                             className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
                                             onClick={() => {
-                                                if (adultos > 1) {
+                                                if (adultos > 0 && (adultos60 > 0 || (adultos + adultos60) > 1)) {
                                                     setAdultos(adultos - 1);
                                                     setVisitantes((prev) => {
                                                         const nuevo = prev.slice(0, prev.length - 1);
-                                                        return nuevo.length === 0 ? [{ nombre: "", apellido:"", correo: "", celular: "", cumple: "", ciudad:"", estado:"", pais:"",tipo: "adulto",}] : nuevo;
+                                                        return nuevo;
                                                     });
                                                     setTouched((prev) => {
                                                         const nuevo = prev.slice(0, prev.length - 1);
-                                                        return nuevo.length === 0 ? [ {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}] : nuevo;
+                                                        return nuevo;
                                                     });
                                                     setIneFiles((prev) => {
                                                         const nuevo = prev.slice(0, prev.length - 1);
-                                                        return nuevo.length === 0 ? [{ frente: null, reverso: null }] : nuevo;
+                                                        return nuevo;
                                                     });
                                                 }
                                             }}
-                                            disabled={adultos <= 1}
+                                            disabled={!(adultos > 0 && (adultos60 > 0 || (adultos + adultos60) > 1))}
                                         >-</button>
                                         <span className="text-xl font-bold">{adultos}</span>
                                         <button
                                             type="button"
                                             className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                             onClick={() => {
-
                                                     setAdultos(adultos + 1);
                                                     setVisitantes((prev) => [...prev, { nombre: "", apellido:"", correo: "", celular: "", cumple:"", ciudad:"",estado:"",pais:"",tipo: "adulto",}]);
                                                     setTouched((prev) => [...prev, {nombre: false, apellido:false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}]);
                                                     setIneFiles((prev) => [...prev, { frente: null, reverso: null }]);
-
                                             }}
                                         >+</button>
                                     </div>
@@ -1038,7 +1036,7 @@ function getPrecioPorTipo(
                                             className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
 
                                             onClick={() => {
-                                                if (adultos60 > 0) {
+                                                if (adultos60 > 0 && (adultos60 > 1 || adultos > 0)) {
                                                     setAdultos60(adultos60 - 1);
                                                     setVisitantes((prev) => {
                                                         const nuevo = prev.slice(0, prev.length - 1);
@@ -1046,16 +1044,16 @@ function getPrecioPorTipo(
                                                     });
                                                     setTouched((prev) => {
                                                         const nuevo = prev.slice(0, prev.length - 1);
-                                                        return nuevo.length === 0 ? [{nombre: false, apellido: false, correo: false, celular: false, cumple: false, ciudad: false, estado: false, pais: false, ine: false,}] : nuevo;
+                                                        return nuevo;
                                                     });
                                                     setIneFiles((prev) => {
                                                         const nuevo = prev.slice(0, prev.length - 1);
-                                                        return nuevo.length === 0 ? [{ frente: null, reverso: null }] : nuevo;
+                                                        return nuevo;
                                                     });
 
                                                 }
                                             }}
-                                            disabled={adultos60 <= 0}
+                                            disabled={!(adultos60 > 0 && (adultos60 > 1 || adultos > 0))}
 
                                         >-</button>
                                         <span className="text-xl font-bold">{adultos60}</span>
