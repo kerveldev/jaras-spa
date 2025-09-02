@@ -51,6 +51,7 @@ export default function DaypassUnicaPage() {
     const [paises, setPaises] = useState<any[]>([]);
     const [estados, setEstados] = useState<any[]>([]);
     const [ciudades, setCiudades] = useState<any[]>([]);
+    const [daypasses, setDaypasses] = useState<any[]>([]);
 
 useEffect(() => {
   async function cargarPaises() {
@@ -109,7 +110,20 @@ useEffect(() => {
     }
   }
 
+  async function cargarDaypasses() {
+    try {
+      const res = await fetch("https://lasjaras-api.kerveldev.com/api/daypasses");
+      const data = await res.json();
+      if (data.data && Array.isArray(data.data)) {
+        setDaypasses(data.data);
+      }
+    } catch (error) {
+      console.error("Error al cargar daypasses:", error);
+    }
+  }
+
   cargarPaises();
+  cargarDaypasses();
 }, []);
 
 const fetchEstadosDePais = async (countryId: number, estadoParaCargar?: string) => {
@@ -651,6 +665,7 @@ function buildVisitorsForApi() {
     phone: string;
     visitor_type_id: "1" | "2";
     checkin_time: string;
+    daypass_id: number;
   }> = [];
 
   const titular =
@@ -664,6 +679,8 @@ function buildVisitorsForApi() {
     } as any);
 
   const checkin = normalizeTimeTo24(selectedTime);
+  const daypassGeneral = getDaypassGeneral();
+  const daypassINAPAM = getDaypassINAPAM();
 
   list.push({
     name: titular.nombre || "Titular",
@@ -673,6 +690,7 @@ function buildVisitorsForApi() {
     phone: titular.celular || "",
     visitor_type_id: "1",
     checkin_time: checkin,
+    daypass_id: daypassGeneral?.id || 8,
   });
 
   let consecutivo = 2;
@@ -686,6 +704,7 @@ function buildVisitorsForApi() {
       phone: "",
       visitor_type_id: "1",
       checkin_time: checkin,
+      daypass_id: daypassGeneral?.id || 8,
     });
   }
 
@@ -698,6 +717,7 @@ function buildVisitorsForApi() {
       phone: "",
       visitor_type_id: "1",
       checkin_time: checkin,
+      daypass_id: daypassINAPAM?.id || 9,
     });
   }
 
@@ -710,6 +730,7 @@ function buildVisitorsForApi() {
       phone: "",
       visitor_type_id: "2",
       checkin_time: checkin,
+      daypass_id: daypassGeneral?.id || 8,
     });
   }
 
@@ -781,6 +802,7 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
       formData.append(`visitors[${i}][phone]`, v.phone);
       formData.append(`visitors[${i}][visitor_type_id]`, v.visitor_type_id);
       formData.append(`visitors[${i}][checkin_time]`, v.checkin_time);
+      formData.append(`visitors[${i}][daypass_id]`, String(v.daypass_id));
     });
 
     if (ineFiles?.[0]?.frente) {
@@ -849,28 +871,29 @@ const normalizeBirthdate = (input?: string | Date | null): string => {
   }
 }
 
+function getDaypassGeneral() {
+  return daypasses.find(dp => dp.name === "DayPass General Online") || null;
+}
+
+function getDaypassINAPAM() {
+  return daypasses.find(dp => dp.name === "DayPass INAPAM Online") || null;
+}
+
 function getPrecioPorTipo(
-  fecha: string,
+  _fecha: string,
   tipo: "adulto" | "adulto60" | "nino" | "menor2",
-  esGrupo: boolean = false
+  _esGrupo: boolean = false
 ) {
-  const [year, month, day] = fecha.split("-");
-  const fechaLocal = new Date(Number(year), Number(month) - 1, Number(day));
-  const diaSemana = fechaLocal.getDay();
-
-  const esLunesAJueves = diaSemana >= 1 && diaSemana <= 4;
-
-  if (tipo === "adulto") {
-    if (esGrupo) return esLunesAJueves ? 325 : 390;
-    return esLunesAJueves ? 350 : 420;
+  if (tipo === "adulto" || tipo === "nino") {
+    const daypassGeneral = getDaypassGeneral();
+    return daypassGeneral ? daypassGeneral.price : 420;
   }
 
   if (tipo === "adulto60") {
-    if (esGrupo) return esLunesAJueves ? 300 : 360;
-    return esLunesAJueves ? 300 : 360;
+    const daypassINAPAM = getDaypassINAPAM();
+    return daypassINAPAM ? daypassINAPAM.price : 360;
   }
 
-  if (tipo === "nino") return 70;
   if (tipo === "menor2") return 0;
 
   return 0;
