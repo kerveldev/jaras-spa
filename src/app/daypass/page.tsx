@@ -1113,36 +1113,6 @@ function getPrecioPorTipo(
                                 )}
                               </div>
                               
-                              {/* Descuentos de grupo */}
-                              <div className="bg-green-50 border-l-4 border-green-400 rounded-r-lg overflow-hidden">
-                                <button
-                                  onClick={() => setExpandedInfo(prev => ({ ...prev, grupos: !prev.grupos }))}
-                                  className="w-full p-4 text-left hover:bg-green-100 transition-colors"
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                      <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                      </svg>
-                                      <h4 className="font-semibold text-gray-800 text-sm">Descuentos de grupo</h4>
-                                    </div>
-                                    <svg 
-                                      className={`w-5 h-5 text-green-400 transition-transform duration-200 ${expandedInfo.grupos ? 'rotate-180' : ''}`} 
-                                      fill="currentColor" 
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                    </svg>
-                                  </div>
-                                </button>
-                                {expandedInfo.grupos && (
-                                  <div className="px-4 pb-4">
-                                    <p className="text-sm text-gray-700 pl-8">
-                                      Al reservar para 12 o más adultos, se aplicará automáticamente una <span className="font-semibold text-green-600">tarifa preferencial</span>. Para grupos de 15 personas o más, se otorgarán cortesías proporcionales según la cantidad total de asistentes (los precios y cortesías se verán reflejados en el cálculo final).
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
                             </div>
                     </div>
                         
