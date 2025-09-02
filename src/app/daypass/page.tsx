@@ -1130,6 +1130,7 @@ function getPrecioPorTipo(
                                   onClick={() => setExpandedInfo(prev => ({ ...prev, ninos: !prev.ninos }))}
                                   className="w-full p-4 text-left hover:bg-blue-100 transition-colors"
                                 >
+                                  
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                       <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
