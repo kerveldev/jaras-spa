@@ -451,12 +451,9 @@ const subtotalMenores2 = cantidadMenores2 * precioMenor2;
 
 const subtotal = subtotalAdultos + subtotalAdultos60 + subtotalNinos + subtotalMenores2;
 const total = Math.max(subtotal - descuento, 0);
-const porcentajePlataforma = 0.05;
 const subtotalConDescuento = Math.max(subtotal - descuento, 0);
 
-const montoPlataforma = subtotalConDescuento * porcentajePlataforma;
-
-const totalConCargos = subtotalConDescuento + montoPlataforma;
+const totalConCargos = subtotalConDescuento;
 function calcularCortesias(totalAdultos: number): number {
   if (totalAdultos >= 60) return 4;
   if (totalAdultos >= 45) return 3;
@@ -1567,26 +1564,24 @@ function getPrecioPorTipo(
                             </div>
                             )}
                             <div className="flex flex-col gap-1 text-sm mb-2">
+                                {cantidadAdultos > 0 && (
                                 <div className="flex justify-between text-sm">
-                                    <span>Precio Adultos 14+</span>
-                                    <span>${precioAdulto.toFixed(2)} MXN c/u</span>
+                                    <span>Adultos 14+ ({cantidadAdultos})</span>
+                                    <span>${subtotalAdultos.toFixed(2)} MXN</span>
                                 </div>
+                                )}
                                 {cantidadAdultos60 > 0 && (
                                 <div className="flex justify-between text-sm">
-                                    <span>Precio Adultos 60+</span>
-                                    <span>${precioAdulto60.toFixed(2)} MXN c/u</span>
+                                    <span>Adultos 60+ ({cantidadAdultos60})</span>
+                                    <span>${subtotalAdultos60.toFixed(2)} MXN</span>
                                 </div>
                                 )}
                                 {cantidadNinos > 0 && (
                                 <div className="flex justify-between text-sm">
-                                    <span>Precio Niños 2-13</span>
-                                    <span>${precioNino.toFixed(2)} MXN c/u</span>
+                                    <span>Niños 2-13 años ({cantidadNinos})</span>
+                                    <span>${subtotalNinos.toFixed(2)} MXN</span>
                                 </div>
                                 )}
-                            </div>
-                                <div className="flex justify-between text-sm mb-2">
-                            <span>Servicio en Línea (5%)</span>
-                            <span>${montoPlataforma.toFixed(2)} MXN</span>
                             </div>
                         
                             {promoAplicado && (
