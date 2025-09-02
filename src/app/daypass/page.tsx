@@ -1267,7 +1267,11 @@ function getPrecioPorTipo(
                                                                 >
                                                                     <option value="">Selecciona tu horario de llegada</option>
                                                                     {horarios.map((hora) => (
-                                                                        <option key={hora} value={hora}>
+                                                                        <option 
+                                                                            key={hora} 
+                                                                            value={hora}
+                                                                            disabled={isHorarioPasado(hora)}
+                                                                        >
                                                                             {hora}
                                                                         </option>
                                                                     ))}
