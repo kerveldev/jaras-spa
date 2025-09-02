@@ -1044,7 +1044,7 @@ function getPrecioPorTipo(
                                             className="h-10 w-10 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-xl font-bold grid place-items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
 
                                             onClick={() => {
-                                                if (adultos60 > 0 && (adultos60 > 1 || adultos > 0)) {
+                                                if (adultos60 > 0) {
                                                     setAdultos60(adultos60 - 1);
                                                     setVisitantes((prev) => {
                                                         const nuevo = prev.slice(0, prev.length - 1);
@@ -1061,7 +1061,7 @@ function getPrecioPorTipo(
 
                                                 }
                                             }}
-                                            disabled={!(adultos60 > 0 && (adultos60 > 1 || adultos > 0))}
+                                            disabled={adultos60 <= 0}
 
                                         >-</button>
                                         <span className="text-xl font-bold">{adultos60}</span>
