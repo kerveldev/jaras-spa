@@ -1564,19 +1564,19 @@ function getPrecioPorTipo(
                             )}
                             <div className="flex flex-col gap-1 text-sm mb-2">
                                 <div className="flex justify-between text-sm">
-                                    <span>Precio Adultos 14+</span>
+                                    <span>Precio Adultos 14+ {cantidadAdultos > 1 ? `x${cantidadAdultos}` : ''}</span>
                                     <span>${precioAdulto.toFixed(2)} MXN</span>
                                 </div>
                                 {cantidadAdultos60 > 0 && (
                                 <div className="flex justify-between text-sm">
-                                    <span>Precio Adultos 60+</span>
+                                    <span>Precio Adultos 60+ {cantidadAdultos60 > 1 ? `x${cantidadAdultos60}` : ''}</span>
                                     <span>${precioAdulto60.toFixed(2)} MXN</span>
                                 </div>
                                 )}
                                 {cantidadNinos > 0 && (
                                 <div className="flex justify-between text-sm">
-                                    <span>Precio Niños 2-13</span>
-                                    <span>$70.00 MXN</span>
+                                    <span>Precio Niños 2-13 {cantidadNinos > 1 ? `x${cantidadNinos}` : ''}</span>
+                                    <span>${precioNino.toFixed(2)} MXN</span>
                                 </div>
                                 )}
                             </div>
