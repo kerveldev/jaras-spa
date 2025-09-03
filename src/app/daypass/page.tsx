@@ -283,7 +283,46 @@ const handleCiudadChange = (idx: number, ciudadNombre: string) => {
     function validateCelular(celular: string) {
         return /^\d{10,}$/.test(celular.trim());
     }
-    const validateCumple = (fecha: string) => fecha.trim() !== "";
+    const validateCumple = (fecha: string) => {
+        if (!fecha.trim()) return false;
+        
+        // Check if format is DD/MM/YYYY (10 characters total)
+        if (fecha.length !== 10) return false;
+        
+        // Extract parts
+        const parts = fecha.split('/');
+        if (parts.length !== 3) return false;
+        
+        const [day, month, year] = parts;
+        
+        // Validate year has 4 digits
+        if (year.length !== 4) return false;
+        
+        // Basic validation of day and month
+        const dayNum = parseInt(day);
+        const monthNum = parseInt(month);
+        const yearNum = parseInt(year);
+        
+        if (dayNum < 1 || dayNum > 31) return false;
+        if (monthNum < 1 || monthNum > 12) return false;
+        if (yearNum < 1900 || yearNum > new Date().getFullYear()) return false;
+        
+        return true;
+    };
+
+    const getCumpleErrorMessage = (fecha: string) => {
+        if (!fecha.trim()) return "Este campo es obligatorio.";
+        
+        if (fecha.length < 10) {
+            const parts = fecha.split('/');
+            if (parts.length === 3 && parts[2].length < 4) {
+                return "El año debe tener 4 dígitos (ej: 1990, no 90).";
+            }
+            return "Formato: DD/MM/AAAA (día/mes/año completo).";
+        }
+        
+        return "Fecha inválida. Use formato DD/MM/AAAA.";
+    };
     const validateCiudad = (ciudad: string) => ciudad.trim() !== "";
     const validateEstado = (estado: string) => estado.trim() !== "";
     const validatePais = (pais: string) => pais.trim() !== "";
@@ -1477,7 +1516,7 @@ function getPrecioPorTipo(
       }`}
     />
     {renderError(
-      "Formato: DD/MM/AAAA",
+      getCumpleErrorMessage(vis.cumple),
       !!touched[idx]?.cumple && !cumpleValido
     )}
   </div>
