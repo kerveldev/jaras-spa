@@ -146,7 +146,7 @@ export default function ExtrasPage() {
 
             {/* Main */}
             <main className="max-w-5xl w-full mx-auto px-4 pb-12 flex-1">
-                <h2 className="text-2xl font-bold mb-6">Servicios Adicionales</h2>
+                <h2 className="text-2xl font-bold mb-6 text-[#B7804F]">Servicios Adicionales</h2>
                 <p className="mb-6 text-gray-700">
                     Mejora tu experiencia en Las Jaras con nuestros servicios adicionales
                 </p>
@@ -154,7 +154,7 @@ export default function ExtrasPage() {
                 <div className="flex flex-col md:flex-row gap-8 mb-10">
                     {/* Buffet */}
                     <section className="flex-1">
-                        <h3 className="font-bold mb-2 text-lg">Buffet Mexicano</h3>
+                        <h3 className="font-bold mb-2 text-lg text-[#B7804F]">Buffet Mexicano</h3>
                         <p className="mb-4 text-sm text-gray-600">
                             Disfruta de nuestra amplia selección de platillos tradicionales mexicanos preparados por nuestros chefs expertos. Ideal para grupos.
                         </p>
@@ -217,7 +217,7 @@ export default function ExtrasPage() {
                     </section>
                     {/* Masajes */}
                     <section className="flex-1">
-                        <h3 className="font-bold mb-2 text-lg">Servicios de Masaje</h3>
+                        <h3 className="font-bold mb-2 text-lg text-[#B7804F]">Servicios de Masaje</h3>
                         <p className="mb-4 text-sm text-gray-600">
                             Relájate y rejuvenece con nuestros servicios de masaje profesional. Perfectos para parejas o individuales.
                         </p>
@@ -281,7 +281,7 @@ export default function ExtrasPage() {
                 </div>
                 {/* Resumen de la orden */}
                 <div className="max-w-2xl mx-auto mt-12 mb-8 bg-white border rounded p-6">
-                    <h4 className="font-bold mb-3">Resumen de tu Orden</h4>
+                    <h4 className="font-bold mb-3 text-[#B7804F]">Resumen de tu Orden</h4>
                     <ul className="mb-4">
                         {orden.map(
                             (item) =>

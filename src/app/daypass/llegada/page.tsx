@@ -18,7 +18,7 @@ export default function LlegadaEstacionPage() {
 
                 {/* Título y pasos de reserva */}
                 <div className="mb-8">
-                    <h2 className="text-2xl font-bold mb-2">Instrucciones de Llegada a la Estación</h2>
+                    <h2 className="text-2xl font-bold mb-2 text-[#B7804F]">Instrucciones de Llegada a la Estación</h2>
                     <div className="flex items-center gap-3 text-xs font-semibold text-gray-500">
                         <span>Compra</span>
                         <div className="w-10 h-1 bg-gray-200 rounded"></div>
@@ -143,7 +143,7 @@ export default function LlegadaEstacionPage() {
                         </div>
                         {/* Detalles del viaje */}
                         <div className="bg-white border rounded-lg p-6 shadow-sm mb-8">
-                            <div className="font-bold mb-2 text-sm">Detalles del Viaje</div>
+                            <div className="font-bold mb-2 text-sm text-[#B7804F]">Detalles del Viaje</div>
                             <div className="text-xs mb-1">
                                 <div className="flex justify-between"><span>Fecha:</span><span>15 de Octubre, 2023</span></div>
                                 <div className="flex justify-between"><span>Hora de Salida:</span><span>6:00 AM</span></div>
@@ -164,7 +164,7 @@ export default function LlegadaEstacionPage() {
                         </div>
                         {/* Soporte */}
                         <div className="bg-white border rounded-lg p-6 shadow-sm">
-                            <div className="font-bold mb-2 text-sm">¿Necesita Ayuda?</div>
+                            <div className="font-bold mb-2 text-sm text-[#B7804F]">¿Necesita Ayuda?</div>
                             <div className="text-xs flex flex-col gap-1">
                                 <span>Línea de Ayuda: <a href="tel:+523312345678" className="underline">+52 (33) 1234 5678</a></span>
                                 <span>Email de Soporte: <a href="mailto:transporte@lasjaras.mx" className="underline">transporte@lasjaras.mx</a></span>

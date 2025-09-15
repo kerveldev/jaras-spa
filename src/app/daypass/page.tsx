@@ -1021,7 +1021,7 @@ function getPrecioPorTipo(
                 {paso === 1 && (
                     <>
                     <div >
-                        <div className="text-gray-700 text-3xl font-bold mb-6 mt-2 text-center ">
+                        <div className="text-[#B7804F] text-3xl font-bold mb-6 mt-2 text-center ">
                                 ¿Cuántos visitantes son?
                             </div>
                             <div className="space-y-6 mb-0 mt-auto">
@@ -1239,7 +1239,7 @@ function getPrecioPorTipo(
                         <div>
                               {/* Selección de fecha y horario (debajo de los selectores de visitantes) */}
                                                 <div className="mt-10">
-                                                    <div className="text-gray-700 text-3xl font-bold mb-6 mt-2 text-center ">
+                                                    <div className="text-[#B7804F] text-3xl font-bold mb-6 mt-2 text-center ">
                                                         Selecciona la fecha y el horario de tu visita
                                                     </div>
                                                     <p className="mb-6 text-gray-600 text-base md:text-xl">
@@ -1369,7 +1369,7 @@ function getPrecioPorTipo(
               {paso === 2 && (
                     <div className="relative">
                         <div>
-                        <div className="text-gray-700 text-2xl font-bold mb-5 overflow-hidden">
+                        <div className="text-[#B7804F] text-2xl font-bold mb-5 overflow-hidden">
                             Detalles de la reserva
                         </div>
 

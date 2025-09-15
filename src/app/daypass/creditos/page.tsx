@@ -43,7 +43,7 @@ export default function CargarCreditosPage() {
             <Header />
 
             <main className="max-w-5xl w-full mx-auto px-4 py-12 flex-1">
-                <h2 className="text-2xl font-bold mb-2 text-black">Agregar Crédito al Brazalete</h2>                <p className="mb-8 text-black">
+                <h2 className="text-2xl font-bold mb-2 text-[#B7804F]">Agregar Crédito al Brazalete</h2>                <p className="mb-8 text-black">
                     Añade crédito al brazalete de tus amigos para acceder al área de Spa, reservar masajes o comprar souvenirs.
                 </p>
 
@@ -53,14 +53,14 @@ export default function CargarCreditosPage() {
                         className={`flex-1 border rounded p-4 flex flex-col items-start ${tipo === "spa" ? "border-black bg-[#f6fafb]" : "bg-white"}`}
                         onClick={() => setTipo("spa")}
                     >
-                        <span className="font-bold mb-1 text-black">Crédito para Spa</span>
+                        <span className="font-bold mb-1 text-[#B7804F]">Crédito para Spa</span>
                         <span className="text-xs text-black">Acceso al área de spa y posibilidad de reservar masajes.<br /><span className="font-semibold">Desde ${SPA_MIN} MXN</span></span>
                     </button>
                     <button
                         className={`flex-1 border rounded p-4 flex flex-col items-start ${tipo === "souvenir" ? "border-black bg-[#f6fafb]" : "bg-white"}`}
                         onClick={() => setTipo("souvenir")}
                     >
-                        <span className="font-bold mb-1  text-black">Crédito para Souvenirs</span>
+                        <span className="font-bold mb-1 text-[#B7804F]">Crédito para Souvenirs</span>
                         <span className="text-xs text-black">Compra anticipada para la tienda de recuerdos.<br /><span className="font-semibold">Cualquier monto</span></span>
                     </button>
                 </div>
@@ -164,7 +164,7 @@ export default function CargarCreditosPage() {
                     {/* Resumen */}
                     <aside className="w-full md:w-72">
                         <div className="bg-white border rounded-lg p-6 shadow-sm mb-4">
-                            <h4 className="font-bold mb-3 text-black">Resumen</h4>
+                            <h4 className="font-bold mb-3 text-[#B7804F]">Resumen</h4>
                             <div className="flex justify-between mb-1 text-sm">
                                 <span>Crédito para {tipo === "spa" ? "Spa" : "Souvenirs"}</span>
                                 <span>${monto.toFixed(2)}</span>
@@ -197,11 +197,11 @@ export default function CargarCreditosPage() {
 
                 {/* Servicios disponibles */}
                 <section className="mt-16">
-                    <h3 className="font-bold text-lg mb-4">Servicios disponibles con crédito de Spa</h3>
+                    <h3 className="font-bold text-lg mb-4 text-[#B7804F]">Servicios disponibles con crédito de Spa</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {serviciosSpa.map((s) => (
                             <div key={s.nombre} className="bg-white border rounded-lg p-6 flex flex-col items-start">
-                                <div className="font-bold mb-1 text-black">{s.nombre}</div>
+                                <div className="font-bold mb-1 text-[#B7804F]">{s.nombre}</div>
                                 <div className="text-xs text-gray-600 mb-2">{s.desc}</div>
                                 <div className="font-semibold text-sm mb-2">${s.precio} MXN</div>
                                 <div className="text-xs text-gray-500">{s.tiempo}</div>

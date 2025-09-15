@@ -224,7 +224,7 @@ export default function TransportePage() {
             <Header />
             <main className="flex flex-col md:flex-row gap-8 max-w-7xl w-full mx-auto px-4 pb-12 flex-1 pt-12">
                 <section className="flex-1">
-                    <h2 className="text-2xl font-bold mb-4">Servicio de transporte</h2>
+                    <h2 className="text-2xl font-bold mb-4 text-[#B7804F]">Servicio de transporte</h2>
                     <p className="mb-6 text-gray-700">
                         Selecciona si deseas utilizar nuestro servicio de transporte Las Jaras Bus para llegar cómodamente a nuestras instalaciones. Ofrecemos varias salidas desde la ciudad.
                     </p>
@@ -340,7 +340,7 @@ export default function TransportePage() {
                 {/* Resumen y pago */}
                 <aside className="w-full md:w-80">
                     <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
-                        <h4 className="font-bold mb-3">Resumen de reserva</h4>
+                        <h4 className="font-bold mb-3 text-[#B7804F]">Resumen de reserva</h4>
                         {/* Total visible siempre */}
                         <div className="flex justify-between font-bold text-lg mb-4">
                             <span>Total:</span>
@@ -386,7 +386,7 @@ export default function TransportePage() {
                                 onSubmit={handlePay}
                                 autoComplete="off"
                             >
-                                <h5 className="font-semibold mb-2">Paga con tarjeta</h5>
+                                <h5 className="font-semibold mb-2 text-[#B7804F]">Paga con tarjeta</h5>
                                 <input
                                     className="border rounded px-2 py-2 text-sm"
                                     placeholder="Nombre en la tarjeta"

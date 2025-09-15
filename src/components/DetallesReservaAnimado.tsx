@@ -36,7 +36,7 @@ export default function DetallesReservaAnimado({
 
     return (
         <>
-            <div className="font-semibold mb-2 text-center pt-2 text-blue-600 cursor-pointer hover:underline"
+            <div className="font-semibold mb-2 text-center pt-2 text-[#B7804F] cursor-pointer hover:underline"
                  onClick={e => { e.preventDefault(); setOpen(v => !v); }}>
                 {open ? "Ocultar resumen" : "Ver más detalles"}
             </div>

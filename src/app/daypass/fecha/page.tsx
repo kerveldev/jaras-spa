@@ -153,7 +153,7 @@ export default function FechaVisitaPage() {
             {/* Main */}
             <main className="flex flex-col md:flex-row gap-8 max-w-5xl w-full mx-auto px-4 pb-12 flex-1">
                 <section className="flex-1">
-                    <h2 className="text-xl font-bold mb-2">Selecciona la fecha de tu visita</h2>
+                    <h2 className="text-xl font-bold mb-2 text-[#B7804F]">Selecciona la fecha de tu visita</h2>
                     {/* Calendario */}
                     <div className="bg-white border rounded p-6 mb-6">
                         <div className="flex items-center justify-between mb-2">
@@ -233,7 +233,7 @@ export default function FechaVisitaPage() {
                 {/* Resumen */}
                 <aside className="w-full md:w-80">
                     <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
-                        <h4 className="font-bold mb-3">Resumen de tu reserva</h4>
+                        <h4 className="font-bold mb-3 text-[#B7804F]">Resumen de tu reserva</h4>
                         <div className="flex items-center gap-2 text-sm mb-2">
                             <span>📅</span>
                             <span className="capitalize">{fechaDisplay}</span>
