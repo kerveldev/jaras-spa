@@ -1756,8 +1756,8 @@ function getPrecioPorTipo(
                     )}
             </section>
              {/* Columna imagen */}
-            <aside className="block md:flex w-full md:w-1/2 md:h-full relative z-0">
-                <div className="relative w-full h-full min-h-[320px] md:min-h-0 md:h-screen">
+            <aside className="block md:flex w-full md:w-1/2 relative z-0">
+                <div className="relative w-full h-full min-h-[320px] md:min-h-0">
                     <Image
                         src={imagenes[paso - 1]}
                         alt={pasos[paso - 1].label}
