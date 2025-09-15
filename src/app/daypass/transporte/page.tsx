@@ -278,7 +278,7 @@ export default function TransportePage() {
                                                 className={`rounded border py-2 font-semibold text-sm w-full
                 ${
                                                     horario.hora === h.hora && horario.salida === h.salida
-                                                        ? "bg-[#18668b] text-white border-[#18668b]"
+                                                        ? "bg-[#B7804F] text-white border-[#B7804F]"
                                                         : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
                                                 }`}
                                                 onClick={() => setHorario(h)}
@@ -441,7 +441,7 @@ export default function TransportePage() {
 
                                 <button
                                     type="submit"
-                                    className="w-full py-2 mt-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition"
+                                    className="w-full py-2 mt-2 rounded font-bold text-white bg-[#B7804F] hover:bg-[#A06F44] transition"
                                     disabled={isPaying}
                                 >
                                     {isPaying ? "Procesando..." : "Pagar con tarjeta"}
@@ -466,7 +466,7 @@ export default function TransportePage() {
                         <button
                             className={`mt-6 w-full py-2 rounded font-bold text-white ${
                                 paid
-                                    ? "bg-[#18668b] hover:bg-[#14526d]"
+                                    ? "bg-[#B7804F] hover:bg-[#A06F44]"
                                     : "bg-gray-300 cursor-not-allowed"
                             }`}
                             onClick={handleContinuar}

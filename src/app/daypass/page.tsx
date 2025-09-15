@@ -1009,7 +1009,7 @@ function getPrecioPorTipo(
                     <div
                       className={`w-full h-1 mt-1 rounded
                         ${activo || completado
-                          ? "bg-[#18668b]"
+                          ? "bg-[#B7804F]"
                           : "bg-gray-200"
                         }`}
                     />
@@ -1305,7 +1305,7 @@ function getPrecioPorTipo(
                                                                                 disabled={isDisabled}
                                                                                 className={`w-9 h-9 md:w-12 md:h-12 text-sm md:text-base rounded-full border flex items-center justify-center transition ${
                                                                                     isSelected
-                                                                                        ? "bg-[#18668b] text-white border-[#18668b]"
+                                                                                        ? "bg-[#B7804F] text-white border-[#B7804F]"
                                                                                         : isDisabled
                                                                                         ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                                                                                         : "bg-white hover:bg-gray-100 border-gray-300 text-gray-700"
@@ -1344,7 +1344,7 @@ function getPrecioPorTipo(
                                                             <button
                                                                 className={`w-full py-2 mt-4 rounded font-bold transition-all duration-200 ${
                                                                     puedeAvanzarPaso2() 
-                                                                        ? "text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b] cursor-pointer" 
+                                                                        ? "text-white bg-[#B7804F] hover:bg-[#A06F44] border border-[#B7804F] cursor-pointer" 
                                                                         : "text-gray-400 bg-gray-200 border border-gray-300 cursor-not-allowed"
                                                                 }`}
                                                                 onClick={() => puedeAvanzarPaso2() && setPaso(2)}
@@ -1714,7 +1714,7 @@ function getPrecioPorTipo(
                                 <button
                                     className={`w-1/2 py-2 rounded font-bold text-white flex items-center justify-center transition-all duration-200 ${
                                         (metodoPago === "efectivo" ? puedeFinalizarEfectivo : paid) && !isProcessingReservation && acceptedTerms
-                                            ? "bg-[#18668b] hover:bg-[#14526d]"
+                                            ? "bg-[#B7804F] hover:bg-[#A06F44]"
                                             : "bg-gray-300 cursor-not-allowed"
                                     }`}
                                     onClick={() => {
@@ -1739,7 +1739,7 @@ function getPrecioPorTipo(
                                     )}
                                 </button>
                                 <button
-                                    className="w-1/2 py-2 rounded font-bold text-[#18668b] bg-white hover:bg-[#d6d3d3] border border-[#18668b] transition-all duration-200"
+                                    className="w-1/2 py-2 rounded font-bold text-white bg-[#B7804F] hover:bg-[#A06F44] border border-[#B7804F] transition-all duration-200"
                                     onClick={() => setPaso(1)}
                                 >
                                     Volver

@@ -137,8 +137,8 @@ export default function LlegadaEstacionPage() {
                                 />
 
                                 <div className="text-xs text-gray-500 mb-2">Muestre este código al chofer</div>
-                                <button className="w-full py-2 rounded font-bold text-white bg-black hover:bg-gray-800 mb-2">Descargar Código QR</button>
-                                <button className="w-full py-2 rounded border text-gray-700 bg-gray-100">Enviar por Email</button>
+                                <button className="w-full py-2 rounded font-bold text-white bg-[#B7804F] hover:bg-[#A06F44] mb-2">Descargar Código QR</button>
+                                <button className="w-full py-2 rounded border text-white bg-[#B7804F] hover:bg-[#A06F44] border-[#B7804F]">Enviar por Email</button>
                             </div>
                         </div>
                         {/* Detalles del viaje */}

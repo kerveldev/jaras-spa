@@ -131,7 +131,7 @@ export default function FechaVisitaPage() {
                             <div
                                 className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${
                                     n === 2
-                                        ? "bg-[#18668b] text-white"
+                                        ? "bg-[#B7804F] text-white"
                                         : "bg-gray-200 text-gray-500"
                                 }`}
                             >
@@ -144,7 +144,7 @@ export default function FechaVisitaPage() {
                     ))}
                     <div className="flex gap-6 ml-4 text-xs">
                         <span className="text-gray-400">Pases</span>
-                        <span className="font-bold text-[#18668b]">Fecha</span>
+                        <span className="font-bold text-[#B7804F]">Fecha</span>
                         <span className="text-gray-400">Extras</span>
                         <span className="text-gray-400">Pago</span>
                     </div>
@@ -158,7 +158,7 @@ export default function FechaVisitaPage() {
                     <div className="bg-white border rounded p-6 mb-6">
                         <div className="flex items-center justify-between mb-2">
                             <button
-                                className="text-xs text-[#18668b] font-bold"
+                                className="text-xs text-[#B7804F] font-bold"
                                 onClick={handlePrevMonth}
                                 type="button"
                             >
@@ -168,7 +168,7 @@ export default function FechaVisitaPage() {
                                 {new Date(year, mes).toLocaleDateString("es-MX", { month: "long", year: "numeric" })}
                             </span>
                             <button
-                                className="text-xs text-[#18668b] font-bold"
+                                className="text-xs text-[#B7804F] font-bold"
                                 onClick={handleNextMonth}
                                 type="button"
                             >
@@ -196,7 +196,7 @@ export default function FechaVisitaPage() {
                                         className={`w-9 h-9 rounded flex items-center justify-center border
                       ${
                                             isSelected
-                                                ? "bg-[#18668b] text-white border-[#18668b]"
+                                                ? "bg-[#B7804F] text-white border-[#B7804F]"
                                                 : "bg-white hover:bg-gray-100 border-gray-200 text-gray-700"
                                         }
                     `}
@@ -218,7 +218,7 @@ export default function FechaVisitaPage() {
                                     className={`rounded border py-2 font-semibold text-sm
                     ${
                                         selectedTime === hora
-                                            ? "bg-[#18668b] text-white border-[#18668b]"
+                                            ? "bg-[#B7804F] text-white border-[#B7804F]"
                                             : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
                                     }
                   `}
@@ -266,7 +266,7 @@ export default function FechaVisitaPage() {
                             <span>${total}.00 MXN</span>
                         </div>
                         <button
-                            className="mt-6 w-full py-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition"
+                            className="mt-6 w-full py-2 rounded font-bold text-white bg-[#B7804F] hover:bg-[#A06F44] transition"
                             onClick={handleContinuar}
                         >
                             Continuar a Extras

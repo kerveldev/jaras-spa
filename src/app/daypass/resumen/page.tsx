@@ -169,7 +169,7 @@ export default function ConfirmacionReservaPage() {
                     </div>
                     
                     <button
-                        className="group relative bg-white hover:bg-gray-50 text-[#18668b] hover:text-[#14526d] font-bold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out w-full max-w-sm border border-gray-200 hover:border-[#18668b]"
+                        className="group relative bg-[#B7804F] hover:bg-[#A06F44] text-white font-bold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out w-full max-w-sm border border-[#B7804F]"
                         onClick={() => {
                             router.push("/daypass");
                         }}

@@ -103,7 +103,7 @@ export default function CargarCreditosPage() {
                                         type="button"
                                         key={v}
                                         className={`px-4 py-2 rounded border text-sm font-semibold ${
-                                            monto === v ? "bg-[#18668b] text-white border-[#18668b]" : "bg-white border-gray-300"
+                                            monto === v ? "bg-[#B7804F] text-white border-[#B7804F]" : "bg-white border-gray-300"
                                         }`}
                                         onClick={() => setMonto(v)}
                                     >
@@ -189,8 +189,8 @@ export default function CargarCreditosPage() {
                                     El crédito se activará inmediatamente después de la compra. El portador del brazalete podrá utilizarlo en cualquier momento durante su visita.
                                 </div>
                             </div>
-                            <button className="w-full mt-4 py-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition">Confirmar y pagar</button>
-                            <button className="w-full mt-2 py-2 rounded border text-black bg-gray-100">Cancelar</button>
+                            <button className="w-full mt-4 py-2 rounded font-bold text-white bg-[#B7804F] hover:bg-[#A06F44] transition">Confirmar y pagar</button>
+                            <button className="w-full mt-2 py-2 rounded border text-white bg-[#B7804F] hover:bg-[#A06F44] border-[#B7804F]">Cancelar</button>
                         </div>
                     </aside>
                 </form>

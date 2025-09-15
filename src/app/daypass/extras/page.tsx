@@ -124,7 +124,7 @@ export default function ExtrasPage() {
                             <div
                                 className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${
                                     n === 3
-                                        ? "bg-[#18668b] text-white"
+                                        ? "bg-[#B7804F] text-white"
                                         : "bg-gray-200 text-gray-500"
                                 }`}
                             >
@@ -138,7 +138,7 @@ export default function ExtrasPage() {
                     <div className="flex gap-6 ml-4 text-xs">
                         <span className="text-gray-400">Pases</span>
                         <span className="text-gray-400">Fecha</span>
-                        <span className="font-bold text-[#18668b]">Extras</span>
+                        <span className="font-bold text-[#B7804F]">Extras</span>
                         <span className="text-gray-400">Transporte</span>
                     </div>
                 </div>
@@ -195,7 +195,7 @@ export default function ExtrasPage() {
                                 <button
                                     className={`px-5 py-2 rounded shadow ${
                                         cantidadesBuffet[item.key] > 0
-                                            ? "bg-black text-white hover:bg-[#222] !important"
+                                            ? "bg-[#B7804F] text-white hover:bg-[#A06F44] !important"
                                             : "bg-gray-200 text-gray-400 cursor-not-allowed"
                                     }`}
                                     disabled={cantidadesBuffet[item.key] === 0}
@@ -258,7 +258,7 @@ export default function ExtrasPage() {
                                 <button
                                     className={`px-5 py-2 rounded  shadow ${
                                         cantidadesMasaje[item.key] > 0
-                                            ? "bg-black text-white hover:bg-[#222]"
+                                            ? "bg-[#B7804F] text-white hover:bg-[#A06F44]"
                                             : "bg-gray-200 text-gray-400 cursor-not-allowed"
                                     }`}
                                     disabled={cantidadesMasaje[item.key] === 0}
@@ -310,7 +310,7 @@ export default function ExtrasPage() {
                         </button>
                         <button
                             onClick={handleContinuar}
-                            className="px-6 py-2 rounded font-bold text-white bg-[#18668b] hover:bg-[#14526d] transition"
+                            className="px-6 py-2 rounded font-bold text-white bg-[#B7804F] hover:bg-[#A06F44] transition"
                         >
                             Continuar a Transporte
                         </button>
