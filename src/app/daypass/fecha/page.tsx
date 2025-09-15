@@ -144,7 +144,7 @@ export default function FechaVisitaPage() {
                     ))}
                     <div className="flex gap-6 ml-4 text-xs">
                         <span className="text-gray-400">Pases</span>
-                        <span className="font-bold text-[#B7804F]">Fecha</span>
+                        <span className="font-headers text-[#B7804F]">Fecha</span>
                         <span className="text-gray-400">Extras</span>
                         <span className="text-gray-400">Pago</span>
                     </div>
@@ -153,7 +153,7 @@ export default function FechaVisitaPage() {
             {/* Main */}
             <main className="flex flex-col md:flex-row gap-8 max-w-5xl w-full mx-auto px-4 pb-12 flex-1">
                 <section className="flex-1">
-                    <h2 className="text-xl font-bold mb-2 text-[#B7804F]">Selecciona la fecha de tu visita</h2>
+                    <h2 className="text-xl font-titles mb-2 text-[#B7804F]">Selecciona la fecha de tu visita</h2>
                     {/* Calendario */}
                     <div className="bg-white border rounded p-6 mb-6">
                         <div className="flex items-center justify-between mb-2">
@@ -233,7 +233,7 @@ export default function FechaVisitaPage() {
                 {/* Resumen */}
                 <aside className="w-full md:w-80">
                     <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
-                        <h4 className="font-bold mb-3 text-[#B7804F]">Resumen de tu reserva</h4>
+                        <h4 className="font-headers mb-3 text-[#B7804F]">Resumen de tu reserva</h4>
                         <div className="flex items-center gap-2 text-sm mb-2">
                             <span>📅</span>
                             <span className="capitalize">{fechaDisplay}</span>
@@ -277,7 +277,7 @@ export default function FechaVisitaPage() {
                         >
                             Volver a Selección de Pases
                         </button>
-                        <div className="mt-4 text-xs text-gray-500 border-t pt-2">
+                        <div className="mt-4 text-legal text-gray-500 border-t pt-2">
                             La entrada es válida solo para la fecha y hora seleccionada.<br />
                             Se recomienda llegar 15 minutos antes de la hora reservada.<br />
                             Cancelaciones gratuitas hasta 48 horas antes de la visita.

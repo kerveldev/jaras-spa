@@ -8,8 +8,8 @@
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
+    --font-roboto-serif: var(--font-roboto-serif);
+    --font-encode-sans: var(--font-encode-sans);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,48 +21,99 @@
 
 body {
     background: var(--background);
-    color: var(--foreground);
-    font-family: Arial, Helvetica, sans-serif;
+    color: #000; /* Negro por defecto */
+    font-family: var(--font-encode-sans), sans-serif;
+    font-weight: 400; /* Regular por defecto */
 }
 
-.font-semibold {
-    color: #000 ;
+/* Typography Classes */
+.font-titles {
+    font-family: var(--font-roboto-serif), serif !important;
+    font-weight: 500 !important; /* Medium */
 }
 
-span {
-    color: #000 ;
+.font-headers {
+    font-family: var(--font-encode-sans), sans-serif !important;
+    font-weight: 600 !important; /* SemiBold */
 }
 
-h2 {
-    color: #000 ;
+.font-body {
+    font-family: var(--font-encode-sans), sans-serif !important;
+    font-weight: 400 !important; /* Regular */
 }
 
-h3 {
-    color: #000 ;
+.font-legal {
+    font-family: var(--font-encode-sans), sans-serif !important;
+    font-weight: 400 !important; /* Regular */
 }
 
-h4 {
-    color: #000 ;
+/* Elementos base con tipografía por defecto - solo negro si no tienen clase de color */
+p:not([class*="text-"]), span:not([class*="text-"]), label:not([class*="text-"]) {
+    color: #000; /* Negro solo si no tiene clase de color */
 }
 
-h5 {
-    color: #000 ;
+p, span, label, textarea, select, div {
+    font-family: var(--font-encode-sans), sans-serif;
+    font-weight: 400; /* Regular */
+}
+
+/* Títulos principales - NO forzar color, permitir que Tailwind controle */
+h1:not([class*="text-"]) {
+    color: #000; /* Solo negro si no tiene clase de color */
 }
 
 h1 {
-    color: #000 ;
+    font-family: var(--font-roboto-serif), serif;
+    font-weight: 500; /* Medium */
 }
 
-label {
-    color: #000 ;
+/* Subtítulos - NO forzar color, permitir que Tailwind controle */
+h2:not([class*="text-"]), h3:not([class*="text-"]), h4:not([class*="text-"]), h5:not([class*="text-"]), h6:not([class*="text-"]) {
+    color: #000; /* Solo negro si no tiene clase de color */
+}
+
+h2, h3, h4, h5, h6 {
+    font-family: var(--font-encode-sans), sans-serif;
+    font-weight: 600; /* SemiBold */
+}
+
+/* Elementos de formulario que deben ser negros */
+button {
+    color: inherit; /* Hereda el color para permitir utilidades de Tailwind */
+}
+
+/* Textos legales - usar clase específica */
+.text-legal {
+    font-family: var(--font-encode-sans), sans-serif;
+    font-weight: 400; /* Regular */
+    font-size: 0.75rem; /* text-xs */
+    line-height: 1.2;
+}
+
+/* Asegurar que las clases de color de Tailwind tengan máxima prioridad */
+[class*="text-[#B7804F]"] {
+    color: #B7804F !important;
+}
+
+[class*="text-white"] {
+    color: white !important;
+}
+
+[class*="text-gray"] {
+    /* Permitir que Tailwind controle los grises */
+}
+
+/* Elementos sin clase de color específica serán negros */
+.text-black {
+    color: #000 !important;
 }
 
 input {
-    color: #000 ;
-    background-color: #fff ;
-    border: 1px solid #ccc ;
-    padding: 0.5rem ;
-    border-radius: 0.25rem ;
+    color: #000 !important;
+    background-color: #fff !important;
+    border: 1px solid #ccc !important;
+    padding: 0.5rem !important;
+    border-radius: 0.25rem !important;
 }
 
 @tailwind utilities;

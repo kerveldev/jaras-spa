@@ -972,7 +972,7 @@ function getPrecioPorTipo(
 
 
 
-            {/* <h1 className="text-2xl font-bold text-center mb-8 text-[#18668b] pt-12">
+            {/* <h1 className="text-2xl font-titles text-center mb-8 text-[#18668b] pt-12">
                 Completa tu Reservación y Agenda tu Visita
             </h1> */}
             <main className="flex flex-col md:flex-row w-full min-h-[calc(100vh-120px)] max-w-none isolate">
@@ -1021,7 +1021,7 @@ function getPrecioPorTipo(
                 {paso === 1 && (
                     <>
                     <div >
-                        <div className="text-[#B7804F] text-3xl font-bold mb-6 mt-2 text-center ">
+                        <div className="text-[#B7804F] text-3xl font-titles mb-6 mt-2 text-center ">
                                 ¿Cuántos visitantes son?
                             </div>
                             <div className="space-y-6 mb-0 mt-auto">
@@ -1239,7 +1239,7 @@ function getPrecioPorTipo(
                         <div>
                               {/* Selección de fecha y horario (debajo de los selectores de visitantes) */}
                                                 <div className="mt-10">
-                                                    <div className="text-[#B7804F] text-3xl font-bold mb-6 mt-2 text-center ">
+                                                    <div className="text-[#B7804F] text-3xl font-titles mb-6 mt-2 text-center ">
                                                         Selecciona la fecha y el horario de tu visita
                                                     </div>
                                                     <p className="mb-6 text-gray-600 text-base md:text-xl">
@@ -1369,7 +1369,7 @@ function getPrecioPorTipo(
               {paso === 2 && (
                     <div className="relative">
                         <div>
-                        <div className="text-[#B7804F] text-2xl font-bold mb-5 overflow-hidden">
+                        <div className="text-[#B7804F] text-2xl font-titles mb-5 overflow-hidden">
                             Detalles de la reserva
                         </div>
 
@@ -1745,7 +1745,7 @@ function getPrecioPorTipo(
                                     Volver
                                 </button>
                             </div>
-                            <div className="mt-4 text-xs text-gray-500">
+                            <div className="mt-4 text-legal text-gray-500">
                                 Los pases son válidos para la fecha y hora seleccionada.<br />
                                 Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu visita.
                             </div>

@@ -116,7 +116,7 @@ export default function ConfirmacionReservaPage() {
               </svg>
             </span>
           </div>
-          <h1 className="text-center text-3xl sm:text-4xl font-extrabold text-[#B7804F] mt-4">¡Reserva confirmada!</h1>
+          <h1 className="text-center text-3xl sm:text-4xl font-titles text-[#B7804F] mt-4">¡Reserva confirmada!</h1>
           <p className="text-center text-slate-600 mt-2">
             Gracias por tu reserva en <span className="font-semibold text-slate-800">Las Jaras</span>. Aquí tienes tus detalles y accesos.
           </p>
@@ -132,7 +132,7 @@ export default function ConfirmacionReservaPage() {
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 Confirmada
               </div>
-              <div className="font-bold text-[#B7804F] text-xl mb-2 text-left">¡Reserva completada!</div>
+              <div className="font-titles text-[#B7804F] text-xl mb-2 text-left">¡Reserva completada!</div>
               <p className="text-slate-700 mb-3">
                 Recibirás un <span className="font-semibold">PDF con tus accesos</span> y toda la información de tu reserva en tu correo electrónico.
               </p>
@@ -160,7 +160,7 @@ export default function ConfirmacionReservaPage() {
 
                 <div className="flex flex-col items-center my-12 px-4">
                     <div className="text-center mb-6">
-                        <h3 className="text-xl md:text-2xl font-bold text-[#B7804F] mb-2">
+                        <h3 className="text-xl md:text-2xl font-titles text-[#B7804F] mb-2">
                             Continúa disfrutando la experiencia
                         </h3>
                         <p className="text-gray-600 text-sm md:text-base">
