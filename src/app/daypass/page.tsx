@@ -1217,7 +1217,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                   <div className="flex items-center justify-between bg-white rounded shadow p-2 mb-8 rounded-2xl">
                     <div>
                       <span className="font-semibold text-lg">
-                        Adultos 14 +
+                        Adultos
                       </span>
                       <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-full inline-block mt-1">
                         ${precioAdulto.toFixed(2)} MXN
@@ -1296,7 +1296,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                   <div className="flex items-center justify-between bg-white rounded shadow p-2 mb-8 rounded-2xl">
                     <div>
                       <span className="font-semibold text-lg">
-                        Adultos 60 +
+                        Adultos Mayor de 60 Años
                       </span>
                       <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-full inline-block mt-1">
                         ${precioAdulto60.toFixed(2)} MXN
@@ -1375,7 +1375,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                   <div className="flex items-center justify-between bg-white rounded shadow p-2 rounded-2xl">
                     <div>
                       <span className="font-semibold text-lg">
-                        Niños 2 - 13
+                        Niños de 2 a 13 años
                       </span>
                       <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-full inline-block mt-1">
                         ${precioNino.toFixed(2)} MXN
