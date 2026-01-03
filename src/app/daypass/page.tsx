@@ -1216,9 +1216,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                   {/* Adultos */}
                   <div className="flex items-center justify-between bg-white rounded shadow p-2 mb-8 rounded-2xl">
                     <div>
-                      <span className="font-semibold text-lg">
-                        Adultos
-                      </span>
+                      <div>
+                        <span className="font-semibold text-lg">
+                          Adultos
+                        </span>
+                      </div>
                       <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-full inline-block mt-1">
                         ${precioAdulto.toFixed(2)} MXN
                       </div>
@@ -1295,9 +1297,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                   {/* Adultos 60+ */}
                   <div className="flex items-center justify-between bg-white rounded shadow p-2 mb-8 rounded-2xl">
                     <div>
-                      <span className="font-semibold text-lg">
-                        Adultos mayores de 60 Años
-                      </span>
+                      <div>
+                        <span className="font-semibold text-lg">
+                          Adultos mayores de 60 Años
+                        </span>
+                      </div>
                       <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-full inline-block mt-1">
                         ${precioAdulto60.toFixed(2)} MXN
                       </div>
@@ -1374,9 +1378,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                   {/* Niños */}
                   <div className="flex items-center justify-between bg-white rounded shadow p-2 rounded-2xl">
                     <div>
-                      <span className="font-semibold text-lg">
-                        Niños de 2 a 13 años
-                      </span>
+                      <div>
+                        <span className="font-semibold text-lg">
+                          Niños de 2 a 13 años
+                        </span>
+                      </div>
                       <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-full inline-block mt-1">
                         ${precioNino.toFixed(2)} MXN
                       </div>
