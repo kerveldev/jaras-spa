@@ -2105,7 +2105,8 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                       Método de pago
                     </label>
                     <div className="flex gap-3">
-                      <label className="flex items-center gap-2">
+                      {/* Pago con tarjeta */}
+                      {/* <label className="flex items-center gap-2">
                         <input
                           type="radio"
                           name="metodoPago"
@@ -2114,8 +2115,9 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                           onChange={() => setMetodoPago("openpay")}
                         />
                         <span>Tarjeta (Openpay)</span>
-                      </label>
+                      </label> */}
 
+                      {/* Pago en efectivo */}
                       <label className="flex items-center gap-2">
                         <input
                           type="radio"
