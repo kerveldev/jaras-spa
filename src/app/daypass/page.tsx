@@ -1299,7 +1299,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                     <div>
                       <div>
                         <span className="font-semibold text-lg">
-                          Adultos mayores de 60 Años
+                          Adultos mayores de 60 años
                         </span>
                       </div>
                       <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-full inline-block mt-1">
@@ -2045,7 +2045,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                     {cantidadAdultos > 0 && (
                       <div>
                         <div className="flex justify-between text-sm">
-                          <span>Adultos 14+ ({cantidadAdultos})</span>
+                          <span>Adultos ({cantidadAdultos})</span>
                           <span>${subtotalAdultos.toFixed(2)} MXN</span>
                         </div>
                         <div className="text-xs text-gray-500 ml-2">
