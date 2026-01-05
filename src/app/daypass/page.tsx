@@ -41,7 +41,6 @@ const horarios = [
   "07:00 PM",
   "08:00 PM",
   "09:00 PM",
-  "10:00 PM",
 ];
 
 function getDiasMes(year: number, month: number) {
