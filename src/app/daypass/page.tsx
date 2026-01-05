@@ -1115,11 +1115,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
   }
 
   function getDaypassGeneral() {
-    return daypasses.find((dp) => dp.name === "DayPass General Online") || null;
+    return daypasses.find((dp) => dp.name === "General Online") || null;
   }
 
   function getDaypassINAPAM() {
-    return daypasses.find((dp) => dp.name === "DayPass INAPAM Online") || null;
+    return daypasses.find((dp) => dp.name === "INAPAM Online") || null;
   }
 
   function getPrecioPorTipo(
