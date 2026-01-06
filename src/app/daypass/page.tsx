@@ -17,6 +17,8 @@ import { FiPlus, FiTrash2 } from "react-icons/fi";
 import Stepper from "@/components/Stepper";
 import axios from "axios";
 import { Country, State, City } from "country-state-city";
+import { formatFechaCortaEs } from "@/lib/daypass/date";
+
 
 const CODIGO_PROMO = "PROMO100";
 const DESCUENTO_PROMO = 100;
@@ -66,23 +68,6 @@ function formatFechaEs(year: number, month: number, day: number) {
     year: "numeric",
   });
 }
-
-function formatFechaCortaEs(fechaISO: string) {
-  if (!fechaISO) return "";
-
-  // Evita desfases por timezone
-  const d = new Date(fechaISO + "T12:00:00");
-
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = d.toLocaleString("es-MX", { month: "short" }).replace(".", "");
-  const year = d.getFullYear();
-
-  // Capitaliza el mes: ene -> Ene
-  const monthCap = month.charAt(0).toUpperCase() + month.slice(1);
-
-  return `${day} ${monthCap} ${year}`;
-}
-
 
 
 export default function DaypassUnicaPage() {
