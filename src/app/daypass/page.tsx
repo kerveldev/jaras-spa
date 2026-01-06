@@ -67,6 +67,24 @@ function formatFechaEs(year: number, month: number, day: number) {
   });
 }
 
+function formatFechaCortaEs(fechaISO: string) {
+  if (!fechaISO) return "";
+
+  // Evita desfases por timezone
+  const d = new Date(fechaISO + "T12:00:00");
+
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = d.toLocaleString("es-MX", { month: "short" }).replace(".", "");
+  const year = d.getFullYear();
+
+  // Capitaliza el mes: ene -> Ene
+  const monthCap = month.charAt(0).toUpperCase() + month.slice(1);
+
+  return `${day} ${monthCap} ${year}`;
+}
+
+
+
 export default function DaypassUnicaPage() {
   const [paises, setPaises] = useState<any[]>([]);
   const [estados, setEstados] = useState<any[]>([]);
@@ -898,6 +916,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
           const total = Number(Number(totalConCargos).toFixed(2));
 
           // 3) Armamos el body para tu endpoint de redirección
+          const fechaConcepto = formatFechaCortaEs(fechaSeleccionada);
           const body = {
             nombre,
             apellido,
@@ -908,7 +927,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
             // Si no, y necesitas pasarlo, descomenta la línea:
             // user_id: 1,
             item_id: 0, // por ahora genérico; en el Paso 2 lo amarramos a la reservación real
-            item_name: `Reserva Daypass ${fechaSeleccionada || ""}`,
+            item_name: `Day Pass Online | Visita: ${fechaConcepto}`,
             type: "daypass",
             // order_id: undefined, // opcional
             // Si tu backend ya soporta redirect_url dinámico, pásalo:
