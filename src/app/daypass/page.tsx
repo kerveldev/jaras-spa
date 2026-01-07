@@ -2150,7 +2150,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                     </label>
                   </div>
 
-                  {/* Botones Finalizar y Volver en el mismo row */}
+                  {/* Boton Continuar */}
                   <div className="flex flex-row gap-4 mt-6">
                     <button
                       className={`w-1/2 py-2 rounded font-bold text-white flex items-center justify-center transition-all duration-200 ${
@@ -2159,7 +2159,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                           : paid) &&
                         !isProcessingReservation &&
                         acceptedTerms
-                          ? "bg-[#B7804F] hover:bg-[#A06F44]"
+                          ? "bg-[#606C54] hover:bg-[#3d4435]"
                           : "bg-gray-300 cursor-not-allowed"
                       }`}
                       onClick={() => {
@@ -2202,22 +2202,19 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                       ) : metodoPago === "efectivo" ? (
                         "Generar Reserva"
                       ) : (
-                        "Continuar al resumen"
+                        "Pagar y Reservar"
                       )}
                     </button>
-                    <button
-                      className="w-1/2 py-2 rounded font-bold text-white bg-[#B7804F] hover:bg-[#A06F44] border border-[#B7804F] transition-all duration-200"
-                      onClick={() => setPaso(1)}
-                    >
-                      Volver
-                    </button>
                   </div>
+
+                  {/* Información legal */}
                   <div className="mt-4 text-legal text-gray-500">
                     Los pases son válidos para la fecha y hora seleccionada.
                     <br />
                     Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu
                     visita.
                   </div>
+
                   {/* Links legales a PDFs */}
                   <div className="mt-3 text-xs text-gray-500">
                     Al continuar, aceptas nuestros{" "}
@@ -2240,6 +2237,17 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                     </a>
                     .
                   </div>
+
+                  {/* Boton volver */}
+                  <div>
+                    <button
+                      className="w-1/2 py-2 rounded font-bold text-white bg-[#B7804F] hover:bg-[#A06F44] border border-[#B7804F] transition-all duration-200"
+                      onClick={() => setPaso(1)}
+                    >
+                      Volver al paso anterior
+                    </button>
+                  </div>
+
                 </div>
               </div>
             </div>
