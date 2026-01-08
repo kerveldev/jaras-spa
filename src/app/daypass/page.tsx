@@ -19,7 +19,6 @@ import axios from "axios";
 import { Country, State, City } from "country-state-city";
 import { formatFechaCortaEs } from "@/lib/daypass/date";
 
-
 const CODIGO_PROMO = "PROMO100";
 const DESCUENTO_PROMO = 100;
 const PRECIO_PASE = 350;
@@ -68,7 +67,6 @@ function formatFechaEs(year: number, month: number, day: number) {
     year: "numeric",
   });
 }
-
 
 export default function DaypassUnicaPage() {
   const [paises, setPaises] = useState<any[]>([]);
@@ -887,7 +885,9 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         return;
       }
 
-      // dentro de handleContinuar(), justo antes de armar el FormData de la reservación
+      // *****************************************************
+      // Aqui es donde manejamos la redirección de Openpay
+      // *****************************************************
       if (metodoPago === "openpay") {
         try {
           // 1) Tomamos datos del titular desde tu array actual (como ya haces más abajo)
@@ -902,23 +902,87 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 
           // 3) Armamos el body para tu endpoint de redirección
           const fechaConcepto = formatFechaCortaEs(fechaSeleccionada);
+
+          // 3.1) helpers locales (para no duplicar lógica)
+          const normalizeBirthdate = (input?: string | Date | null): string => {
+            if (!input) return "";
+
+            if (input instanceof Date) {
+              const yyyy = String(input.getFullYear());
+              const mm = String(input.getMonth() + 1).padStart(2, "0");
+              const dd = String(input.getDate()).padStart(2, "0");
+              return `${yyyy}-${mm}-${dd}`;
+            }
+
+            const s = String(input).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+            const m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+            if (m) {
+              const [, ddRaw, mmRaw, yyyy] = m;
+              const dd = ddRaw.padStart(2, "0");
+              const mm = mmRaw.padStart(2, "0");
+              return `${yyyy}-${mm}-${dd}`;
+            }
+
+            return s;
+          };
+
+          // 3.2) payload completo para backend (similar a /api/reservations)
+          const visitors = buildVisitorsForApi();
+
+          const reservation_payload = {
+            client: {
+              name: nombre || "Titular",
+              lastname: apellido || "Reserva",
+              email: email || "",
+              phone: telefono || "",
+              birthdate: normalizeBirthdate(titular?.cumple || "1990-01-01"),
+            },
+
+            visit_date: fechaSeleccionada, // YYYY-MM-DD
+            origin_city: visitantes?.[0]?.ciudad || "",
+            origin_state: visitantes?.[0]?.estado || "",
+            origin_country: visitantes?.[0]?.pais || "",
+
+            payment_method: "openpay",
+
+            totals: {
+              total: String(Number(totalConCargos.toFixed(2))),
+            },
+
+            promo: promoAplicado ? { code: codigoPromo } : [],
+
+            visitors: visitors.map((v) => ({
+              name: v.name,
+              lastname: v.lastname,
+              birthdate: normalizeBirthdate(v.birthdate),
+              email: v.email,
+              phone: v.phone,
+              visitor_type_id: v.visitor_type_id,
+              checkin_time: v.checkin_time,
+              daypass_id: String(v.daypass_id),
+            })),
+          };
+
+          // 3.3) body final para el endpoint
           const body = {
             nombre,
             apellido,
             telefono,
             email,
             monto: total,
-            // Si el endpoint está público, podemos omitir user_id y que el backend haga fallback.
-            // Si no, y necesitas pasarlo, descomenta la línea:
-            // user_id: 1,
-            item_id: 0, // por ahora genérico; en el Paso 2 lo amarramos a la reservación real
+            // importante para ligar y describir
+            item_id: 0,
             item_name: `Day Pass Online | Visita: ${fechaConcepto}`,
             type: "daypass",
-            // order_id: undefined, // opcional
-            // Si tu backend ya soporta redirect_url dinámico, pásalo:
+            // NUEVO: mandamos la reservación completa al backend
+            reservation_payload,
+            // redirect_url a tu callback del front
             redirect_url: `${window.location.origin}/daypass/checkout/callback`,
           };
 
+          // 3.4) llamada al endpoint de redirección
           const resp = await fetch(
             "https://lasjaras-api.kerveldev.com/api/pagos/openpay-redirect",
             {
@@ -940,9 +1004,13 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
           }
 
           // 4) (Opcional) guarda el sale_id para el callback del Paso 2
-          if (json.sale_id) {
+          if (json.sale_id)
             localStorage.setItem("openpay_sale_id", String(json.sale_id));
-          }
+          if (json.reservation_id)
+            localStorage.setItem(
+              "openpay_reservation_id",
+              String(json.reservation_id)
+            );
 
           // 5) ¡A 3-D Secure!
           window.location.assign(json.redirect_url);
@@ -952,6 +1020,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
           return;
         }
       }
+      // *****************************************************
 
       const formData = new FormData();
 
@@ -1220,9 +1289,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                   <div className="flex items-center justify-between bg-white rounded shadow p-2 mb-8 rounded-2xl">
                     <div>
                       <div>
-                        <span className="font-semibold text-lg">
-                          Adultos
-                        </span>
+                        <span className="font-semibold text-lg">Adultos</span>
                       </div>
                       <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-full inline-block mt-1">
                         ${precioAdulto.toFixed(2)} MXN
@@ -2247,7 +2314,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                       Volver al paso anterior
                     </button>
                   </div>
-
                 </div>
               </div>
             </div>

@@ -1,66 +1,140 @@
 // src/app/daypass/checkout/callback/CallbackClient.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
+
+type ConfirmResponse = {
+  success: boolean;
+  paid?: boolean;
+  charge_status?: string;
+  reservation?: {
+    id: number;
+    qr_code_url?: string | null;
+  };
+  error?: string;
+};
+
+const API_BASE = "https://lasjaras-api.kerveldev.com";
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 export function CallbackClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [statusMessage, setStatusMessage] = useState(
-    "Validando información de tu pago..."
+    "Confirmando tu pago con el servidor..."
   );
 
+  const qp = useMemo(() => {
+    const get = (k: string) => searchParams.get(k);
+    return {
+      status: get("status"), // lo ignoraremos como fuente de verdad
+      transactionId: get("transaction_id") ?? get("id") ?? get("charge_id"),
+      saleId: get("sale_id") ?? get("saleId"),
+    };
+  }, [searchParams]);
+
   useEffect(() => {
+    let cancelled = false;
+
+    async function confirmOpenpay(saleId: string): Promise<ConfirmResponse> {
+      const resp = await fetch(`${API_BASE}/api/pagos/openpay-confirm`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ sale_id: Number(saleId) }),
+        cache: "no-store",
+      });
+
+      const json = (await resp.json().catch(() => ({}))) as ConfirmResponse;
+
+      if (!resp.ok) {
+        return {
+          success: false,
+          paid: false,
+          error: json?.error || "No se pudo confirmar el pago.",
+        };
+      }
+
+      return json;
+    }
+
     async function run() {
       try {
-        const status = searchParams.get("status"); // ajusta nombres según lo que regrese Openpay
-        const transactionId =
-          searchParams.get("transaction_id") ?? searchParams.get("id");
         const saleId =
-          searchParams.get("sale_id") ??
+          qp.saleId ??
           (typeof window !== "undefined"
             ? localStorage.getItem("openpay_sale_id")
             : null);
 
-        // Aquí puedes hacer la llamada a tu API para confirmar:
-        // await fetch("https://lasjaras-api.kerveldev.com/api/pagos/openpay-callback", { ... })
-
-        console.log("Callback Openpay:", {
-          status,
-          transactionId,
-          saleId,
-        });
-
-        if (status === "completed" || status === "success") {
-          setStatusMessage("Pago confirmado, generando tu reservación...");
-          // Redirigimos al resumen
-          router.replace("/daypass/resumen");
-        } else if (status === "failed" || status === "cancelled") {
-          setStatusMessage("Hubo un problema con tu pago.");
-          toast.error("No se pudo completar el pago. Inténtalo de nuevo.");
+        if (!saleId) {
+          toast.error("No se encontró sale_id para confirmar el pago.");
           router.replace("/daypass");
-        } else {
-          // Caso raro / sin status claro
-          setStatusMessage(
-            "No pudimos validar el estado del pago. Por favor revisa tu correo o intenta de nuevo."
-          );
-          router.replace("/daypass");
+          return;
         }
-      } catch (err) {
-        console.error(err);
-        setStatusMessage(
-          "Ocurrió un error al validar tu pago. Inténtalo de nuevo."
-        );
+
+        // Polling hasta ~30s (15 intentos x 2s)
+        const maxAttempts = 15;
+
+        for (let i = 1; i <= maxAttempts; i++) {
+          if (cancelled) return;
+
+          setStatusMessage(
+            i === 1
+              ? "Validando pago..."
+              : `Procesando pago... (${i}/${maxAttempts})`
+          );
+
+          const res = await confirmOpenpay(saleId);
+
+          // Si backend responde éxito y pagado => guardamos QR y nos vamos al resumen
+          if (res?.success && res?.paid) {
+            const qrUrl = res?.reservation?.qr_code_url ?? null;
+            if (typeof window !== "undefined" && qrUrl) {
+              localStorage.setItem("qr_code_url", qrUrl);
+            }
+
+            setStatusMessage("Pago confirmado. Redirigiendo al resumen...");
+            router.replace("/daypass/resumen");
+            return;
+          }
+
+          // Si éxito pero no pagado: seguir esperando
+          if (res?.success && !res?.paid) {
+            await sleep(2000);
+            continue;
+          }
+
+          // Si falló: cortar
+          toast.error(res?.error || "No se pudo confirmar el pago.");
+          router.replace("/daypass");
+          return;
+        }
+
+        // Si se acabó el tiempo de polling, igual lo mandamos a resumen (que muestre “en proceso” si quieren)
+        toast("Tu pago sigue en proceso. Si no aparece, revisa tu correo.", {
+          icon: "⏳",
+        });
+        router.replace("/daypass/resumen");
+      } catch (e) {
+        console.error(e);
         toast.error("Error al validar el pago.");
         router.replace("/daypass");
       }
     }
 
     run();
-  }, [router, searchParams]);
+    return () => {
+      cancelled = true;
+    };
+  }, [router, qp]);
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-slate-50">
