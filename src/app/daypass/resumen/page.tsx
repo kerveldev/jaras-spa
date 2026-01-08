@@ -1,14 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import Image from "next/image";
 
-// Demo QR (puedes actualizar el string con los datos reales de la reserva si lo deseas)
+// Demo QR (fallback)
 const BASE_QR_URL =
-  "https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=";
-const MAPA_BOLETO =
   "https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=";
 
 const PRECIO_PASE = 350;
@@ -23,12 +19,10 @@ function safeParse<T>(item: string | null, def: T): T {
 }
 
 // Formatea fecha a texto en español
-// Formatea fecha a texto en español
 function fechaLegible(fechaStr: string | string[]) {
   if (!fechaStr || (Array.isArray(fechaStr) && fechaStr.length === 0))
     return "-";
 
-  // Si es array, usamos el primer valor
   const fecha = Array.isArray(fechaStr) ? fechaStr[0] : fechaStr;
 
   try {
@@ -44,8 +38,55 @@ function fechaLegible(fechaStr: string | string[]) {
   }
 }
 
+function digitsOnly(input: string) {
+  return (input || "").replace(/\D/g, "");
+}
+
+/**
+ * Normaliza teléfono a formato wa.me SIN "+"
+ * - Si son 10 dígitos => asumimos MX y usamos 521 + número
+ * - Si ya viene con 52 o 521 => lo dejamos
+ */
+function normalizeWhatsAppMx(raw?: string | null) {
+  if (!raw) return null;
+  const d = digitsOnly(raw);
+
+  if (d.length === 10) return `521${d}`;
+  if (d.length >= 11) return d;
+
+  return null;
+}
+
+function buildWaUrl(phoneE164: string | null, text: string) {
+  const encoded = encodeURIComponent(text);
+  const base = phoneE164 ? `https://wa.me/${phoneE164}` : "https://wa.me/";
+  return `${base}?text=${encoded}`;
+}
+
+async function safeClipboardCopy(text: string) {
+  if (!text) return;
+  if (navigator?.clipboard?.writeText)
+    return navigator.clipboard.writeText(text);
+
+  const el = document.createElement("textarea");
+  el.value = text;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand("copy");
+  document.body.removeChild(el);
+}
+
+function fmtMoney(maybe: any) {
+  const n = Number(maybe);
+  if (Number.isFinite(n)) {
+    return n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+  }
+  return String(maybe ?? "-");
+}
+
 export default function ConfirmacionReservaPage() {
   const router = useRouter();
+
   // Estados para info real
   const [visitantes, setVisitantes] = useState<any[]>([]);
   const [cantidad, setCantidad] = useState(1);
@@ -62,12 +103,29 @@ export default function ConfirmacionReservaPage() {
   }>({ aplicado: false, valor: 0, codigo: "" });
   const [totalFinal, setTotalFinal] = useState<number>(0);
 
+  const [openpayReservationId, setOpenpayReservationId] = useState<
+    string | null
+  >(null);
+  const [openpaySaleId, setOpenpaySaleId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [copiedQr, setCopiedQr] = useState(false);
+
+  // Para generar QR con datos reales (fallback)
+  const qrData = `LJ-RESERVA|${fecha}|${hora}|${cantidad}`;
+  const qrURL = BASE_QR_URL + encodeURIComponent(qrData);
+
   useEffect(() => {
     // Lee todo el objeto reserva guardado por la otra página
     const reserva = safeParse<any>(localStorage.getItem("reserva_data"), null);
+
     const qrCodeUrl = localStorage.getItem("qr_code_url") || qrURL;
+
+    const rId = localStorage.getItem("openpay_reservation_id");
+    const sId = localStorage.getItem("openpay_sale_id");
+    setOpenpayReservationId(rId);
+    setOpenpaySaleId(sId);
+
     if (reserva) {
-      console.log("Cargando datos de reserva desde localStorage:", qrCodeUrl);
       setLinkQr(qrCodeUrl);
       setVisitantes(reserva.visitantes || []);
       setCantidad(reserva.visitantes?.length || 1);
@@ -78,50 +136,115 @@ export default function ConfirmacionReservaPage() {
       setExtras(reserva.extras || []);
       setPromo(reserva.promo || { aplicado: false, valor: 0, codigo: "" });
       setTotalFinal(reserva.total || 0);
-      console.log("Datos de reserva recuperados del localStorage:", reserva);
     }
-  }, []);
+  }, [qrURL]);
 
-  // Totales y textos
+  // Totales y textos (por si faltara totalFinal)
   const totalPases = cantidad;
-
   const totalExtras = extras.reduce((acc, curr) => acc + (curr?.total || 0), 0);
   const totalBase = totalPases * PRECIO_PASE;
   const totalPromo = promo.aplicado ? promo.valor : 0;
   const totalTransporte = usaTransporte ? totalPases * PRECIO_TRANSPORTE : 0;
-  // Usar totalFinal del objeto reserva_data si está disponible
   const total =
     totalFinal || totalBase + totalExtras + totalTransporte - totalPromo;
 
-  // Para generar QR con datos reales (puedes usar un ID único si tienes uno)
-  const qrData = `LJ-RESERVA|${fecha}|${hora}|${totalPases}`;
-  const qrURL = BASE_QR_URL + encodeURIComponent(qrData);
-  const qrURLMapa = MAPA_BOLETO + encodeURIComponent(qrData);
-
-  // Nombres y tipos de visitantes
-  const nombresVisitantes = visitantes
-    .map((v, i) => v?.nombre || `Visitante ${i + 1}`)
-    .join(", ");
-  const tipoBoletos = `${totalPases} ${
-    totalPases === 1 ? "persona" : "personas"
-  }`;
-
-  // Horario de transporte
+  // Datos UX
+  const fechaTexto = fecha ? fechaLegible(fecha) : "-";
   const horarioTexto = horarioTransporte
     ? `${horarioTransporte.hora} (${horarioTransporte.salida})`
     : "-";
 
-  // Extras
-  const extrasList = extras.filter((x: any) => x.cantidad > 0);
+  const visitantePrincipal = visitantes?.[0] || null;
+  const nombrePrincipal = visitantePrincipal?.nombre || "";
+  const celularRaw = visitantePrincipal?.celular || null;
+  const phoneE164 = normalizeWhatsAppMx(celularRaw);
+  const correoRaw = visitantePrincipal?.correo || null;
+
+  const resumenUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return window.location.href;
+  }, []);
+
+  const waText = useMemo(() => {
+    const folio = openpayReservationId || "-";
+    const sale = openpaySaleId || "-";
+    const qrLine = linkQr
+      ? `QR de acceso: ${linkQr}`
+      : "QR: te llegará en el PDF del correo";
+    const APP_CLIENTES_URL = "https://lasjaras-app.kerveldev.com";
+
+    return [
+      `✅ *Reserva confirmada – Las Jaras*`,
+      ``,
+      nombrePrincipal ? `Nombre: *${nombrePrincipal}*` : null,
+      correoRaw ? `Usuario (email): *${correoRaw}*` : null,
+      `Folio: *${folio}*`,
+      `Pago (sale): *${sale}*`,
+      `Fecha: *${fechaTexto}*`,
+      `Hora: *${hora || "-"}*`,
+      `Visitantes: *${totalPases}*`,
+      `Total: *${fmtMoney(total)}*`,
+      usaTransporte ? `Transporte: *Sí* (${horarioTexto})` : `Transporte: *No*`,
+      ``,
+      qrLine,
+      ``,
+      `👤 *Mi cuenta (app de clientes):* ${APP_CLIENTES_URL}`,
+      correoRaw
+        ? `Para ingresar usa tu email. Si es tu primera vez, toca *"Olvidé mi contraseña"* para crear una nueva.`
+        : `Para ingresar usa tu email. Si es tu primera vez, toca *"Olvidé mi contraseña"*.`,
+      ``,
+      `🌿 ¡Nos vemos pronto!`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }, [
+    openpayReservationId,
+    openpaySaleId,
+    nombrePrincipal,
+    correoRaw,
+    fechaTexto,
+    hora,
+    totalPases,
+    total,
+    usaTransporte,
+    horarioTexto,
+    linkQr,
+  ]);
+
+  const waUrl = useMemo(
+    () => buildWaUrl(phoneE164, waText),
+    [phoneE164, waText]
+  );
+
+  async function onCopyInfo() {
+    await safeClipboardCopy(waText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  async function onCopyQr() {
+    if (!linkQr) return;
+    await safeClipboardCopy(linkQr);
+    setCopiedQr(true);
+    setTimeout(() => setCopiedQr(false), 1500);
+  }
+
+  function onWhatsApp() {
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+  }
+
+  function onOpenQr() {
+    if (!linkQr) return;
+    window.open(linkQr, "_blank", "noopener,noreferrer");
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <main className="max-w-5xl w-full mx-auto px-4 py-12 flex-1">
-        {/* Mensaje de confirmación */}
-        <div className="mb-10">
+        {/* HERO */}
+        <div className="mb-10 text-center">
           <div className="flex items-center justify-center gap-3">
             <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-700">
-              {/* Check icon */}
               <svg
                 viewBox="0 0 24 24"
                 className="w-7 h-7"
@@ -137,69 +260,159 @@ export default function ConfirmacionReservaPage() {
               </svg>
             </span>
           </div>
-          <h1 className="text-center text-3xl sm:text-4xl font-titles text-[#B7804F] mt-4">
+
+          <h1 className="text-3xl sm:text-4xl font-titles text-[#B7804F] mt-4">
             ¡Reserva confirmada!
           </h1>
-          <p className="text-center text-slate-600 mt-2">
+
+          <p className="text-slate-600 mt-2">
             Gracias por tu reserva en{" "}
             <span className="font-semibold text-slate-800">Las Jaras</span>.
             Aquí tienes tus detalles y accesos.
           </p>
+
+          {/* Chips info rápida */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            <span className="px-3 py-1 rounded-full text-xs bg-white border text-slate-700">
+              Fecha: <strong>{fechaTexto}</strong>
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs bg-white border text-slate-700">
+              Total: <strong>{fmtMoney(total)}</strong>
+            </span>
+            {openpayReservationId && (
+              <span className="px-3 py-1 rounded-full text-xs bg-white border text-slate-700">
+                Folio: <strong>{openpayReservationId}</strong>
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Confirmación + Detalles (side by side) */}
-        <section className="py-16">
+        {/* Confirmación + QR */}
+        <section className="py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            {/* Confirmación de reserva y PDF */}
+            {/* Confirmación de reserva y PDF + Acciones rápidas */}
             <div className="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 p-8 shadow-sm">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 mb-4">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                Confirmada
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 mb-4">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Confirmada
+                  </div>
+
+                  <div className="font-titles text-[#B7804F] text-xl mb-2 text-left">
+                    ¡Reserva completada!
+                  </div>
+
+                  <p className="text-slate-700 mb-3">
+                    Recibirás un{" "}
+                    <span className="font-semibold">PDF con tus accesos</span> y
+                    toda la información de tu reserva en tu correo electrónico.
+                  </p>
+
+                  <p className="text-slate-500 text-xs">
+                    Revisa tu bandeja de entrada y, si no lo encuentras,
+                    verifica en la carpeta de spam o promociones.
+                  </p>
+                </div>
               </div>
-              <div className="font-titles text-[#B7804F] text-xl mb-2 text-left">
-                ¡Reserva completada!
+
+              {/* Acciones (mínimos clics) */}
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={onWhatsApp}
+                  className="flex-1 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-4 shadow-sm transition"
+                >
+                  Enviar por WhatsApp
+                </button>
+
+                <button
+                  onClick={onCopyInfo}
+                  className="flex-1 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-bold px-6 py-4 border border-slate-200 shadow-sm transition"
+                >
+                  {copied ? "Copiado ✅" : "Copiar info"}
+                </button>
               </div>
-              <p className="text-slate-700 mb-3">
-                Recibirás un{" "}
-                <span className="font-semibold">PDF con tus accesos</span> y
-                toda la información de tu reserva en tu correo electrónico.
-              </p>
-              <p className="text-slate-500 text-xs">
-                Revisa tu bandeja de entrada y, si no lo encuentras, verifica en
-                la carpeta de spam o promociones.
+
+              {/* Nota teléfono */}
+              <p className="text-[11px] text-slate-500 mt-3">
+                {phoneE164
+                  ? `WhatsApp se enviará al número: ${celularRaw}`
+                  : `No detectamos teléfono; WhatsApp se abrirá sin destinatario para que elijas el contacto.`}
               </p>
             </div>
 
-            {/* Detalles de la reserva */}
-            <div className="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 p-5 shadow-sm">
-              {/* mostrar el link que tengo guardado en localStorage del qr */}
+            {/* QR */}
+            <div className="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 p-6 shadow-sm">
               <div className="text-slate-700 mb-3 flex flex-col items-center">
                 <p className="mb-1">
-                  <strong>Este es tu código QR de acceso: </strong>
+                  <strong>Este es tu código QR de acceso:</strong>
                 </p>
 
                 {linkQr ? (
-                  <a href={linkQr} className="flex justify-center">
-                    <Image
-                      src={linkQr}
-                      alt="Código QR de acceso"
-                      width={160}
-                      height={160}
-                      className="mb-2"
-                      unoptimized
-                    />
-                  </a>
+                  <>
+                    <a
+                      href={linkQr}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex justify-center"
+                    >
+                      <Image
+                        src={linkQr}
+                        alt="Código QR de acceso"
+                        width={220}
+                        height={220}
+                        className="mb-3 rounded-xl border bg-white p-2"
+                        unoptimized
+                      />
+                    </a>
+
+                    <div className="w-full flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={onOpenQr}
+                        className="flex-1 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-bold px-6 py-3 border border-slate-200 transition"
+                      >
+                        Abrir QR
+                      </button>
+
+                      <button
+                        onClick={onCopyQr}
+                        className="flex-1 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-bold px-6 py-3 border border-slate-200 transition"
+                      >
+                        {copiedQr ? "Copiado ✅" : "Copiar link QR"}
+                      </button>
+                    </div>
+
+                    <p className="text-[11px] text-slate-500 mt-3 text-center">
+                      Preséntalo en acceso/taquilla. También viene en el PDF del
+                      correo.
+                    </p>
+                  </>
                 ) : (
-                  <p className="text-sm text-gray-500 text-center">
-                    Tu pago fue procesado correctamente. En breve recibirás tu
-                    código QR en tu correo electrónico.
-                  </p>
+                  <div className="w-full rounded-xl border bg-slate-50 p-6 text-center">
+                    <p className="text-slate-700 text-sm font-semibold">
+                      Generando tu QR…
+                    </p>
+                    <p className="text-slate-500 text-xs mt-2">
+                      Si no aparece aquí, lo recibirás en el correo (PDF de
+                      accesos).
+                    </p>
+                    <button
+                      onClick={() => {
+                        const qr = localStorage.getItem("qr_code_url");
+                        if (qr) setLinkQr(qr);
+                      }}
+                      className="mt-4 w-full rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-bold px-6 py-3 border border-slate-200 transition"
+                    >
+                      Actualizar
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
           </div>
         </section>
 
+        {/* CTA final */}
         <div className="flex flex-col items-center my-12 px-4">
           <div className="text-center mb-6">
             <h3 className="text-xl md:text-2xl font-titles text-[#B7804F] mb-2">
@@ -212,9 +425,7 @@ export default function ConfirmacionReservaPage() {
 
           <button
             className="group relative bg-[#B7804F] hover:bg-[#A06F44] text-white font-bold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out w-full max-w-sm border border-[#B7804F]"
-            onClick={() => {
-              router.push("/daypass");
-            }}
+            onClick={() => router.push("/daypass")}
           >
             <div className="flex items-center justify-center gap-3">
               <svg
