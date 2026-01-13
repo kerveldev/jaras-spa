@@ -42,6 +42,36 @@ function digitsOnly(input: string) {
   return (input || "").replace(/\D/g, "");
 }
 
+function canShareFiles() {
+  const nav: any = navigator as any;
+  return !!(nav?.share && nav?.canShare);
+}
+
+async function shareQrImage(qrUrl: string, text: string) {
+  // Descarga la imagen del QR y la prepara como File para compartir
+  const res = await fetch(qrUrl, { cache: "no-store" });
+  if (!res.ok) throw new Error("No se pudo descargar el QR.");
+
+  const blob = await res.blob();
+  const ext = blob.type === "image/png" ? "png" : "jpg";
+  const file = new File([blob], `qr-las-jaras.${ext}`, { type: blob.type });
+
+  const nav: any = navigator as any;
+
+  // Algunas plataformas requieren validar canShare({files})
+  if (!nav?.share)
+    throw new Error("Compartir no disponible en este navegador.");
+  if (nav?.canShare && !nav.canShare({ files: [file] })) {
+    throw new Error("Este navegador no permite compartir imágenes.");
+  }
+
+  await nav.share({
+    title: "Reserva Las Jaras",
+    text,
+    files: [file],
+  });
+}
+
 /**
  * Normaliza teléfono a formato wa.me SIN "+"
  * - Si son 10 dígitos => asumimos MX y usamos 521 + número
@@ -88,6 +118,8 @@ export default function ConfirmacionReservaPage() {
   const router = useRouter();
 
   // Estados para info real
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
+
   const [visitantes, setVisitantes] = useState<any[]>([]);
   const [cantidad, setCantidad] = useState(1);
   const [fecha, setFecha] = useState<string>("");
@@ -238,6 +270,37 @@ export default function ConfirmacionReservaPage() {
     window.open(linkQr, "_blank", "noopener,noreferrer");
   }
 
+  async function onShareQr() {
+    setShareNotice(null);
+
+    if (!linkQr) {
+      setShareNotice("Aún no tenemos el QR listo para compartir.");
+      return;
+    }
+
+    const nav: any = navigator as any;
+
+    // No compatible: mostramos aviso y sugerimos fallback
+    if (!nav?.share) {
+      setShareNotice(
+        'Tu navegador no soporta compartir imágenes. Usa "Abrir QR" o "Copiar link QR".'
+      );
+      return;
+    }
+
+    try {
+      await shareQrImage(linkQr, waText);
+      setShareNotice("Listo ✅ Se abrió el menú para compartir.");
+      setTimeout(() => setShareNotice(null), 2000);
+    } catch (e: any) {
+      console.error(e);
+      setShareNotice(
+        e?.message ||
+          'No se pudo compartir el QR como imagen. Usa "Abrir QR" o "Copiar link QR".'
+      );
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <main className="max-w-5xl w-full mx-auto px-4 py-12 flex-1">
@@ -380,7 +443,20 @@ export default function ConfirmacionReservaPage() {
                       >
                         {copiedQr ? "Copiado ✅" : "Copiar link QR"}
                       </button>
+
+                      <button
+                        onClick={onShareQr}
+                        className="flex-1 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 transition"
+                      >
+                        Compartir QR (imagen)
+                      </button>
                     </div>
+
+                    {shareNotice && (
+                      <p className="text-[11px] text-slate-500 mt-3 text-center">
+                        {shareNotice}
+                      </p>
+                    )}
 
                     <p className="text-[11px] text-slate-500 mt-3 text-center">
                       Preséntalo en acceso/taquilla. También viene en el PDF del
