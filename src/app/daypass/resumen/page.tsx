@@ -43,7 +43,6 @@ function digitsOnly(input: string) {
 }
 
 async function shareQrImage(qrUrl: string, text: string) {
-  // Descarga la imagen del QR y la prepara como File para compartir
   const res = await fetch(qrUrl, { cache: "no-store" });
   if (!res.ok) throw new Error("No se pudo descargar el QR.");
 
@@ -53,9 +52,7 @@ async function shareQrImage(qrUrl: string, text: string) {
 
   const nav: any = navigator as any;
 
-  // Algunas plataformas requieren validar canShare({files})
-  if (!nav?.share)
-    throw new Error("Compartir no disponible en este navegador.");
+  if (!nav?.share) throw new Error("Compartir no disponible en este navegador.");
   if (nav?.canShare && !nav.canShare({ files: [file] })) {
     throw new Error("Este navegador no permite compartir imágenes.");
   }
@@ -114,6 +111,7 @@ function statusUi(status: string) {
 
   if (s === "paid") {
     return {
+      code: "paid",
       label: "PAGADA / CONFIRMADA",
       pill: "bg-emerald-50 text-emerald-700",
       dot: "bg-emerald-500",
@@ -126,18 +124,20 @@ function statusUi(status: string) {
 
   if (s === "pending") {
     return {
+      code: "pending",
       label: "PENDIENTE DE PAGO",
       pill: "bg-amber-50 text-amber-800",
       dot: "bg-amber-500",
       hero: "Reserva pendiente",
       heroSubtitle:
-        "Tu reservación fue registrada, pero el pago no se completó. Puedes reintentar el pago o crear una nueva.",
+        "Tu reservación fue registrada, pero el pago aún no está confirmado. Puedes reintentar el pago o esperar confirmación.",
       waTitle: "🟡 *Reserva pendiente – Las Jaras*",
     };
   }
 
   if (s === "cancelled") {
     return {
+      code: "cancelled",
       label: "CANCELADA",
       pill: "bg-red-50 text-red-700",
       dot: "bg-red-500",
@@ -148,14 +148,15 @@ function statusUi(status: string) {
     };
   }
 
-  // failed u otros
+  // failed / unknown
   return {
+    code: "failed",
     label: "PAGO NO COMPLETADO",
     pill: "bg-red-50 text-red-700",
     dot: "bg-red-500",
     hero: "Pago no completado",
     heroSubtitle:
-      "No se completó el pago. Puedes intentar de nuevo o crear una nueva reservación.",
+      "No se completó el pago. No se realizó ningún cobro. Puedes intentar de nuevo o crear una nueva reservación.",
     waTitle: "❌ *Pago no completado – Las Jaras*",
   };
 }
@@ -163,7 +164,6 @@ function statusUi(status: string) {
 export default function ConfirmacionReservaPage() {
   const router = useRouter();
 
-  // Estados para info real
   const [shareNotice, setShareNotice] = useState<string | null>(null);
 
   const [visitantes, setVisitantes] = useState<any[]>([]);
@@ -181,14 +181,14 @@ export default function ConfirmacionReservaPage() {
   }>({ aplicado: false, valor: 0, codigo: "" });
   const [totalFinal, setTotalFinal] = useState<number>(0);
 
-  const [openpayReservationId, setOpenpayReservationId] = useState<
-    string | null
-  >(null);
+  const [openpayReservationId, setOpenpayReservationId] = useState<string | null>(
+    null
+  );
   const [openpaySaleId, setOpenpaySaleId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [copiedQr, setCopiedQr] = useState(false);
 
-  // ✅ default seguro
+  // ✅ default seguro: pending (no "paid")
   const [reservationStatus, setReservationStatus] = useState<string>("pending");
 
   // Para generar QR con datos reales (fallback)
@@ -196,19 +196,17 @@ export default function ConfirmacionReservaPage() {
   const qrURL = BASE_QR_URL + encodeURIComponent(qrData);
 
   useEffect(() => {
-    // Lee todo el objeto reserva guardado por la otra página
     const reserva = safeParse<any>(localStorage.getItem("reserva_data"), null);
-
     const qrCodeUrl = localStorage.getItem("qr_code_url") || qrURL;
 
     const rId = localStorage.getItem("openpay_reservation_id");
     const sId = localStorage.getItem("openpay_sale_id");
 
-    // ✅ orden correcto: localStorage > reserva_data.status > pending
+    // ✅ FIX: sin "|| paid || pending" (eso siempre se queda en paid)
     const st =
-      localStorage.getItem("reservation_status") ||
-      reserva?.status ||
-      "pending";
+      (localStorage.getItem("reservation_status") ||
+        reserva?.status ||
+        "pending") as string;
 
     setReservationStatus(String(st).toLowerCase());
 
@@ -226,20 +224,16 @@ export default function ConfirmacionReservaPage() {
       setExtras(reserva.extras || []);
       setPromo(reserva.promo || { aplicado: false, valor: 0, codigo: "" });
       setTotalFinal(reserva.total || 0);
-    } else {
-      // Si no hay reserva_data, igual deja QR fallback
-      setLinkQr(qrCodeUrl);
     }
   }, [qrURL]);
 
-  // Totales y textos (por si faltara totalFinal)
+  // Totales
   const totalPases = cantidad;
   const totalExtras = extras.reduce((acc, curr) => acc + (curr?.total || 0), 0);
   const totalBase = totalPases * PRECIO_PASE;
   const totalPromo = promo.aplicado ? promo.valor : 0;
   const totalTransporte = usaTransporte ? totalPases * PRECIO_TRANSPORTE : 0;
-  const total =
-    totalFinal || totalBase + totalExtras + totalTransporte - totalPromo;
+  const total = totalFinal || totalBase + totalExtras + totalTransporte - totalPromo;
 
   // Datos UX
   const fechaTexto = fecha ? fechaLegible(fecha) : "-";
@@ -255,6 +249,11 @@ export default function ConfirmacionReservaPage() {
 
   const status = statusUi(reservationStatus);
 
+  const retryUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/daypass`;
+  }, []);
+
   const waText = useMemo(() => {
     const folio = openpayReservationId || "-";
     const sale = openpaySaleId || "-";
@@ -263,14 +262,28 @@ export default function ConfirmacionReservaPage() {
       : "QR: te llegará en el PDF del correo";
     const APP_CLIENTES_URL = "https://lasjaras-app.kerveldev.com";
 
-    const retryUrl =
-      typeof window !== "undefined" ? `${window.location.origin}/daypass` : "";
+    const failedBlock =
+      status.code === "failed"
+        ? [
+            ``,
+            `⚠️ *No se completó el pago con tarjeta.*`,
+            `No se realizó ningún cobro.`,
+            retryUrl ? `Puedes intentar de nuevo aquí: ${retryUrl}` : null,
+            `Si necesitas ayuda, comparte este folio con recepción.`,
+          ]
+        : [];
 
-    const isFailed = reservationStatus === "failed";
-    const isPending = reservationStatus === "pending";
+    const pendingBlock =
+      status.code === "pending"
+        ? [
+            ``,
+            `⏳ *Tu pago está en proceso.*`,
+            `Si no se confirma en unos minutos, revisa tu correo o intenta nuevamente.`,
+          ]
+        : [];
 
     return [
-      `${status.waTitle}`,
+      status.waTitle,
       ``,
       nombrePrincipal ? `Nombre: *${nombrePrincipal}*` : null,
       correoRaw ? `Usuario (email): *${correoRaw}*` : null,
@@ -282,29 +295,11 @@ export default function ConfirmacionReservaPage() {
       `Visitantes: *${totalPases}*`,
       `Total: *${fmtMoney(total)}*`,
       usaTransporte ? `Transporte: *Sí* (${horarioTexto})` : `Transporte: *No*`,
+      ...pendingBlock,
+      ...failedBlock,
       ``,
       qrLine,
       ``,
-
-      ...(isFailed
-        ? [
-            `⚠️ *No se completó el pago con tarjeta.*`,
-            `No se realizó ningún cobro.`,
-            `Puedes intentar de nuevo aquí:`,
-            retryUrl || "https://lasjaras-spa.vercel.app/daypass",
-            `Si necesitas ayuda, comparte este folio con recepción.`,
-            ``,
-          ]
-        : []),
-
-      ...(isPending
-        ? [
-            `⏳ *Tu pago está pendiente / en proceso.*`,
-            `Si ya pagaste y no se refleja aún, revisa tu correo en unos minutos.`,
-            ``,
-          ]
-        : []),
-
       `👤 *Mi cuenta (app de clientes):* ${APP_CLIENTES_URL}`,
       correoRaw
         ? `Para ingresar usa tu email. Si es tu primera vez, toca *"Olvidé mi contraseña"* para crear una nueva.`
@@ -326,15 +321,13 @@ export default function ConfirmacionReservaPage() {
     usaTransporte,
     horarioTexto,
     linkQr,
+    status.code,
     status.label,
     status.waTitle,
-    reservationStatus,
+    retryUrl,
   ]);
 
-  const waUrl = useMemo(
-    () => buildWaUrl(phoneE164, waText),
-    [phoneE164, waText]
-  );
+  const waUrl = useMemo(() => buildWaUrl(phoneE164, waText), [phoneE164, waText]);
 
   async function onCopyInfo() {
     await safeClipboardCopy(waText);
@@ -368,7 +361,6 @@ export default function ConfirmacionReservaPage() {
 
     const nav: any = navigator as any;
 
-    // No compatible: mostramos aviso y sugerimos fallback
     if (!nav?.share) {
       setShareNotice(
         'Tu navegador no soporta compartir imágenes. Usa "Abrir QR" o "Copiar link QR".'
@@ -418,7 +410,7 @@ export default function ConfirmacionReservaPage() {
 
           <p className="text-slate-600 mt-2">{status.heroSubtitle}</p>
 
-          {/* Chips info rápida */}
+          {/* Chips */}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs bg-white border text-slate-700">
               Fecha: <strong>{fechaTexto}</strong>
@@ -437,41 +429,43 @@ export default function ConfirmacionReservaPage() {
         {/* Confirmación + QR */}
         <section className="py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            {/* Confirmación de reserva y PDF + Acciones rápidas */}
+            {/* Confirmación */}
             <div className="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 p-8 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div
                     className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 ${status.pill}`}
                   >
-                    <span className={`w-2 h-2 rounded-full ${status.dot}`} />
+                    <span className={`w-2 h-2 rounded-full ${status.dot}`}></span>
                     {status.label}
                   </div>
 
                   <div className="font-titles text-[#B7804F] text-xl mb-2 text-left">
-                    {reservationStatus === "paid"
-                      ? "¡Reserva completada!"
-                      : reservationStatus === "pending"
-                      ? "Reserva registrada"
-                      : "Pago no completado"}
+                    {status.code === "paid" ? "¡Reserva completada!" : "Estado de tu reserva"}
                   </div>
 
                   <p className="text-slate-700 mb-3">
-                    {reservationStatus === "paid"
-                      ? "Recibirás un PDF con tus accesos y toda la información de tu reserva en tu correo electrónico."
-                      : reservationStatus === "pending"
-                      ? "Tu reserva está registrada. Si el pago fue con tarjeta, puede tardar unos minutos en confirmarse."
-                      : "No se completó el pago. Puedes intentar nuevamente desde el botón de Nueva reservación."}
+                    {status.code === "paid" ? (
+                      <>
+                        Recibirás un{" "}
+                        <span className="font-semibold">PDF con tus accesos</span> y
+                        toda la información de tu reserva en tu correo electrónico.
+                      </>
+                    ) : (
+                      <>
+                        Esta pantalla muestra el estatus actual. Si el pago no se completó,
+                        puedes reintentar desde <span className="font-semibold">Nueva reservación</span>.
+                      </>
+                    )}
                   </p>
 
                   <p className="text-slate-500 text-xs">
-                    Revisa tu bandeja de entrada y, si no lo encuentras,
-                    verifica en la carpeta de spam o promociones.
+                    Revisa tu bandeja de entrada y, si no lo encuentras, verifica en spam o promociones.
                   </p>
                 </div>
               </div>
 
-              {/* Acciones (mínimos clics) */}
+              {/* Acciones */}
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={onWhatsApp}
@@ -488,7 +482,6 @@ export default function ConfirmacionReservaPage() {
                 </button>
               </div>
 
-              {/* Nota teléfono */}
               <p className="text-[11px] text-slate-500 mt-3">
                 {phoneE164
                   ? `WhatsApp se enviará al número: ${celularRaw}`
@@ -551,18 +544,14 @@ export default function ConfirmacionReservaPage() {
                     )}
 
                     <p className="text-[11px] text-slate-500 mt-3 text-center">
-                      Preséntalo en acceso/taquilla. También viene en el PDF del
-                      correo.
+                      Preséntalo en acceso/taquilla. También viene en el PDF del correo.
                     </p>
                   </>
                 ) : (
                   <div className="w-full rounded-xl border bg-slate-50 p-6 text-center">
-                    <p className="text-slate-700 text-sm font-semibold">
-                      Generando tu QR…
-                    </p>
+                    <p className="text-slate-700 text-sm font-semibold">Generando tu QR…</p>
                     <p className="text-slate-500 text-xs mt-2">
-                      Si no aparece aquí, lo recibirás en el correo (PDF de
-                      accesos).
+                      Si no aparece aquí, lo recibirás en el correo (PDF de accesos).
                     </p>
                     <button
                       onClick={() => {
