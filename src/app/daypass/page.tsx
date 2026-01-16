@@ -255,8 +255,13 @@ export default function DaypassUnicaPage() {
   };
 
   useEffect(() => {
-    localStorage.clear();
+    localStorage.removeItem("reserva_data");
+    localStorage.removeItem("qr_code_url");
+    localStorage.removeItem("openpay_sale_id");
+    localStorage.removeItem("openpay_reservation_id");
+    localStorage.removeItem("reservation_status");
   }, []);
+
   const [visitantes, setVisitantes] = useState([
     {
       nombre: "",
@@ -743,8 +748,16 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       total,
       fechaVisita: fechaSeleccionada,
       horaVisita: selectedTime,
+      status: localStorage.getItem("reservation_status") || "pending",
     };
+
     localStorage.setItem("reserva_data", JSON.stringify(data));
+
+    // Si aún no existe, lo dejamos como pending por seguridad (se actualiza después)
+    if (!localStorage.getItem("reservation_status")) {
+      localStorage.setItem("reservation_status", "pending");
+    }
+
     console.log("Datos de la reserva guardados en localStorage:", data);
   }, [visitantes, total, fechaSeleccionada, selectedTime]);
 
@@ -1041,6 +1054,9 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
               String(json.reservation_id)
             );
 
+          // Openpay: la reservación queda PENDIENTE hasta confirmación
+          localStorage.setItem("reservation_status", "pending");
+
           // 5) ¡A 3-D Secure!
           window.location.assign(json.redirect_url);
           return; // importante: no continúes con el flujo de crear reservación aquí
@@ -1201,6 +1217,10 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 
       toast.dismiss("reservation-processing");
       toast.success("¡Reservación enviada exitosamente!");
+
+      // Efectivo: reservación registrada, pago pendiente en taquilla
+      localStorage.setItem("reservation_status", "pending");
+
       setTimeout(() => {
         window.location.href = "/daypass/resumen";
       }, 1000);

@@ -100,6 +100,14 @@ export function CallbackClient() {
             if (typeof window !== "undefined" && qrUrl) {
               localStorage.setItem("qr_code_url", qrUrl);
             }
+            if (res?.reservation?.id) {
+              localStorage.setItem(
+                "openpay_reservation_id",
+                String(res.reservation.id)
+              );
+            }
+
+            localStorage.setItem("reservation_status", "paid");
 
             setStatusMessage("Pago confirmado. Redirigiendo al resumen...");
             router.replace("/daypass/resumen");
@@ -108,12 +116,17 @@ export function CallbackClient() {
 
           // Si éxito pero no pagado: seguir esperando
           if (res?.success && !res?.paid) {
+            localStorage.setItem("reservation_status", "pending");
             await sleep(2000);
             continue;
           }
 
           // Si falló: cortar
           toast.error(res?.error || "No se pudo confirmar el pago.");
+          localStorage.setItem("reservation_status", "failed");
+          localStorage.removeItem("openpay_sale_id");
+          localStorage.removeItem("openpay_reservation_id");
+
           router.replace("/daypass");
           return;
         }
@@ -122,6 +135,8 @@ export function CallbackClient() {
         toast("Tu pago sigue en proceso. Si no aparece, revisa tu correo.", {
           icon: "⏳",
         });
+        localStorage.setItem("reservation_status", "pending");
+
         router.replace("/daypass/resumen");
       } catch (e) {
         console.error(e);
