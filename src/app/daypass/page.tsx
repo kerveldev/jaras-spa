@@ -815,20 +815,39 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     const daypassGeneral = getDaypassGeneral();
     const daypassINAPAM = getDaypassINAPAM();
 
+    const totalAdultos = adultos + adultos60;
+
+    // Protección extra (en UI también lo validamos)
+    if (ninos > 0 && totalAdultos === 0) {
+      return [];
+    }
+
+    // El titular debe ser el primer adulto real de la compra
+    const titularEsInapam = adultos === 0 && adultos60 > 0;
+
     list.push({
       name: titular.nombre || "Titular",
       lastname: titular.apellido || "Reserva",
-      birthdate: titular.cumple || "1990-01-01",
+      birthdate:
+        titular.cumple || (titularEsInapam ? "1950-01-01" : "1990-01-01"),
       email: titular.correo || "",
       phone: titular.celular || "",
       visitor_type_id: "1",
       checkin_time: checkin,
-      daypass_id: daypassGeneral?.id || 8,
+      daypass_id: titularEsInapam
+        ? daypassINAPAM?.id || 9
+        : daypassGeneral?.id || 8,
     });
 
     let consecutivo = 2;
 
-    for (let i = 0; i < Math.max(0, adultos - 1); i++, consecutivo++) {
+    const adultosRestantes = Math.max(0, adultos - (adultos > 0 ? 1 : 0));
+    const adultos60Restantes = Math.max(
+      0,
+      adultos60 - (titularEsInapam ? 1 : 0)
+    );
+
+    for (let i = 0; i < adultosRestantes; i++, consecutivo++) {
       list.push({
         name: `Invitado ${consecutivo}`,
         lastname: "Adulto",
@@ -841,7 +860,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       });
     }
 
-    for (let i = 0; i < adultos60; i++, consecutivo++) {
+    for (let i = 0; i < adultos60Restantes; i++, consecutivo++) {
       list.push({
         name: `Invitado ${consecutivo}`,
         lastname: "Adulto 60+",
@@ -881,6 +900,16 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       if (!selectedDay || !selectedTime || !fechaSeleccionada) {
         toast.dismiss("reservation-processing");
         toast.error("Por favor selecciona una fecha y horario válidos.");
+        setIsProcessingReservation(false);
+        return;
+      }
+
+      // Validar que hay al menos un adulto o adulto mayor
+      if (ninos > 0 && adultos + adultos60 === 0) {
+        toast.dismiss("reservation-processing");
+        toast.error(
+          "Para comprar Daypass Niño necesitas agregar al menos 1 adulto (Normal o INAPAM)."
+        );
         setIsProcessingReservation(false);
         return;
       }
