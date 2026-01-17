@@ -58,7 +58,7 @@ function formatFechaEs(year: number, month: number, day: number) {
   const fecha = new Date(
     `${year}-${(month + 1).toString().padStart(2, "0")}-${day
       .toString()
-      .padStart(2, "0")}T12:00:00`
+      .padStart(2, "0")}T12:00:00`,
   );
   return fecha.toLocaleDateString("es-MX", {
     weekday: "long",
@@ -78,7 +78,7 @@ export default function DaypassUnicaPage() {
     async function cargarPaises() {
       try {
         const res = await fetch(
-          "https://lasjaras-api.kerveldev.com/api/catalog/countries"
+          "https://lasjaras-api.kerveldev.com/api/catalog/countries",
         );
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -136,7 +136,7 @@ export default function DaypassUnicaPage() {
     async function cargarDaypasses() {
       try {
         const res = await fetch(
-          "https://lasjaras-api.kerveldev.com/api/daypasses"
+          "https://lasjaras-api.kerveldev.com/api/daypasses",
         );
         const data = await res.json();
         if (data.data && Array.isArray(data.data)) {
@@ -153,13 +153,13 @@ export default function DaypassUnicaPage() {
 
   const fetchEstadosDePais = async (
     countryId: number,
-    estadoParaCargar?: string
+    estadoParaCargar?: string,
   ) => {
     if (!countryId) return;
 
     try {
       const res = await fetch(
-        `https://lasjaras-api.kerveldev.com/api/catalog/states?country_id=${countryId}`
+        `https://lasjaras-api.kerveldev.com/api/catalog/states?country_id=${countryId}`,
       );
       const data = await res.json();
 
@@ -169,7 +169,7 @@ export default function DaypassUnicaPage() {
         // If we have a specific state to load cities for, do it after states are loaded
         if (estadoParaCargar) {
           const stateToLoad = data.find(
-            (s: any) => s.name === estadoParaCargar
+            (s: any) => s.name === estadoParaCargar,
           );
           if (stateToLoad) {
             // Set the state in visitantes
@@ -198,7 +198,7 @@ export default function DaypassUnicaPage() {
 
     try {
       const res = await fetch(
-        `https://lasjaras-api.kerveldev.com/api/catalog/cities?state_id=${stateId}`
+        `https://lasjaras-api.kerveldev.com/api/catalog/cities?state_id=${stateId}`,
       );
       const data = await res.json();
 
@@ -206,7 +206,7 @@ export default function DaypassUnicaPage() {
         setCiudades(data);
       } else {
         console.warn(
-          `No se encontraron ciudades para el estado ID: ${stateId}`
+          `No se encontraron ciudades para el estado ID: ${stateId}`,
         );
         setCiudades([]);
       }
@@ -289,7 +289,7 @@ export default function DaypassUnicaPage() {
     },
   ]);
   const [ineFiles, setIneFiles] = useState<IneFiles[]>(
-    visitantes.map(() => ({ frente: null, reverso: null }))
+    visitantes.map(() => ({ frente: null, reverso: null })),
   );
   const [codigoPromo, setCodigoPromo] = useState("");
   const [promoAplicado, setPromoAplicado] = useState(false);
@@ -311,7 +311,7 @@ export default function DaypassUnicaPage() {
       ciudad: "",
       estado: "",
       pais: "",
-    }))
+    })),
   );
 
   function validateNombre(nombre: string) {
@@ -429,7 +429,7 @@ export default function DaypassUnicaPage() {
         validateNombre(v.nombre) &&
         validateApellido(v.apellido) &&
         validateCelular(v.celular) &&
-        validateCorreo(v.correo, i === 0)
+        validateCorreo(v.correo, i === 0),
     ) && puedeAvanzarPaso2();
   type Visitante = {
     nombre: string;
@@ -487,7 +487,7 @@ export default function DaypassUnicaPage() {
       | "ciudad"
       | "estado"
       | "pais",
-    valor: string
+    valor: string,
   ) => {
     setVisitantes((prev) => {
       const copia = [...prev];
@@ -555,7 +555,7 @@ export default function DaypassUnicaPage() {
   const precioAdulto60 = getPrecioPorTipo(
     fechaSeleccionada,
     "adulto60",
-    esGrupo
+    esGrupo,
   );
   const precioNino = getPrecioPorTipo(fechaSeleccionada, "nino", esGrupo);
   const precioMenor2 = getPrecioPorTipo(fechaSeleccionada, "menor2", esGrupo);
@@ -615,7 +615,7 @@ export default function DaypassUnicaPage() {
   }
 
   function generarCuerpoCorreo(
-    data: ReturnType<typeof prepararDatosParaCorreo>
+    data: ReturnType<typeof prepararDatosParaCorreo>,
   ) {
     const visitantesTxt = data.visitantes
       .map(
@@ -627,7 +627,7 @@ export default function DaypassUnicaPage() {
             ? `- INE Frente: ${v.ine_frente || "No adjunto"}\n- INE Reverso: ${
                 v.ine_reverso || "No adjunto"
               }\n`
-            : "")
+            : ""),
       )
       .join("\n");
 
@@ -665,7 +665,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 
   // arriba
   const [metodoPago, setMetodoPago] = useState<"openpay" | "efectivo">(
-    "openpay"
+    "openpay",
   );
 
   const [paid, setPaid] = useState(true);
@@ -722,6 +722,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     }
     setSelectedDay(1);
   };
+
   const handleNextMonth = () => {
     if (mes === 11) {
       setMes(0);
@@ -731,16 +732,37 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     }
     setSelectedDay(1);
   };
+
   const handleRemoveVisitante = (idx: number) => {
     setVisitantes((prev) => prev.filter((_, i) => i !== idx));
     setTouched((prev) => prev.filter((_, i) => i !== idx));
     setIneFiles((prev) => prev.filter((_, i) => i !== idx));
   };
-  const puedeFinalizarEfectivo =
-    validateNombre(visitantes[0]?.nombre) &&
-    validateNombre(visitantes[0]?.apellido) &&
-    validateCelular(visitantes[0]?.celular) &&
-    validateCorreo(visitantes[0]?.correo, true);
+
+  const titular = visitantes?.[0] ?? {
+    nombre: "",
+    apellido: "",
+    correo: "",
+    celular: "",
+    cumple: "",
+    ciudad: "",
+    estado: "",
+    pais: "",
+  };
+
+  const puedeFinalizarBase =
+    validateNombre(titular.nombre) &&
+    validateApellido(titular.apellido) &&
+    validateCorreo(titular.correo, true) &&
+    validateCelular(titular.celular) &&
+    validateCumple(titular.cumple) &&
+    validatePais(titular.pais) &&
+    validateEstado(titular.estado) &&
+    validateCiudad(titular.ciudad);
+
+  // ✅ Efectivo y Openpay: mismo candado (si quieres, lo separas después)
+  const puedeFinalizarEfectivo = puedeFinalizarBase;
+  const puedeFinalizarOpenpay = puedeFinalizarBase;
 
   useEffect(() => {
     const data = {
@@ -764,7 +786,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
   const handleIneFileChange = (
     idx: number,
     tipo: "frente" | "reverso",
-    file: File | null
+    file: File | null,
   ) => {
     setIneFiles((prev) => {
       const copia = [...prev];
@@ -857,7 +879,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     const adultosRestantes = Math.max(0, adultos - (adultos > 0 ? 1 : 0));
     const adultos60Restantes = Math.max(
       0,
-      adultos60 - (titularEsInapam ? 1 : 0)
+      adultos60 - (titularEsInapam ? 1 : 0),
     );
 
     for (let i = 0; i < adultosRestantes; i++, consecutivo++) {
@@ -921,7 +943,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       if (ninos > 0 && adultos + adultos60 === 0) {
         toast.dismiss("reservation-processing");
         toast.error(
-          "Para comprar Daypass Niño necesitas agregar al menos 1 adulto (Normal o INAPAM)."
+          "Para comprar Daypass Niño necesitas agregar al menos 1 adulto (Normal o INAPAM).",
         );
         setIsProcessingReservation(false);
         return;
@@ -1034,14 +1056,14 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                 Accept: "application/json",
               },
               body: JSON.stringify(body),
-            }
+            },
           );
 
           const json = await resp.json().catch(() => ({}));
 
           if (!resp.ok || !json?.success || !json?.redirect_url) {
             throw new Error(
-              json?.error || "No se pudo generar la redirección de pago."
+              json?.error || "No se pudo generar la redirección de pago.",
             );
           }
 
@@ -1051,7 +1073,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
           if (json.reservation_id)
             localStorage.setItem(
               "openpay_reservation_id",
-              String(json.reservation_id)
+              String(json.reservation_id),
             );
 
           // Openpay: la reservación queda PENDIENTE hasta confirmación
@@ -1075,7 +1097,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       formData.append("client[phone]", visitantes[0]?.celular || "");
       formData.append(
         "client[birthdate]",
-        visitantes[0]?.cumple || "1990-01-01"
+        visitantes[0]?.cumple || "1990-01-01",
       );
 
       // Ensure proper date format (YYYY-MM-DD)
@@ -1087,7 +1109,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         "Date being sent:",
         formattedDate,
         "Original fechaSeleccionada:",
-        fechaSeleccionada
+        fechaSeleccionada,
       );
       formData.append("origin_city", visitantes[0]?.ciudad || "");
       if (visitantes[0]?.estado)
@@ -1131,11 +1153,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 
       formData.append(
         "totals[total]",
-        String(Number(totalConCargos.toFixed(2)))
+        String(Number(totalConCargos.toFixed(2))),
       );
       formData.append(
         "promo",
-        promoAplicado ? JSON.stringify({ code: codigoPromo }) : "[]"
+        promoAplicado ? JSON.stringify({ code: codigoPromo }) : "[]",
       );
 
       const visitors = buildVisitorsForApi();
@@ -1145,7 +1167,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         formData.append(`visitors[${i}][lastname]`, v.lastname);
         formData.append(
           `visitors[${i}][birthdate]`,
-          normalizeBirthdate(v.birthdate)
+          normalizeBirthdate(v.birthdate),
         );
         formData.append(`visitors[${i}][email]`, v.email);
         formData.append(`visitors[${i}][phone]`, v.phone);
@@ -1159,7 +1181,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         formData.append(
           `visitors[0][document_front]`,
           ineFiles[0].frente,
-          ineFiles[0].frente.name
+          ineFiles[0].frente.name,
         );
       }
       if (ineFiles?.[0]?.reverso) {
@@ -1167,7 +1189,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         formData.append(
           `visitors[0][document_back]`,
           ineFiles[0].reverso,
-          ineFiles[0].reverso.name
+          ineFiles[0].reverso.name,
         );
       }
 
@@ -1181,7 +1203,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
           method: "POST",
           headers: { Accept: "application/json" },
           body: formData,
-        }
+        },
       );
 
       const json = await res.json().catch(() => ({}));
@@ -1228,7 +1250,8 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       console.error("Error inesperado:", error);
       toast.dismiss("reservation-processing");
       toast.error(
-        error.message || "Error al procesar la reservación. Intenta nuevamente."
+        error.message ||
+          "Error al procesar la reservación. Intenta nuevamente.",
       );
     } finally {
       setIsProcessingReservation(false);
@@ -1246,7 +1269,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
   function getPrecioPorTipo(
     _fecha: string,
     tipo: "adulto" | "adulto60" | "nino" | "menor2",
-    _esGrupo: boolean = false
+    _esGrupo: boolean = false,
   ) {
     if (tipo === "adulto" || tipo === "nino") {
       const daypassGeneral = getDaypassGeneral();
@@ -1726,7 +1749,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                 month: "long",
                                 year: "numeric",
                                 timeZone: "America/Mexico_City",
-                              }
+                              },
                             )}
                           </span>
                           <button
@@ -1768,8 +1791,8 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                                   isSelected
                                     ? "bg-[#B7804F] text-white border-[#B7804F]"
                                     : isDisabled
-                                    ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                                    : "bg-white hover:bg-gray-100 border-gray-300 text-gray-700"
+                                      ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                      : "bg-white hover:bg-gray-100 border-gray-300 text-gray-700"
                                 }`}
                               >
                                 {dia}
@@ -1886,7 +1909,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             />
                             {renderError(
                               "El nombre es obligatorio.",
-                              !!touched[idx]?.nombre && !nombreValido
+                              !!touched[idx]?.nombre && !nombreValido,
                             )}
                           </div>
 
@@ -1918,7 +1941,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             />
                             {renderError(
                               "Este campo es obligatorio.",
-                              !!touched[idx]?.apellido && !apellidoValido
+                              !!touched[idx]?.apellido && !apellidoValido,
                             )}
                           </div>
 
@@ -1951,7 +1974,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             />
                             {renderError(
                               "Correo electrónico inválido.",
-                              !!touched[idx]?.correo && !correoValido
+                              !!touched[idx]?.correo && !correoValido,
                             )}
                           </div>
 
@@ -1985,7 +2008,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             />
                             {renderError(
                               "Debe tener al menos 10 dígitos.",
-                              !!touched[idx]?.celular && !celularValido
+                              !!touched[idx]?.celular && !celularValido,
                             )}
                           </div>
                         </div>
@@ -2026,7 +2049,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             />
                             {renderError(
                               getCumpleErrorMessage(vis.cumple),
-                              !!touched[idx]?.cumple && !cumpleValido
+                              !!touched[idx]?.cumple && !cumpleValido,
                             )}
                           </div>
 
@@ -2059,7 +2082,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             </select>
                             {renderError(
                               "El país es obligatorio.",
-                              !!touched[idx]?.pais && !paisValido
+                              !!touched[idx]?.pais && !paisValido,
                             )}
                           </div>
 
@@ -2093,7 +2116,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             </select>
                             {renderError(
                               "El estado es obligatorio.",
-                              !!touched[idx]?.estado && !estadoValido
+                              !!touched[idx]?.estado && !estadoValido,
                             )}
                           </div>
 
@@ -2127,7 +2150,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                             </select>
                             {renderError(
                               "La ciudad es obligatoria.",
-                              !!touched[idx]?.ciudad && !ciudadValido
+                              !!touched[idx]?.ciudad && !ciudadValido,
                             )}
                           </div>
                         </div>
@@ -2272,23 +2295,48 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                       className={`w-1/2 py-2 rounded font-bold text-white flex items-center justify-center transition-all duration-200 ${
                         (metodoPago === "efectivo"
                           ? puedeFinalizarEfectivo
-                          : paid) &&
+                          : puedeFinalizarOpenpay) &&
                         !isProcessingReservation &&
                         acceptedTerms
                           ? "bg-[#606C54] hover:bg-[#3d4435]"
                           : "bg-gray-300 cursor-not-allowed"
                       }`}
                       onClick={() => {
-                        if (!isProcessingReservation) {
-                          handleContinuar();
-                        }
+                        if (isProcessingReservation) return;
+
+                        setTouched((prev) => {
+                          const copy = [...prev];
+                          if (!copy[0]) return prev;
+                          copy[0] = {
+                            ...copy[0],
+                            nombre: true,
+                            apellido: true,
+                            correo: true,
+                            celular: true,
+                            cumple: true,
+                            pais: true,
+                            estado: true,
+                            ciudad: true,
+                          };
+                          return copy;
+                        });
+
+                        if (
+                          metodoPago === "efectivo" &&
+                          !puedeFinalizarEfectivo
+                        )
+                          return;
+                        if (metodoPago === "openpay" && !puedeFinalizarOpenpay)
+                          return;
+
+                        handleContinuar();
                       }}
                       disabled={
                         isProcessingReservation ||
                         !acceptedTerms ||
                         (metodoPago === "efectivo"
                           ? !puedeFinalizarEfectivo
-                          : !paid)
+                          : !puedeFinalizarOpenpay)
                       }
                     >
                       {isProcessingReservation ? (
