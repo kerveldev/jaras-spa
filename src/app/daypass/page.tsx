@@ -1011,6 +1011,10 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 
             payment_method: "openpay",
 
+            // ✅ ESTO:
+            suppress_notifications: true,
+            allow_replace_pending: true,
+
             totals: {
               total: String(Number(totalConCargos.toFixed(2))),
             },
