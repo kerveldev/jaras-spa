@@ -182,32 +182,12 @@ export default function TransportePage() {
         };
 
         console.log("🟢 DATOS DE RESERVA AL CONTINUAR:", datos);
+        toast.success("Reserva creada con éxito. Se enviará un correo electrónico con los accesos.");
+        // Le damos un pequeño delay para que se vea el toast antes de redirigir
+        setTimeout(() => {
+            window.location.href = "/daypass/resumen";
+        }, 2000);
 
-        // try {
-            // const response = await fetch("http://127.0.0.1:8000/api/reservas", {
-            //     method: "POST",
-            //     headers: { "Content-Type": "application/json" },
-            //     body: JSON.stringify(datos),
-            // });
-            //
-            //
-            // const result = await response.json();
-            //
-            // console.log("🟢 RESERVA RESPUESTA:", result);
-
-            // if (result.ok) {
-                toast.success("Reserva creada con éxito. Se enviará un correo electrónico con los accesos.");
-                // Le damos un pequeño delay para que se vea el toast antes de redirigir
-                setTimeout(() => {
-                    window.location.href = "/daypass/resumen";
-                }, 2000);
-        //     } else {
-        //         toast.error("Error al crear la reserva, intenta de nuevo.");
-        //     }
-        // } catch (error) {
-        //     console.error("Error al enviar la reserva:", error);
-        //     toast.error("Error de conexión, intenta más tarde.");
-        // }
     }
 
     function getCoords(salida: string) {

@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
+import { apiUrl } from "@/lib/api";
 
 type ConfirmResponse = {
   success: boolean;
@@ -15,8 +16,6 @@ type ConfirmResponse = {
   };
   error?: string;
 };
-
-const API_BASE = "https://lasjaras-api.kerveldev.com";
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -43,7 +42,7 @@ export function CallbackClient() {
     let cancelled = false;
 
     async function confirmOpenpay(saleId: string): Promise<ConfirmResponse> {
-      const resp = await fetch(`${API_BASE}/api/pagos/openpay-confirm`, {
+      const resp = await fetch("/api/proxy/api/pagos/openpay-confirm", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

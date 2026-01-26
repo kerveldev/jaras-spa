@@ -18,6 +18,7 @@ import Stepper from "@/components/Stepper";
 import axios from "axios";
 import { Country, State, City } from "country-state-city";
 import { formatFechaCortaEs } from "@/lib/daypass/date";
+import { apiUrl } from "@/lib/api";
 
 const CODIGO_PROMO = "PROMO100";
 const DESCUENTO_PROMO = 100;
@@ -77,9 +78,8 @@ export default function DaypassUnicaPage() {
   useEffect(() => {
     async function cargarPaises() {
       try {
-        const res = await fetch(
-          "https://lasjaras-api.kerveldev.com/api/catalog/countries",
-        );
+        const res = await fetch("/api/proxy/api/catalog/countries");
+
         const data = await res.json();
         if (Array.isArray(data)) {
           setPaises(data);
@@ -135,9 +135,7 @@ export default function DaypassUnicaPage() {
 
     async function cargarDaypasses() {
       try {
-        const res = await fetch(
-          "https://lasjaras-api.kerveldev.com/api/daypasses",
-        );
+        const res = await fetch("/api/proxy/api/daypasses");
         const data = await res.json();
         if (data.data && Array.isArray(data.data)) {
           setDaypasses(data.data);
@@ -158,9 +156,7 @@ export default function DaypassUnicaPage() {
     if (!countryId) return;
 
     try {
-      const res = await fetch(
-        `https://lasjaras-api.kerveldev.com/api/catalog/states?country_id=${countryId}`,
-      );
+      const res = await fetch("/api/proxy/api/catalog/states?country_id=" + countryId);
       const data = await res.json();
 
       if (Array.isArray(data)) {
@@ -197,9 +193,7 @@ export default function DaypassUnicaPage() {
     if (!stateId) return;
 
     try {
-      const res = await fetch(
-        `https://lasjaras-api.kerveldev.com/api/catalog/cities?state_id=${stateId}`,
-      );
+      const res = await fetch("/api/proxy/api/catalog/cities?state_id=" + stateId);
       const data = await res.json();
 
       if (Array.isArray(data)) {
@@ -1052,7 +1046,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 
           // 3.4) llamada al endpoint de redirección
           const resp = await fetch(
-            "https://lasjaras-api.kerveldev.com/api/pagos/openpay-redirect",
+            apiUrl("/api/pagos/openpay-redirect"),
             {
               method: "POST",
               headers: {
@@ -1202,7 +1196,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       }
 
       const res = await fetch(
-        "https://lasjaras-api.kerveldev.com/api/reservations",
+        apiUrl("/api/reservations"),
         {
           method: "POST",
           headers: { Accept: "application/json" },
