@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "node:child_process";
-import { GoogleAuth } from "google-auth-library";
-import { promises as fs } from "node:fs";
 
 export const runtime = "nodejs";
 
@@ -22,7 +20,7 @@ function envOrThrow(name: string) {
  */
 async function getIdTokenViaGcloud(targetSa: string, audience: string) {
   const raw = process.env.GCLOUD_PATH || "gcloud";
-  const gcloud = raw.replace(/^"+|"+$/g, ""); // quita comillas si vienen
+  const gcloud = raw.replace(/^"+|"+$/g, "");
   const gcloudQuoted = gcloud.includes(" ") ? `"${gcloud}"` : gcloud;
 
   const cmd =
@@ -49,35 +47,67 @@ async function getIdTokenViaGcloud(targetSa: string, audience: string) {
   });
 }
 
-function readAuthHeader(h: unknown): string | undefined {
-  // Caso 1: Headers (tiene .get)
-  if (
-    h &&
-    typeof h === "object" &&
-    "get" in h &&
-    typeof (h as any).get === "function"
-  ) {
-    return (
-      (h as Headers).get("authorization") ??
-      (h as Headers).get("Authorization") ??
-      undefined
-    );
-  }
+type JwtPublicClaims = {
+  iss?: string;
+  aud?: string | string[];
+  sub?: string;
+  email?: string;
+  azp?: string;
+  exp?: number;
+  iat?: number;
+  [k: string]: unknown;
+};
 
-  // Caso 2: objeto plano Record<string,string>
-  if (h && typeof h === "object") {
-    const obj = h as Record<string, string | undefined>;
-    return obj.authorization ?? obj.Authorization;
-  }
+function decodeJwtClaims(token: string): JwtPublicClaims | null {
+  const parts = token.split(".");
+  if (parts.length < 2) return null;
 
-  return undefined;
+  try {
+    const json = Buffer.from(parts[1], "base64url").toString("utf8");
+    const claims = JSON.parse(json) as JwtPublicClaims;
+
+    return {
+      iss: claims.iss,
+      aud: claims.aud,
+      sub: claims.sub,
+      email: claims.email,
+      azp: claims.azp,
+      exp: claims.exp,
+      iat: claims.iat,
+    };
+  } catch {
+    return null;
+  }
 }
+
+type StsOk = {
+  access_token: string;
+  expires_in?: number;
+  issued_token_type?: string;
+  token_type?: string;
+};
+
+type IamGenerateIdTokenOk = {
+  token: string;
+};
+
+type DebugWif = {
+  wifAudience: string;
+  serviceAccount: string;
+  stsStatus?: number;
+  stsBody?: unknown;
+  iamStatus?: number;
+  iamBody?: unknown;
+};
 
 /**
  * ✅ Vercel → GCP WIF (sin API keys, sin ADC).
  * Usa x-vercel-oidc-token como subject_token.
  */
-async function getIdTokenViaWifFromVercel(audience: string, oidcToken: string) {
+async function getIdTokenViaWifFromVercel(
+  audience: string,
+  oidcToken: string,
+): Promise<{ idToken: string; debug: DebugWif }> {
   const projectNumber = envOrThrow("GCP_PROJECT_NUMBER");
   const poolId = envOrThrow("WIF_POOL_ID");
   const providerId = envOrThrow("WIF_PROVIDER_ID");
@@ -85,7 +115,12 @@ async function getIdTokenViaWifFromVercel(audience: string, oidcToken: string) {
 
   const wifAudience = `//iam.googleapis.com/projects/${projectNumber}/locations/global/workloadIdentityPools/${poolId}/providers/${providerId}`;
 
-  // 1) STS token exchange: Vercel OIDC -> access_token
+  const debug: DebugWif = {
+    wifAudience,
+    serviceAccount,
+  };
+
+  // 1) STS token exchange: Vercel OIDC -> access_token federado
   const stsResp = await fetch("https://sts.googleapis.com/v1/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -99,16 +134,20 @@ async function getIdTokenViaWifFromVercel(audience: string, oidcToken: string) {
     }).toString(),
   });
 
-  const stsJson = (await stsResp.json().catch(() => ({}))) as any;
+  debug.stsStatus = stsResp.status;
+
+  const stsJson = (await stsResp.json().catch(() => ({}))) as Partial<StsOk> & {
+    error?: unknown;
+    error_description?: unknown;
+  };
+  debug.stsBody = stsJson;
+
   if (!stsResp.ok || !stsJson?.access_token) {
-    console.error("[wif] sts failed", {
-      status: stsResp.status,
-      body: stsJson,
-    });
+    console.error("[wif] sts failed", { status: stsResp.status, body: stsJson });
     throw new Error(`STS exchange failed: ${stsResp.status}`);
   }
 
-  const federatedAccessToken = stsJson.access_token as string;
+  const federatedAccessToken = stsJson.access_token;
 
   // 2) IAMCredentials: access_token federado -> ID token del Service Account (para Cloud Run)
   const iamUrl = `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${encodeURIComponent(
@@ -127,7 +166,13 @@ async function getIdTokenViaWifFromVercel(audience: string, oidcToken: string) {
     }),
   });
 
-  const idJson = (await idResp.json().catch(() => ({}))) as any;
+  debug.iamStatus = idResp.status;
+
+  const idJson = (await idResp.json().catch(() => ({}))) as Partial<IamGenerateIdTokenOk> & {
+    error?: unknown;
+  };
+  debug.iamBody = idJson;
+
   if (!idResp.ok || !idJson?.token) {
     console.error("[wif] generateIdToken failed", {
       status: idResp.status,
@@ -136,29 +181,15 @@ async function getIdTokenViaWifFromVercel(audience: string, oidcToken: string) {
     throw new Error(`generateIdToken failed: ${idResp.status}`);
   }
 
-  return idJson.token as string;
+  return { idToken: idJson.token, debug };
 }
 
-function decodeJwtClaims(token: string) {
-  const parts = token.split(".");
-  if (parts.length < 2) return null;
-  const payload = parts[1]
-    .replace(/-/g, "+")
-    .replace(/_/g, "/")
-    .padEnd(Math.ceil(parts[1].length / 4) * 4, "=");
-
-  const json = Buffer.from(payload, "base64").toString("utf8");
-  const claims = JSON.parse(json);
-
-  // regresa solo lo útil (no todo)
+function oidcPreview(oidc: string) {
+  // No mostramos todo el token. Solo longitud y un preview seguro.
   return {
-    iss: claims.iss,
-    aud: claims.aud,
-    sub: claims.sub,
-    email: claims.email,
-    azp: claims.azp,
-    exp: claims.exp,
-    iat: claims.iat,
+    len: oidc.length,
+    head: oidc.slice(0, 24),
+    tail: oidc.slice(-16),
   };
 }
 
@@ -173,7 +204,7 @@ async function handler(req: NextRequest, pathParts: string[]) {
   try {
     const oidc = req.headers.get("x-vercel-oidc-token");
 
-    // Debug sin tocar google auth
+    // Debug simple: confirma que Vercel sí está mandando OIDC
     if (req.nextUrl.searchParams.get("__oidc") === "1") {
       return NextResponse.json({
         hasOidc: !!oidc,
@@ -190,7 +221,7 @@ async function handler(req: NextRequest, pathParts: string[]) {
       process.env.GCP_PROXY_MODE || (process.env.VERCEL ? "wif" : "gcloud")
     ).toLowerCase();
 
-    let idToken: string;
+    let idToken = "";
 
     if (mode === "wif") {
       if (!oidc) {
@@ -199,8 +230,52 @@ async function handler(req: NextRequest, pathParts: string[]) {
           { status: 401 },
         );
       }
-      idToken = await getIdTokenViaWifFromVercel(audience, oidc);
 
+      // __debug=2: antes de generar nada, decodifica OIDC de Vercel y luego intenta WIF
+      if (req.nextUrl.searchParams.get("__debug") === "2") {
+        const oidcClaims = decodeJwtClaims(oidc);
+        try {
+          const { idToken: tok, debug } = await getIdTokenViaWifFromVercel(
+            audience,
+            oidc,
+          );
+
+          return NextResponse.json({
+            mode,
+            audience,
+            targetUrl,
+            oidcPreview: oidcPreview(oidc),
+            oidcClaims, // sub/iss/aud reales que determinan tu principalSet
+            wif: {
+              wifAudience: debug.wifAudience,
+              serviceAccount: debug.serviceAccount,
+              stsStatus: debug.stsStatus,
+              iamStatus: debug.iamStatus,
+            },
+            idTokenClaims: decodeJwtClaims(tok),
+          });
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          return NextResponse.json(
+            {
+              mode,
+              audience,
+              targetUrl,
+              oidcPreview: oidcPreview(oidc),
+              oidcClaims,
+              error: msg,
+              note: "Si falla aquí, es STS o IAMCredentials (impersonation), no Cloud Run.",
+            },
+            { status: 500 },
+          );
+        }
+      }
+
+      // Normal: generar token por WIF
+      const res = await getIdTokenViaWifFromVercel(audience, oidc);
+      idToken = res.idToken;
+
+      // __debug=1: muestra claims del ID token final (el que va a Cloud Run)
       if (req.nextUrl.searchParams.get("__debug") === "1") {
         return NextResponse.json({
           mode,
@@ -246,10 +321,11 @@ async function handler(req: NextRequest, pathParts: string[]) {
       status: upstream.status,
       headers: { "Content-Type": respCt },
     });
-  } catch (e: any) {
-    console.error("[proxy] exception", e?.message || e);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("[proxy] exception", msg);
     return NextResponse.json(
-      { error: "Proxy exception", message: e?.message || String(e) },
+      { error: "Proxy exception", message: msg },
       { status: 500 },
     );
   }
