@@ -133,6 +133,7 @@ async function handler(req: NextRequest, pathParts: string[]) {
         hasOidc: !!oidc,
         oidcLen: oidc?.length ?? 0,
         vercelEnv: process.env.VERCEL_ENV,
+        mode: process.env.GCP_PROXY_MODE,
       });
     }
 
