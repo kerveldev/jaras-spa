@@ -66,7 +66,7 @@ async function getIdTokenViaIamCreds(targetSa: string, audience: string) {
   if (!accessAuth) throw new Error("No access token from Impersonated client");
 
   const iamUrl = `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${encodeURIComponent(
-    targetSa
+    targetSa,
   )}:generateIdToken`;
 
   const tokenResp = await fetch(iamUrl, {
@@ -97,6 +97,20 @@ async function handler(req: NextRequest, pathParts: string[]) {
   const targetUrl = joinUrl(audience, targetPath) + req.nextUrl.search;
 
   try {
+    const oidc = req.headers.get("x-vercel-oidc-token");
+
+    if (req.nextUrl.searchParams.get("__oidc") === "1") {
+      console.log("OIDC present?", Boolean(oidc));
+      console.log("OIDC length", oidc?.length);
+
+      return NextResponse.json({
+        hasOidc: !!oidc,
+        oidcLen: oidc?.length ?? 0,
+        // opcional para ver que ambiente es:
+        vercelEnv: process.env.VERCEL_ENV,
+      });
+    }
+
     const mode = (process.env.GCP_PROXY_MODE || "iamcreds").toLowerCase();
 
     const idToken =
@@ -137,7 +151,7 @@ async function handler(req: NextRequest, pathParts: string[]) {
     console.error("[proxy] exception", e?.message || e);
     return NextResponse.json(
       { error: "Proxy exception", message: e?.message || String(e) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
