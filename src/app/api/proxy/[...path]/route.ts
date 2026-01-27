@@ -143,6 +143,10 @@ async function handler(req: NextRequest, pathParts: string[]) {
 }
 
 export async function GET(req: NextRequest, ctx: Ctx) {
+  const oidc = req.headers.get("x-vercel-oidc-token");
+  console.log("OIDC present?", Boolean(oidc));
+  console.log("OIDC length", oidc?.length);
+
   const { path } = await ctx.params;
   return handler(req, path);
 }
