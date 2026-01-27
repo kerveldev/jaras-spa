@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "node:child_process";
-import { GoogleAuth, Impersonated } from "google-auth-library";
+import { GoogleAuth } from "google-auth-library";
+import { promises as fs } from "node:fs";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,9 @@ function envOrThrow(name: string) {
   return v;
 }
 
+/**
+ * Local-only fallback (cuando tú estás logueado en gcloud)
+ */
 async function getIdTokenViaGcloud(targetSa: string, audience: string) {
   const raw = process.env.GCLOUD_PATH || "gcloud";
   const gcloud = raw.replace(/^"+|"+$/g, ""); // quita comillas si vienen
@@ -45,52 +49,76 @@ async function getIdTokenViaGcloud(targetSa: string, audience: string) {
   });
 }
 
-async function getIdTokenViaIamCreds(targetSa: string, audience: string) {
-  const auth = new GoogleAuth({ projectId: process.env.GCP_PROJECT_ID });
-  const sourceClient = await auth.getClient();
-
-  const impersonated = new Impersonated({
-    sourceClient,
-    targetPrincipal: targetSa,
-    targetScopes: ["https://www.googleapis.com/auth/cloud-platform"],
-    lifetime: 300,
-  });
-
-  const accessHeaders = await (impersonated as any).getRequestHeaders?.();
-  const accessAuth =
-    accessHeaders?.Authorization ||
-    accessHeaders?.authorization ||
-    accessHeaders?.["Authorization"] ||
-    accessHeaders?.["authorization"];
-
-  if (!accessAuth) throw new Error("No access token from Impersonated client");
-
-  const iamUrl = `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${encodeURIComponent(
-    targetSa,
-  )}:generateIdToken`;
-
-  const tokenResp = await fetch(iamUrl, {
-    method: "POST",
-    headers: { Authorization: accessAuth, "Content-Type": "application/json" },
-    body: JSON.stringify({ audience, includeEmail: true }),
-  });
-
-  const tokenJson = (await tokenResp.json().catch(() => ({}))) as any;
-
-  if (!tokenResp.ok || !tokenJson?.token) {
-    console.error("[proxy] generateIdToken failed", {
-      status: tokenResp.status,
-      body: tokenJson,
-    });
-    throw new Error(`generateIdToken failed: ${tokenResp.status}`);
+function readAuthHeader(h: unknown): string | undefined {
+  // Caso 1: Headers (tiene .get)
+  if (
+    h &&
+    typeof h === "object" &&
+    "get" in h &&
+    typeof (h as any).get === "function"
+  ) {
+    return (
+      (h as Headers).get("authorization") ??
+      (h as Headers).get("Authorization") ??
+      undefined
+    );
   }
 
-  return tokenJson.token as string;
+  // Caso 2: objeto plano Record<string,string>
+  if (h && typeof h === "object") {
+    const obj = h as Record<string, string | undefined>;
+    return obj.authorization ?? obj.Authorization;
+  }
+
+  return undefined;
+}
+
+/**
+ * ✅ Vercel → GCP WIF (sin API keys, sin ADC).
+ * Usa x-vercel-oidc-token como subject_token.
+ */
+async function getIdTokenViaWifFromVercel(audience: string, oidcToken: string) {
+  const projectNumber = envOrThrow("GCP_PROJECT_NUMBER");
+  const poolId = envOrThrow("WIF_POOL_ID");
+  const providerId = envOrThrow("WIF_PROVIDER_ID");
+  const serviceAccount = envOrThrow("GCP_SERVICE_ACCOUNT");
+
+  // 1) Guardar el OIDC de Vercel a /tmp
+  const subjectTokenPath = "/tmp/vercel-oidc-token";
+  await fs.writeFile(subjectTokenPath, oidcToken, "utf8");
+
+  // 2) External Account JSON
+  const wifJsonPath = "/tmp/gcp-wif.json";
+  const wif = {
+    type: "external_account",
+    audience: `//iam.googleapis.com/projects/${projectNumber}/locations/global/workloadIdentityPools/${poolId}/providers/${providerId}`,
+    subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
+    token_url: "https://sts.googleapis.com/v1/token",
+    service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${serviceAccount}:generateAccessToken`,
+    credential_source: {
+      file: subjectTokenPath,
+    },
+  };
+
+  await fs.writeFile(wifJsonPath, JSON.stringify(wif), "utf8");
+
+  // 3) Forzar a google-auth-library a usar este archivo
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = wifJsonPath;
+
+  // 4) Pedir ID Token para Cloud Run (audience = URL del servicio)
+  const auth = new GoogleAuth();
+  const client = await auth.getIdTokenClient(audience);
+  const headers = await client.getRequestHeaders();
+  const bearer = readAuthHeader(headers);
+
+  if (!bearer) throw new Error("No Authorization header from IdTokenClient");
+
+  return bearer.replace(/^Bearer\s+/i, "");
 }
 
 async function handler(req: NextRequest, pathParts: string[]) {
   const cloudRunUrl = envOrThrow("CLOUD_RUN_URL"); // ej: https://...run.app
-  const targetSa = envOrThrow("GCP_SERVICE_ACCOUNT"); // ej: vercel-bff-invoker@...
+  const targetSa = envOrThrow("GCP_SERVICE_ACCOUNT"); // vercel-bff-invoker@...
 
   const audience = cloudRunUrl.replace(/\/$/, "");
   const targetPath = pathParts.join("/");
@@ -99,24 +127,39 @@ async function handler(req: NextRequest, pathParts: string[]) {
   try {
     const oidc = req.headers.get("x-vercel-oidc-token");
 
+    // Debug sin tocar google auth
     if (req.nextUrl.searchParams.get("__oidc") === "1") {
-      console.log("OIDC present?", Boolean(oidc));
-      console.log("OIDC length", oidc?.length);
-
       return NextResponse.json({
         hasOidc: !!oidc,
         oidcLen: oidc?.length ?? 0,
-        // opcional para ver que ambiente es:
         vercelEnv: process.env.VERCEL_ENV,
       });
     }
 
-    const mode = (process.env.GCP_PROXY_MODE || "iamcreds").toLowerCase();
+    // Modo:
+    // - En Vercel: default "wif"
+    // - En local: puedes usar "gcloud"
+    const mode = (
+      process.env.GCP_PROXY_MODE || (process.env.VERCEL ? "wif" : "gcloud")
+    ).toLowerCase();
 
-    const idToken =
-      mode === "gcloud"
-        ? await getIdTokenViaGcloud(targetSa, audience)
-        : await getIdTokenViaIamCreds(targetSa, audience);
+    let idToken: string;
+
+    if (mode === "wif") {
+      if (!oidc) {
+        return NextResponse.json(
+          { error: "Missing Vercel OIDC token" },
+          { status: 401 },
+        );
+      }
+      idToken = await getIdTokenViaWifFromVercel(audience, oidc);
+    } else if (mode === "gcloud") {
+      idToken = await getIdTokenViaGcloud(targetSa, audience);
+    } else {
+      throw new Error(
+        `Unsupported GCP_PROXY_MODE="${mode}". Use "wif" (Vercel) or "gcloud" (local).`,
+      );
+    }
 
     const method = req.method.toUpperCase();
     const body =
@@ -157,10 +200,6 @@ async function handler(req: NextRequest, pathParts: string[]) {
 }
 
 export async function GET(req: NextRequest, ctx: Ctx) {
-  const oidc = req.headers.get("x-vercel-oidc-token");
-  console.log("OIDC present?", Boolean(oidc));
-  console.log("OIDC length", oidc?.length);
-
   const { path } = await ctx.params;
   return handler(req, path);
 }
