@@ -83,37 +83,83 @@ async function getIdTokenViaWifFromVercel(audience: string, oidcToken: string) {
   const providerId = envOrThrow("WIF_PROVIDER_ID");
   const serviceAccount = envOrThrow("GCP_SERVICE_ACCOUNT");
 
-  // 1) Guardar el OIDC de Vercel a /tmp
-  const subjectTokenPath = "/tmp/vercel-oidc-token";
-  await fs.writeFile(subjectTokenPath, oidcToken, "utf8");
+  const wifAudience = `//iam.googleapis.com/projects/${projectNumber}/locations/global/workloadIdentityPools/${poolId}/providers/${providerId}`;
 
-  // 2) External Account JSON
-  const wifJsonPath = "/tmp/gcp-wif.json";
-  const wif = {
-    type: "external_account",
-    audience: `//iam.googleapis.com/projects/${projectNumber}/locations/global/workloadIdentityPools/${poolId}/providers/${providerId}`,
-    subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
-    token_url: "https://sts.googleapis.com/v1/token",
-    service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${serviceAccount}:generateAccessToken`,
-    credential_source: {
-      file: subjectTokenPath,
+  // 1) STS token exchange: Vercel OIDC -> access_token
+  const stsResp = await fetch("https://sts.googleapis.com/v1/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
+      requested_token_type: "urn:ietf:params:oauth:token-type:access_token",
+      subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
+      subject_token: oidcToken,
+      audience: wifAudience,
+      scope: "https://www.googleapis.com/auth/cloud-platform",
+    }).toString(),
+  });
+
+  const stsJson = (await stsResp.json().catch(() => ({}))) as any;
+  if (!stsResp.ok || !stsJson?.access_token) {
+    console.error("[wif] sts failed", {
+      status: stsResp.status,
+      body: stsJson,
+    });
+    throw new Error(`STS exchange failed: ${stsResp.status}`);
+  }
+
+  const federatedAccessToken = stsJson.access_token as string;
+
+  // 2) IAMCredentials: access_token federado -> ID token del Service Account (para Cloud Run)
+  const iamUrl = `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${encodeURIComponent(
+    serviceAccount,
+  )}:generateIdToken`;
+
+  const idResp = await fetch(iamUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${federatedAccessToken}`,
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify({
+      audience,
+      includeEmail: true,
+    }),
+  });
+
+  const idJson = (await idResp.json().catch(() => ({}))) as any;
+  if (!idResp.ok || !idJson?.token) {
+    console.error("[wif] generateIdToken failed", {
+      status: idResp.status,
+      body: idJson,
+    });
+    throw new Error(`generateIdToken failed: ${idResp.status}`);
+  }
+
+  return idJson.token as string;
+}
+
+function decodeJwtClaims(token: string) {
+  const parts = token.split(".");
+  if (parts.length < 2) return null;
+  const payload = parts[1]
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .padEnd(Math.ceil(parts[1].length / 4) * 4, "=");
+
+  const json = Buffer.from(payload, "base64").toString("utf8");
+  const claims = JSON.parse(json);
+
+  // regresa solo lo útil (no todo)
+  return {
+    iss: claims.iss,
+    aud: claims.aud,
+    sub: claims.sub,
+    email: claims.email,
+    azp: claims.azp,
+    exp: claims.exp,
+    iat: claims.iat,
   };
-
-  await fs.writeFile(wifJsonPath, JSON.stringify(wif), "utf8");
-
-  // 3) Forzar a google-auth-library a usar este archivo
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = wifJsonPath;
-
-  // 4) Pedir ID Token para Cloud Run (audience = URL del servicio)
-  const auth = new GoogleAuth();
-  const client = await auth.getIdTokenClient(audience);
-  const headers = await client.getRequestHeaders();
-  const bearer = readAuthHeader(headers);
-
-  if (!bearer) throw new Error("No Authorization header from IdTokenClient");
-
-  return bearer.replace(/^Bearer\s+/i, "");
 }
 
 async function handler(req: NextRequest, pathParts: string[]) {
@@ -154,6 +200,15 @@ async function handler(req: NextRequest, pathParts: string[]) {
         );
       }
       idToken = await getIdTokenViaWifFromVercel(audience, oidc);
+
+      if (req.nextUrl.searchParams.get("__debug") === "1") {
+        return NextResponse.json({
+          mode,
+          audience,
+          targetUrl,
+          tokenClaims: decodeJwtClaims(idToken),
+        });
+      }
     } else if (mode === "gcloud") {
       idToken = await getIdTokenViaGcloud(targetSa, audience);
     } else {
