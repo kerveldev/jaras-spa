@@ -42,7 +42,7 @@ export function CallbackClient() {
     let cancelled = false;
 
     async function confirmOpenpay(saleId: string): Promise<ConfirmResponse> {
-      const resp = await fetch("/api/proxy/api/pagos/openpay-confirm", {
+      const resp = await fetch(apiUrl("/api/pagos/openpay-confirm"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
