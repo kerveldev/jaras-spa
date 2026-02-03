@@ -130,8 +130,8 @@ function statusUi(status: string) {
       dot: "bg-amber-500",
       hero: "Reserva pendiente",
       heroSubtitle:
-        "Tu reservación fue registrada, pero el pago aún no está confirmado. Puedes reintentar el pago o esperar confirmación.",
-      waTitle: "🟡 *Reserva pendiente – Las Jaras*",
+        "Tu reservación fue registrada, pero el pago aún no está confirmado. Puedes esperar confirmación de tu banco o pagar en la recepcion de Las Jaras.",
+      waTitle: "🟡 Reserva pendiente - Las Jaras",
     };
   }
 
@@ -144,7 +144,7 @@ function statusUi(status: string) {
       hero: "Reserva cancelada",
       heroSubtitle:
         "Esta reservación está cancelada. Si necesitas ayuda, contáctanos.",
-      waTitle: "⛔ *Reserva cancelada – Las Jaras*",
+      waTitle: "⛔ Reserva cancelada - Las Jaras",
     };
   }
 
@@ -157,7 +157,7 @@ function statusUi(status: string) {
     hero: "Pago no completado",
     heroSubtitle:
       "No se completó el pago. No se realizó ningún cobro. Puedes intentar de nuevo o crear una nueva reservación.",
-    waTitle: "❌ *Pago no completado – Las Jaras*",
+    waTitle: "❌ Pago no completado - Las Jaras",
   };
 }
 
@@ -302,8 +302,8 @@ export default function ConfirmacionReservaPage() {
       ``,
       `👤 *Mi cuenta (app de clientes):* ${APP_CLIENTES_URL}`,
       correoRaw
-        ? `Para ingresar usa tu email. Si es tu primera vez, toca *"Olvidé mi contraseña"* para crear una nueva.`
-        : `Para ingresar usa tu email. Si es tu primera vez, toca *"Olvidé mi contraseña"*.`,
+        ? `Para ingresar usa tu email y la contraseña temporal que te enviamos al correo.`
+        : `Para ingresar usa tu email y la contraseña temporal que te enviamos al correo.`,
       ``,
       `🌿 ¡Nos vemos pronto!`,
     ]
