@@ -2279,8 +2279,10 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                         className="mt-1 h-4 w-4 text-[#18668b] focus:ring-[#18668b] border-gray-300 rounded"
                       />
                       <span className="text-sm text-gray-600 leading-relaxed">
-                        Acepto y confirmo que la información proporcionada es
-                        correcta.
+                        Acepto y confirmo que la información proporcionada es correcta. He leído y acepto los Términos y Condiciones y el Aviso de Privacidad de Las Jaras Aguas Termales. 
+                        <br />Entiendo que los pases son válidos para la fecha y hora seleccionada, y que el pago es 100% seguro. 
+                        <br />También reconozco que puedo cancelar mi reserva hasta 48 horas antes de mi visita para obtener un reembolso completo. 
+                        <br />Los niños no pueden ingresar al jardín termal.
                       </span>
                     </label>
                   </div>
