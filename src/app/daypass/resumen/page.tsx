@@ -52,7 +52,8 @@ async function shareQrImage(qrUrl: string, text: string) {
 
   const nav: any = navigator as any;
 
-  if (!nav?.share) throw new Error("Compartir no disponible en este navegador.");
+  if (!nav?.share)
+    throw new Error("Compartir no disponible en este navegador.");
   if (nav?.canShare && !nav.canShare({ files: [file] })) {
     throw new Error("Este navegador no permite compartir imágenes.");
   }
@@ -106,35 +107,72 @@ function fmtMoney(maybe: any) {
   return String(maybe ?? "-");
 }
 
-function statusUi(status: string) {
-  const s = (status || "").toLowerCase();
 
+type StatusCode =
+  | "paid"
+  | "cash_pending"
+  | "openpay_pending"
+  | "cancelled"
+  | "failed";
+
+type StatusUI = {
+  code: StatusCode;
+  label: string;
+  pill: string;
+  dot: string;
+  hero: string;
+  heroSubtitle: string;
+  waTitle: string;
+};
+
+
+function statusUi(status: string, paymentMethod: string): StatusUI  {
+  const s = (status || "").toLowerCase();
+  const pm = (paymentMethod || "").toLowerCase(); // 'cash' | 'openpay'
+
+  // ✅ Pagada/confirmada (tarjeta)
   if (s === "paid") {
     return {
       code: "paid",
       label: "PAGADA / CONFIRMADA",
       pill: "bg-emerald-50 text-emerald-700",
       dot: "bg-emerald-500",
-      hero: "¡Reserva confirmada!",
+      hero: "¡Tu Day Pass está confirmado!",
       heroSubtitle:
-        "Gracias por tu reserva en Las Jaras. Aquí tienes tus detalles y accesos.",
-      waTitle: "✅ *Reserva confirmada – Las Jaras*",
+        "Todo está listo para tu visita a Las Jaras. Aquí tienes los detalles de tu reserva y tu acceso.",
+      waTitle: "✅ *Day Pass confirmado – Las Jaras*",
     };
   }
 
-  if (s === "pending") {
+  // 🟡 Pending + CASH (efectivo)
+  if (s === "pending" && pm === "cash") {
     return {
-      code: "pending",
+      code: "cash_pending",
       label: "PENDIENTE DE PAGO",
       pill: "bg-amber-50 text-amber-800",
       dot: "bg-amber-500",
-      hero: "Reserva pendiente",
+      hero: "Reserva registrada",
       heroSubtitle:
-        "Tu reservación fue registrada, pero el pago aún no está confirmado. Puedes esperar confirmación de tu banco o pagar en la recepcion de Las Jaras.",
-      waTitle: "🟡 Reserva pendiente - Las Jaras",
+        "Tu lugar está apartado, solo falta completar el pago en efectivo.",
+      waTitle: "🟡 Reserva registrada (pago en efectivo) – Las Jaras",
     };
   }
 
+  // 🟠 Pending + OPENPAY (tarjeta no verificada)
+  if (s === "pending" && pm === "openpay") {
+    return {
+      code: "openpay_pending",
+      label: "PAGO PENDIENTE",
+      pill: "bg-sky-50 text-sky-800",
+      dot: "bg-sky-500",
+      hero: "Pago en proceso",
+      heroSubtitle:
+        "Tu reserva fue registrada, pero el pago aún no ha sido confirmado.",
+      waTitle: "🟠 Pago en proceso – Las Jaras",
+    };
+  }
+
+  // cancel / failed (igual que ya tienes)
   if (s === "cancelled") {
     return {
       code: "cancelled",
@@ -144,20 +182,20 @@ function statusUi(status: string) {
       hero: "Reserva cancelada",
       heroSubtitle:
         "Esta reservación está cancelada. Si necesitas ayuda, contáctanos.",
-      waTitle: "⛔ Reserva cancelada - Las Jaras",
+      waTitle: "⛔ Reserva cancelada – Las Jaras",
     };
   }
 
-  // failed / unknown
+  // ✅ fallback real: si llega algo raro o no hay datos
   return {
     code: "failed",
-    label: "PAGO NO COMPLETADO",
+    label: "ESTATUS DESCONOCIDO",
     pill: "bg-red-50 text-red-700",
     dot: "bg-red-500",
-    hero: "Pago no completado",
+    hero: "Revisión necesaria",
     heroSubtitle:
-      "No se completó el pago. No se realizó ningún cobro. Puedes intentar de nuevo o crear una nueva reservación.",
-    waTitle: "❌ Pago no completado - Las Jaras",
+      "No pudimos confirmar el estatus de esta reserva. Por favor contáctanos con tu folio.",
+    waTitle: "⚠️ Estatus desconocido – Las Jaras",
   };
 }
 
@@ -181,9 +219,9 @@ export default function ConfirmacionReservaPage() {
   }>({ aplicado: false, valor: 0, codigo: "" });
   const [totalFinal, setTotalFinal] = useState<number>(0);
 
-  const [openpayReservationId, setOpenpayReservationId] = useState<string | null>(
-    null
-  );
+  const [openpayReservationId, setOpenpayReservationId] = useState<
+    string | null
+  >(null);
   const [openpaySaleId, setOpenpaySaleId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [copiedQr, setCopiedQr] = useState(false);
@@ -195,6 +233,9 @@ export default function ConfirmacionReservaPage() {
   const qrData = `LJ-RESERVA|${fecha}|${hora}|${cantidad}`;
   const qrURL = BASE_QR_URL + encodeURIComponent(qrData);
 
+  const [paymentMethod, setPaymentMethod] = useState<string>(""); // 'cash' | 'openpay'
+  const [reservationFolio, setReservationFolio] = useState<string>(""); // clave tipo JR-7
+
   useEffect(() => {
     const reserva = safeParse<any>(localStorage.getItem("reserva_data"), null);
     const qrCodeUrl = localStorage.getItem("qr_code_url") || qrURL;
@@ -203,10 +244,9 @@ export default function ConfirmacionReservaPage() {
     const sId = localStorage.getItem("openpay_sale_id");
 
     // ✅ FIX: sin "|| paid || pending" (eso siempre se queda en paid)
-    const st =
-      (localStorage.getItem("reservation_status") ||
-        reserva?.status ||
-        "pending") as string;
+    const st = (localStorage.getItem("reservation_status") ||
+      reserva?.status ||
+      "pending") as string;
 
     setReservationStatus(String(st).toLowerCase());
 
@@ -214,6 +254,14 @@ export default function ConfirmacionReservaPage() {
     setOpenpaySaleId(sId);
 
     if (reserva) {
+      // 🔥 NUEVO: payment_method viene del backend
+      setPaymentMethod(String(reserva.payment_method || "").toLowerCase());
+
+      // 🔥 NUEVO: folio preferente = reserva.clave (JR-7). Fallback a openpay_reservation_id o id.
+      const folio =
+        rId || reserva?.clave || (reserva?.id ? `JR-${reserva.id}` : "");
+      setReservationFolio(folio);
+
       setLinkQr(qrCodeUrl);
       setVisitantes(reserva.visitantes || []);
       setCantidad(reserva.visitantes?.length || 1);
@@ -233,7 +281,8 @@ export default function ConfirmacionReservaPage() {
   const totalBase = totalPases * PRECIO_PASE;
   const totalPromo = promo.aplicado ? promo.valor : 0;
   const totalTransporte = usaTransporte ? totalPases * PRECIO_TRANSPORTE : 0;
-  const total = totalFinal || totalBase + totalExtras + totalTransporte - totalPromo;
+  const total =
+    totalFinal || totalBase + totalExtras + totalTransporte - totalPromo;
 
   // Datos UX
   const fechaTexto = fecha ? fechaLegible(fecha) : "-";
@@ -247,7 +296,9 @@ export default function ConfirmacionReservaPage() {
   const phoneE164 = normalizeWhatsAppMx(celularRaw);
   const correoRaw = visitantePrincipal?.correo || null;
 
-  const status = statusUi(reservationStatus);
+  const status = statusUi(reservationStatus, paymentMethod);
+
+  const qrIsEnabled = !(status.code === "openpay_pending");
 
   const retryUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -255,7 +306,7 @@ export default function ConfirmacionReservaPage() {
   }, []);
 
   const waText = useMemo(() => {
-    const folio = openpayReservationId || "-";
+    const folio = reservationFolio || openpayReservationId || "-";
     const sale = openpaySaleId || "-";
     const qrLine = linkQr
       ? `QR de acceso: ${linkQr}`
@@ -274,13 +325,19 @@ export default function ConfirmacionReservaPage() {
         : [];
 
     const pendingBlock =
-      status.code === "pending"
+      status.code === "cash_pending"
         ? [
-            ``,
-            `⏳ *Tu pago está en proceso.*`,
-            `Si no se confirma en unos minutos, revisa tu correo o intenta nuevamente.`,
+            "",
+            "🧾 *Pago en efectivo en taquilla.*",
+            "Tu reserva está registrada.",
           ]
-        : [];
+        : status.code === "openpay_pending"
+          ? [
+              "",
+              "⏳ *Tu pago está en proceso.*",
+              "El QR se habilitará cuando el pago sea aprobado.",
+            ]
+          : [];
 
     return [
       status.waTitle,
@@ -325,9 +382,13 @@ export default function ConfirmacionReservaPage() {
     status.label,
     status.waTitle,
     retryUrl,
+    reservationFolio,
   ]);
 
-  const waUrl = useMemo(() => buildWaUrl(phoneE164, waText), [phoneE164, waText]);
+  const waUrl = useMemo(
+    () => buildWaUrl(phoneE164, waText),
+    [phoneE164, waText],
+  );
 
   async function onCopyInfo() {
     await safeClipboardCopy(waText);
@@ -363,7 +424,7 @@ export default function ConfirmacionReservaPage() {
 
     if (!nav?.share) {
       setShareNotice(
-        'Tu navegador no soporta compartir imágenes. Usa "Abrir QR" o "Copiar link QR".'
+        'Tu navegador no soporta compartir imágenes. Usa "Abrir QR" o "Copiar link QR".',
       );
       return;
     }
@@ -376,7 +437,7 @@ export default function ConfirmacionReservaPage() {
       console.error(e);
       setShareNotice(
         e?.message ||
-          'No se pudo compartir el QR como imagen. Usa "Abrir QR" o "Copiar link QR".'
+          'No se pudo compartir el QR como imagen. Usa "Abrir QR" o "Copiar link QR".',
       );
     }
   }
@@ -418,9 +479,9 @@ export default function ConfirmacionReservaPage() {
             <span className="px-3 py-1 rounded-full text-xs bg-white border text-slate-700">
               Total: <strong>{fmtMoney(total)}</strong>
             </span>
-            {openpayReservationId && (
+            {reservationFolio && (
               <span className="px-3 py-1 rounded-full text-xs bg-white border text-slate-700">
-                Folio: <strong>{openpayReservationId}</strong>
+                Folio: <strong>{reservationFolio}</strong>
               </span>
             )}
           </div>
@@ -436,31 +497,77 @@ export default function ConfirmacionReservaPage() {
                   <div
                     className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 ${status.pill}`}
                   >
-                    <span className={`w-2 h-2 rounded-full ${status.dot}`}></span>
+                    <span
+                      className={`w-2 h-2 rounded-full ${status.dot}`}
+                    ></span>
                     {status.label}
                   </div>
 
                   <div className="font-titles text-[#B7804F] text-xl mb-2 text-left">
-                    {status.code === "paid" ? "¡Reserva completada!" : "Estado de tu reserva"}
+                    {status.code === "paid"
+                      ? "¡Reserva completada!"
+                      : "Estado de tu reserva"}
                   </div>
 
                   <p className="text-slate-700 mb-3">
-                    {status.code === "paid" ? (
+                    {status.code === "paid" && (
                       <>
                         Recibirás un{" "}
-                        <span className="font-semibold">PDF con tus accesos</span> y
-                        toda la información de tu reserva en tu correo electrónico.
+                        <span className="font-semibold">
+                          PDF con tus accesos
+                        </span>{" "}
+                        y toda la información de tu reserva en tu correo
+                        electrónico.
                       </>
-                    ) : (
+                    )}
+
+                    {status.code === "cash_pending" && (
                       <>
-                        Esta pantalla muestra el estatus actual. Si el pago no se completó,
-                        puedes reintentar desde <span className="font-semibold">Nueva reservación</span>.
+                        Tu reserva fue creada correctamente. El pago se realiza{" "}
+                        <span className="font-semibold">
+                          directamente en taquilla
+                        </span>{" "}
+                        el día de tu visita.
+                        <br />
+                        <span className="text-slate-600">
+                          Una vez realizado el pago, tu acceso quedará
+                          confirmado.
+                        </span>
+                      </>
+                    )}
+
+                    {status.code === "openpay_pending" && (
+                      <>
+                        El cargo aún no ha sido aprobado. Puedes{" "}
+                        <span className="font-semibold">
+                          reintentar el pago
+                        </span>{" "}
+                        o esperar a que se confirme automáticamente.
+                        <br />
+                        <span className="text-slate-600">
+                          El QR se habilitará cuando el pago sea aprobado.
+                        </span>
+                      </>
+                    )}
+
+                    {status.code === "failed" && (
+                      <>
+                        No se completó el pago. No se realizó ningún cobro.
+                        Puedes intentar de nuevo o crear una nueva reservación.
+                      </>
+                    )}
+
+                    {status.code === "cancelled" && (
+                      <>
+                        Esta reservación está cancelada. Si necesitas ayuda,
+                        contáctanos.
                       </>
                     )}
                   </p>
 
                   <p className="text-slate-500 text-xs">
-                    Revisa tu bandeja de entrada y, si no lo encuentras, verifica en spam o promociones.
+                    Revisa tu bandeja de entrada y, si no lo encuentras,
+                    verifica en spam o promociones.
                   </p>
                 </div>
               </div>
@@ -493,7 +600,13 @@ export default function ConfirmacionReservaPage() {
             <div className="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 p-6 shadow-sm">
               <div className="text-slate-700 mb-3 flex flex-col items-center">
                 <p className="mb-1">
-                  <strong>Este es tu código QR de acceso:</strong>
+                  <strong>
+                    {status.code === "cash_pending"
+                      ? "Código QR provisional:"
+                      : status.code === "openpay_pending"
+                        ? "Código QR no habilitado:"
+                        : "Este es tu código QR de acceso:"}
+                  </strong>
                 </p>
 
                 {linkQr ? (
@@ -517,6 +630,7 @@ export default function ConfirmacionReservaPage() {
                     <div className="w-full flex flex-col sm:flex-row gap-3">
                       <button
                         onClick={onOpenQr}
+                        disabled={!qrIsEnabled}
                         className="flex-1 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-bold px-6 py-3 border border-slate-200 transition"
                       >
                         Abrir QR
@@ -524,6 +638,7 @@ export default function ConfirmacionReservaPage() {
 
                       <button
                         onClick={onCopyQr}
+                        disabled={!qrIsEnabled}
                         className="flex-1 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-bold px-6 py-3 border border-slate-200 transition"
                       >
                         {copiedQr ? "Copiado ✅" : "Copiar link QR"}
@@ -531,6 +646,7 @@ export default function ConfirmacionReservaPage() {
 
                       <button
                         onClick={onShareQr}
+                        disabled={!qrIsEnabled}
                         className="flex-1 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 transition"
                       >
                         Compartir QR (imagen)
@@ -544,14 +660,24 @@ export default function ConfirmacionReservaPage() {
                     )}
 
                     <p className="text-[11px] text-slate-500 mt-3 text-center">
-                      Preséntalo en acceso/taquilla. También viene en el PDF del correo.
+                      {status.code === "cash_pending" &&
+                        "Preséntalo en taquilla para completar tu pago y activar tu acceso."}
+
+                      {status.code === "openpay_pending" &&
+                        "El QR se activará automáticamente cuando el pago sea aprobado."}
+
+                      {status.code === "paid" &&
+                        "Preséntalo en acceso/taquilla. También viene en el PDF del correo."}
                     </p>
                   </>
                 ) : (
                   <div className="w-full rounded-xl border bg-slate-50 p-6 text-center">
-                    <p className="text-slate-700 text-sm font-semibold">Generando tu QR…</p>
+                    <p className="text-slate-700 text-sm font-semibold">
+                      Generando tu QR…
+                    </p>
                     <p className="text-slate-500 text-xs mt-2">
-                      Si no aparece aquí, lo recibirás en el correo (PDF de accesos).
+                      Si no aparece aquí, lo recibirás en el correo (PDF de
+                      accesos).
                     </p>
                     <button
                       onClick={() => {
