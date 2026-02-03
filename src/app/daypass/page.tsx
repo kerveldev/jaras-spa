@@ -156,7 +156,9 @@ export default function DaypassUnicaPage() {
     if (!countryId) return;
 
     try {
-      const res = await fetch(apiUrl("/api/catalog/states?country_id=" + countryId));
+      const res = await fetch(
+        apiUrl("/api/catalog/states?country_id=" + countryId),
+      );
       const data = await res.json();
 
       if (Array.isArray(data)) {
@@ -193,7 +195,9 @@ export default function DaypassUnicaPage() {
     if (!stateId) return;
 
     try {
-      const res = await fetch(apiUrl("/api/catalog/cities?state_id=" + stateId));
+      const res = await fetch(
+        apiUrl("/api/catalog/cities?state_id=" + stateId),
+      );
       const data = await res.json();
 
       if (Array.isArray(data)) {
@@ -1045,16 +1049,14 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
           };
 
           // 3.4) llamada al endpoint de redirección
-          const resp = await fetch(apiUrl("/api/pagos/openpay-redirect"),
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-              },
-              body: JSON.stringify(body),
+          const resp = await fetch(apiUrl("/api/pagos/openpay-redirect"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
             },
-          );
+            body: JSON.stringify(body),
+          });
 
           const json = await resp.json().catch(() => ({}));
 
@@ -1194,13 +1196,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         console.log(pair[0] + ": ", pair[1]);
       }
 
-      const res = await fetch(apiUrl("/api/reservations"),
-        {
-          method: "POST",
-          headers: { Accept: "application/json" },
-          body: formData,
-        },
-      );
+      const res = await fetch(apiUrl("/api/reservations"), {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: formData,
+      });
 
       const json = await res.json().catch(() => ({}));
 
@@ -2229,13 +2229,8 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                     <span>Total</span>
                     <span>${totalConCargos.toFixed(2)} MXN</span>
                   </div>
-                  {/* Código promocional */}
 
-                  {paid && metodoPago === "efectivo" && (
-                    <div className="mt-4 text-yellow-700 text-center font-bold">
-                      Presenta este resumen y paga en taquilla.
-                    </div>
-                  )}
+                  {/* Código promocional */}
 
                   {/* METODO DE PAGO */}
                   <div className="mt-4">
@@ -2279,10 +2274,36 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                         className="mt-1 h-4 w-4 text-[#18668b] focus:ring-[#18668b] border-gray-300 rounded"
                       />
                       <span className="text-sm text-gray-600 leading-relaxed">
-                        Acepto y confirmo que la información proporcionada es correcta. He leído y acepto los Términos y Condiciones y el Aviso de Privacidad de Las Jaras Aguas Termales. 
-                        <br />Entiendo que los pases son válidos para la fecha y hora seleccionada, y que el pago es 100% seguro. 
-                        <br />También reconozco que puedo cancelar mi reserva hasta 48 horas antes de mi visita para obtener un reembolso completo. 
-                        <br />Los niños no pueden ingresar al jardín termal.
+                        Acepto y confirmo que la información proporcionada es
+                        correcta.
+                        <br />
+                        He leído y acepto los
+                        <a
+                          href="/pdf/Terms-and-Conditions-Las-Jaras-Aguas-Termales.pdf"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          Términos y Condiciones
+                        </a>
+                        y el{" "}
+                        <a
+                          href="/pdf/Privacy-Policy-Las-Jaras-Aguas-Termales.pdf"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          Aviso de Privacidad
+                        </a>{" "}
+                        de Las Jaras Aguas Termales.
+                        <br />
+                        Entiendo que los pases son válidos para la fecha y hora
+                        seleccionada, y que el pago es 100% seguro.
+                        <br />
+                        También reconozco que puedo cancelar mi reserva hasta 48
+                        horas antes de mi visita.
+                        <br />
+                        Los niños no pueden ingresar al jardín termal.
                       </span>
                     </label>
                   </div>
@@ -2372,33 +2393,32 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                   {/* Información legal */}
                   <div className="mt-4 text-legal text-gray-500">
                     Los pases son válidos para la fecha y hora seleccionada.
-                    <br />
                     Pago 100% seguro. Puedes cancelar hasta 48 horas antes de tu
                     visita.
+                    {/* Links legales a PDFs */}
+                    <div className="mt-3 text-xs text-gray-500">
+                      Al continuar, aceptas nuestros{" "}
+                      <a
+                        href="/pdf/Terms-and-Conditions-Las-Jaras-Aguas-Termales.pdf"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        Términos y Condiciones
+                      </a>{" "}
+                      y nuestro{" "}
+                      <a
+                        href="/pdf/Privacy-Policy-Las-Jaras-Aguas-Termales.pdf"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        Aviso de Privacidad
+                      </a>
+                      .
+                    </div>
                   </div>
-
-                  {/* Links legales a PDFs */}
-                  <div className="mt-3 text-xs text-gray-500">
-                    Al continuar, aceptas nuestros{" "}
-                    <a
-                      href="/pdf/Terms-and-Conditions-Las-Jaras-Aguas-Termales.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      Términos y Condiciones
-                    </a>{" "}
-                    y nuestro{" "}
-                    <a
-                      href="/pdf/Privacy-Policy-Las-Jaras-Aguas-Termales.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      Aviso de Privacidad
-                    </a>
-                    .
-                  </div>
+                  <br />
 
                   {/* Boton volver */}
                   <div>
