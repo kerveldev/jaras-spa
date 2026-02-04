@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-// Demo QR (fallback)
+// QR Server (siempre)
 const BASE_QR_URL =
   "https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=";
 
@@ -18,7 +18,6 @@ function safeParse<T>(item: string | null, def: T): T {
   }
 }
 
-// Formatea fecha a texto en español
 function fechaLegible(fechaStr: string | string[]) {
   if (!fechaStr || (Array.isArray(fechaStr) && fechaStr.length === 0))
     return "-";
@@ -107,6 +106,11 @@ function fmtMoney(maybe: any) {
   return String(maybe ?? "-");
 }
 
+function toIntOrNull(v: any): number | null {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.trunc(n) : null;
+}
+
 type StatusCode =
   | "paid"
   | "cash_pending"
@@ -128,7 +132,6 @@ function statusUi(status: string, paymentMethod: string): StatusUI {
   const s = (status || "").toLowerCase();
   const pm = (paymentMethod || "").toLowerCase(); // 'cash' | 'openpay'
 
-  // ✅ Pagada/confirmada (tarjeta)
   if (s === "paid") {
     return {
       code: "paid",
@@ -142,7 +145,6 @@ function statusUi(status: string, paymentMethod: string): StatusUI {
     };
   }
 
-  // 🟡 Pending + CASH (efectivo)
   if (s === "pending" && pm === "cash") {
     return {
       code: "cash_pending",
@@ -156,7 +158,6 @@ function statusUi(status: string, paymentMethod: string): StatusUI {
     };
   }
 
-  // 🟠 Pending + OPENPAY (tarjeta no verificada)
   if (s === "pending" && pm === "openpay") {
     return {
       code: "openpay_pending",
@@ -170,7 +171,6 @@ function statusUi(status: string, paymentMethod: string): StatusUI {
     };
   }
 
-  // cancel / failed (igual que ya tienes)
   if (s === "cancelled") {
     return {
       code: "cancelled",
@@ -184,7 +184,6 @@ function statusUi(status: string, paymentMethod: string): StatusUI {
     };
   }
 
-  // ✅ fallback real: si llega algo raro o no hay datos
   return {
     code: "failed",
     label: "ESTATUS DESCONOCIDO",
@@ -195,6 +194,27 @@ function statusUi(status: string, paymentMethod: string): StatusUI {
       "No pudimos confirmar el estatus de esta reserva. Por favor contáctanos con tu folio.",
     waTitle: "⚠️ Estatus desconocido – Las Jaras",
   };
+}
+
+// Reglas para inferir paymentMethod si reserva_data no lo trae
+function resolvePaymentMethod(args: {
+  reserva: any;
+  openpaySaleId: string | null;
+  openpayReservationId: string | null;
+}): "cash" | "openpay" | "" {
+  const pm = String(args.reserva?.payment_method || "").toLowerCase();
+  if (pm === "cash" || pm === "openpay") return pm;
+
+  // Inferencia: si hay ids de openpay, es openpay
+  if (args.openpaySaleId || args.openpayReservationId) return "openpay";
+
+  // Si no hay nada, lo dejamos vacío (y statusUi caerá a failed solo si status no encaja)
+  return "";
+}
+
+function buildQrUrlFromReservationId(reservationId: number) {
+  const value = `JR-${reservationId}`;
+  return BASE_QR_URL + encodeURIComponent(value);
 }
 
 export default function ConfirmacionReservaPage() {
@@ -221,37 +241,51 @@ export default function ConfirmacionReservaPage() {
     string | null
   >(null);
   const [openpaySaleId, setOpenpaySaleId] = useState<string | null>(null);
+
   const [copied, setCopied] = useState(false);
   const [copiedQr, setCopiedQr] = useState(false);
 
-  // ✅ default seguro: pending (no "paid")
+  // defaults seguros
   const [reservationStatus, setReservationStatus] = useState<string>("pending");
-
   const [paymentMethod, setPaymentMethod] = useState<string>(""); // 'cash' | 'openpay'
-  const [reservationFolio, setReservationFolio] = useState<string>(""); // clave tipo JR-7
+  const [reservationId, setReservationId] = useState<number | null>(null); // id real numérico
+  const [reservationFolio, setReservationFolio] = useState<string>(""); // JR-{id}
 
-  useEffect(() => {
+  function refreshFromStorage() {
     const reserva = safeParse<any>(localStorage.getItem("reserva_data"), null);
 
-    const rId = localStorage.getItem("openpay_reservation_id");
-    const sId = localStorage.getItem("openpay_sale_id");
+    const opResId = localStorage.getItem("openpay_reservation_id");
+    const opSaleId = localStorage.getItem("openpay_sale_id");
+
+    setOpenpayReservationId(opResId);
+    setOpenpaySaleId(opSaleId);
 
     const st = (localStorage.getItem("reservation_status") ||
       reserva?.status ||
       "pending") as string;
-
     setReservationStatus(String(st).toLowerCase());
 
-    setOpenpayReservationId(rId);
-    setOpenpaySaleId(sId);
+    const pm = resolvePaymentMethod({
+      reserva,
+      openpaySaleId: opSaleId,
+      openpayReservationId: opResId,
+    });
+    setPaymentMethod(pm);
 
+    // ✅ Prioridad de reservation_id:
+    // 1) localStorage.reservation_id
+    // 2) reserva_data.id
+    const lsReservationId = toIntOrNull(localStorage.getItem("reservation_id"));
+    const reservaId = toIntOrNull(reserva?.id);
+    const realId = lsReservationId ?? reservaId ?? null;
+
+    setReservationId(realId);
+
+    // ✅ Folio SIEMPRE JR-{reservation_id}
+    setReservationFolio(realId ? `JR-${realId}` : "");
+
+    // resto UI
     if (reserva) {
-      setPaymentMethod(String(reserva.payment_method || "").toLowerCase());
-
-      // ✅ folio estandar: SIEMPRE JR-{reservation_id}
-      const folio = reserva?.id ? `JR-${reserva.id}` : reserva?.clave || "";
-      setReservationFolio(folio);
-
       setVisitantes(reserva.visitantes || []);
       setCantidad(reserva.visitantes?.length || 1);
       setFecha(reserva.fechaVisita || "");
@@ -261,16 +295,33 @@ export default function ConfirmacionReservaPage() {
       setExtras(reserva.extras || []);
       setPromo(reserva.promo || { aplicado: false, valor: 0, codigo: "" });
       setTotalFinal(reserva.total || 0);
+    } else {
+      // si no hay reserva_data, al menos limpia lo visible
+      setVisitantes([]);
+      setCantidad(1);
+      setFecha("");
+      setHora("");
+      setHorarioTransporte(null);
+      setUsaTransporte(true);
+      setExtras([]);
+      setPromo({ aplicado: false, valor: 0, codigo: "" });
+      setTotalFinal(0);
     }
-  }, []);
+  }
 
   useEffect(() => {
-    if (!reservationFolio) return;
+    refreshFromStorage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    // ✅ Siempre generar QR con qrserver y data = JR-{id}
-    const url = BASE_QR_URL + encodeURIComponent(reservationFolio);
-    setLinkQr(url);
-  }, [reservationFolio]);
+  // ✅ QR SIEMPRE desde qrserver y SOLO si ya tenemos reservationId real
+  useEffect(() => {
+    if (!reservationId) {
+      setLinkQr("");
+      return;
+    }
+    setLinkQr(buildQrUrlFromReservationId(reservationId));
+  }, [reservationId]);
 
   // Totales
   const totalPases = cantidad;
@@ -295,6 +346,7 @@ export default function ConfirmacionReservaPage() {
 
   const status = statusUi(reservationStatus, paymentMethod);
 
+  // Mantengo tu regla: si Openpay pending, no habilitar QR
   const qrIsEnabled = !(status.code === "openpay_pending");
 
   const retryUrl = useMemo(() => {
@@ -303,10 +355,11 @@ export default function ConfirmacionReservaPage() {
   }, []);
 
   const waText = useMemo(() => {
-    const folio = reservationFolio || openpayReservationId || "-";
+    const folio =
+      reservationFolio || (reservationId ? `JR-${reservationId}` : "-");
     const sale = openpaySaleId || "-";
-    const qrLine = linkQr
-      ? `QR de acceso: ${linkQr}`
+    const qrLine = reservationId
+      ? `QR de acceso: ${BASE_QR_URL}${encodeURIComponent(`JR-${reservationId}`)}`
       : "QR: no disponible por el momento.";
 
     const APP_CLIENTES_URL = "https://lasjaras-app.kerveldev.com";
@@ -365,7 +418,6 @@ export default function ConfirmacionReservaPage() {
       .filter(Boolean)
       .join("\n");
   }, [
-    openpayReservationId,
     openpaySaleId,
     nombrePrincipal,
     correoRaw,
@@ -375,12 +427,12 @@ export default function ConfirmacionReservaPage() {
     total,
     usaTransporte,
     horarioTexto,
-    linkQr,
+    reservationFolio,
+    reservationId,
     status.code,
     status.label,
     status.waTitle,
     retryUrl,
-    reservationFolio,
   ]);
 
   const waUrl = useMemo(
@@ -660,10 +712,8 @@ export default function ConfirmacionReservaPage() {
                     <p className="text-[11px] text-slate-500 mt-3 text-center">
                       {status.code === "cash_pending" &&
                         "Preséntalo en taquilla para completar tu pago y activar tu acceso."}
-
                       {status.code === "openpay_pending" &&
                         "El QR se activará automáticamente cuando el pago sea aprobado."}
-
                       {status.code === "paid" &&
                         "Preséntalo en acceso/taquilla. También viene en el PDF del correo."}
                     </p>
@@ -678,10 +728,7 @@ export default function ConfirmacionReservaPage() {
                       accesos).
                     </p>
                     <button
-                      onClick={() => {
-                        const qr = localStorage.getItem("qr_code_url");
-                        if (qr) setLinkQr(qr);
-                      }}
+                      onClick={() => refreshFromStorage()}
                       className="mt-4 w-full rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-bold px-6 py-3 border border-slate-200 transition"
                     >
                       Actualizar

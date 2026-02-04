@@ -69,12 +69,29 @@ function formatFechaEs(year: number, month: number, day: number) {
   });
 }
 
+function normalizePaymentMethod(
+  method: "openpay" | "efectivo" | "cash" | string,
+) {
+  const m = String(method || "").toLowerCase();
+  if (m === "openpay") return "openpay";
+  // tu UI dice "efectivo", pero tu sistema quiere "cash"
+  if (m === "efectivo" || m === "cash") return "cash";
+  return "";
+}
+
+function safeParse<T>(item: string | null, def: T): T {
+  try {
+    return item ? JSON.parse(item) : def;
+  } catch {
+    return def;
+  }
+}
+
 export default function DaypassUnicaPage() {
   const [paises, setPaises] = useState<any[]>([]);
   const [estados, setEstados] = useState<any[]>([]);
   const [ciudades, setCiudades] = useState<any[]>([]);
   const [daypasses, setDaypasses] = useState<any[]>([]);
-
 
   // ---------------------------------------------------
   // Bloque de carga de catalogos y detección por IP
@@ -261,7 +278,6 @@ export default function DaypassUnicaPage() {
     });
   };
 
-
   // ---------------------------------------------------
   // Estado principal del componente
   // ---------------------------------------------------
@@ -272,6 +288,7 @@ export default function DaypassUnicaPage() {
     localStorage.removeItem("openpay_sale_id");
     localStorage.removeItem("openpay_reservation_id");
     localStorage.removeItem("reservation_status");
+    localStorage.removeItem("reservation_id");
   }, []);
 
   const [visitantes, setVisitantes] = useState([
@@ -413,7 +430,6 @@ export default function DaypassUnicaPage() {
     return fechaHorario <= hoy;
   }
 
-
   // -------------------------------
   // Lógica para avanzar al siguiente paso
   // -------------------------------
@@ -444,13 +460,14 @@ export default function DaypassUnicaPage() {
     return !isHorarioPasado(selectedTime);
   }
 
-  const puedeContinuar = visitantes.every(
+  const puedeContinuar =
+    visitantes.every(
       (v, i) =>
         validateNombre(v.nombre) &&
         validateApellido(v.apellido) &&
         validateCelular(v.celular) &&
         validateCorreo(v.correo, i === 0),
-  ) && puedeAvanzarPaso2();
+    ) && puedeAvanzarPaso2();
 
   type Visitante = {
     nombre: string;
@@ -556,7 +573,6 @@ export default function DaypassUnicaPage() {
     }
   };
 
-
   // -------------------------------
   // Cálculo de totales
   // -------------------------------
@@ -609,7 +625,6 @@ export default function DaypassUnicaPage() {
   }
   const totalAdultosUnicos = cantidadAdultos + cantidadAdultos60;
   const cortesias = calcularCortesias(totalAdultosUnicos);
-
 
   // -------------------------------
   // Funciones para preparar datos para el correo
@@ -686,7 +701,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         `.trim();
   }
 
-
   // -------------------------------
   // Manejador para ir a la siguiente página
   // -------------------------------
@@ -698,7 +712,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     localStorage.setItem("horaVisita", selectedTime);
     window.location.href = "/daypass/extras";
   };
-
 
   // -------------------------------
   // Estado y funciones para el pago
@@ -805,29 +818,41 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
   const puedeFinalizarEfectivo = puedeFinalizarBase;
   const puedeFinalizarOpenpay = puedeFinalizarBase;
 
-
   // -------------------------------
   // Efecto para guardar datos en localStorage
   // -------------------------------
 
   useEffect(() => {
+    const reservation_status =
+      localStorage.getItem("reservation_status") || "pending";
+
+    const reservation_id = localStorage.getItem("reservation_id"); // string o null
+
     const data = {
       visitantes,
       total,
       fechaVisita: fechaSeleccionada,
       horaVisita: selectedTime,
-      status: localStorage.getItem("reservation_status") || "pending",
+      status: reservation_status,
+
+      // ✅ IMPORTANTES para /resumen:
+      id: reservation_id ? Number(reservation_id) : undefined,
+      payment_method: normalizePaymentMethod(metodoPago),
+
+      // (opcional) por si luego lo ocupas en resumen
+      openpay_sale_id: localStorage.getItem("openpay_sale_id") || undefined,
+      openpay_reservation_id:
+        localStorage.getItem("openpay_reservation_id") || undefined,
     };
 
     localStorage.setItem("reserva_data", JSON.stringify(data));
 
-    // Si aún no existe, lo dejamos como pending por seguridad (se actualiza después)
     if (!localStorage.getItem("reservation_status")) {
       localStorage.setItem("reservation_status", "pending");
     }
 
     console.log("Datos de la reserva guardados en localStorage:", data);
-  }, [visitantes, total, fechaSeleccionada, selectedTime]);
+  }, [visitantes, total, fechaSeleccionada, selectedTime, metodoPago]);
 
   const handleIneFileChange = (
     idx: number,
@@ -973,7 +998,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     return list;
   }
 
-
   // -------------------------------
   // Funciones para obtener precios de daypasses
   // -------------------------------
@@ -1004,7 +1028,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 
     return 0;
   }
-
 
   // -------------------------------
   // Manejador para continuar con la reservación y pago
@@ -1158,14 +1181,30 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
           // 4) (Opcional) guarda el sale_id para el callback del Paso 2
           if (json.sale_id)
             localStorage.setItem("openpay_sale_id", String(json.sale_id));
+
           if (json.reservation_id)
-            localStorage.setItem(
-              "reservation_id",
-              String(json.reservation_id),
-            );
+            localStorage.setItem("reservation_id", String(json.reservation_id));
 
           // Openpay: la reservación queda PENDIENTE hasta confirmación
           localStorage.setItem("reservation_status", "pending");
+
+          // ✅ deja consistente el "reserva_data" para cuando vuelvas del callback
+          const current = safeParse<any>(
+            localStorage.getItem("reserva_data"),
+            {},
+          );
+          localStorage.setItem(
+            "reserva_data",
+            JSON.stringify({
+              ...current,
+              payment_method: "openpay",
+              // si backend ya te dio reservation_id real:
+              id: json.reservation_id
+                ? Number(json.reservation_id)
+                : current?.id,
+              status: "pending",
+            }),
+          );
 
           // 5) ¡A 3-D Secure!
           window.location.assign(json.redirect_url);
@@ -1204,7 +1243,8 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         formData.append("origin_state", visitantes[0].estado);
       if (visitantes[0]?.pais)
         formData.append("origin_country", visitantes[0].pais);
-      formData.append("payment_method", metodoPago || "");
+      formData.append("payment_method", normalizePaymentMethod(metodoPago));
+
       const normalizeBirthdate = (input?: string | Date | null): string => {
         if (!input) return "";
 
@@ -1319,7 +1359,22 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       console.log("Respuesta de la API:", json);
 
       if (json.reservation?.id) {
-        localStorage.setItem("reservation_id", json.reservation.id);
+        localStorage.setItem("reservation_id", String(json.reservation.id));
+
+        // ✅ sincroniza reserva_data con el id real
+        const current = safeParse<any>(
+          localStorage.getItem("reserva_data"),
+          {},
+        );
+        localStorage.setItem(
+          "reserva_data",
+          JSON.stringify({
+            ...current,
+            id: Number(json.reservation.id),
+            payment_method: "cash", // efectivo => cash
+            status: localStorage.getItem("reservation_status") || "pending",
+          }),
+        );
       }
 
       toast.dismiss("reservation-processing");
@@ -1342,7 +1397,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       setIsProcessingReservation(false);
     }
   }
-
 
   // -------------------------------
   // Render de la pagina
