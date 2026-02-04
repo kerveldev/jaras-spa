@@ -107,7 +107,6 @@ function fmtMoney(maybe: any) {
   return String(maybe ?? "-");
 }
 
-
 type StatusCode =
   | "paid"
   | "cash_pending"
@@ -125,8 +124,7 @@ type StatusUI = {
   waTitle: string;
 };
 
-
-function statusUi(status: string, paymentMethod: string): StatusUI  {
+function statusUi(status: string, paymentMethod: string): StatusUI {
   const s = (status || "").toLowerCase();
   const pm = (paymentMethod || "").toLowerCase(); // 'cash' | 'openpay'
 
@@ -229,21 +227,15 @@ export default function ConfirmacionReservaPage() {
   // ✅ default seguro: pending (no "paid")
   const [reservationStatus, setReservationStatus] = useState<string>("pending");
 
-  // Para generar QR con datos reales (fallback)
-  const qrData = `LJ-RESERVA|${fecha}|${hora}|${cantidad}`;
-  const qrURL = BASE_QR_URL + encodeURIComponent(qrData);
-
   const [paymentMethod, setPaymentMethod] = useState<string>(""); // 'cash' | 'openpay'
   const [reservationFolio, setReservationFolio] = useState<string>(""); // clave tipo JR-7
 
   useEffect(() => {
     const reserva = safeParse<any>(localStorage.getItem("reserva_data"), null);
-    const qrCodeUrl = localStorage.getItem("qr_code_url") || qrURL;
 
     const rId = localStorage.getItem("openpay_reservation_id");
     const sId = localStorage.getItem("openpay_sale_id");
 
-    // ✅ FIX: sin "|| paid || pending" (eso siempre se queda en paid)
     const st = (localStorage.getItem("reservation_status") ||
       reserva?.status ||
       "pending") as string;
@@ -254,15 +246,12 @@ export default function ConfirmacionReservaPage() {
     setOpenpaySaleId(sId);
 
     if (reserva) {
-      // 🔥 NUEVO: payment_method viene del backend
       setPaymentMethod(String(reserva.payment_method || "").toLowerCase());
 
-      // 🔥 NUEVO: folio preferente = reserva.clave (JR-7). Fallback a openpay_reservation_id o id.
-      const folio =
-        rId || reserva?.clave || (reserva?.id ? `JR-${reserva.id}` : "");
+      // ✅ folio estandar: SIEMPRE JR-{reservation_id}
+      const folio = reserva?.id ? `JR-${reserva.id}` : reserva?.clave || "";
       setReservationFolio(folio);
 
-      setLinkQr(qrCodeUrl);
       setVisitantes(reserva.visitantes || []);
       setCantidad(reserva.visitantes?.length || 1);
       setFecha(reserva.fechaVisita || "");
@@ -273,7 +262,15 @@ export default function ConfirmacionReservaPage() {
       setPromo(reserva.promo || { aplicado: false, valor: 0, codigo: "" });
       setTotalFinal(reserva.total || 0);
     }
-  }, [qrURL]);
+  }, []);
+
+  useEffect(() => {
+    if (!reservationFolio) return;
+
+    // ✅ Siempre generar QR con qrserver y data = JR-{id}
+    const url = BASE_QR_URL + encodeURIComponent(reservationFolio);
+    setLinkQr(url);
+  }, [reservationFolio]);
 
   // Totales
   const totalPases = cantidad;
@@ -310,7 +307,8 @@ export default function ConfirmacionReservaPage() {
     const sale = openpaySaleId || "-";
     const qrLine = linkQr
       ? `QR de acceso: ${linkQr}`
-      : "QR: te llegará en el PDF del correo";
+      : "QR: no disponible por el momento.";
+
     const APP_CLIENTES_URL = "https://lasjaras-app.kerveldev.com";
 
     const failedBlock =
@@ -566,7 +564,8 @@ export default function ConfirmacionReservaPage() {
                   </p>
 
                   <p className="text-slate-500 text-xs">
-                    Revisa tu bandeja de entrada. Si no lo encuentras verifica en spam o promociones.
+                    Revisa tu bandeja de entrada. Si no lo encuentras verifica
+                    en spam o promociones.
                   </p>
                 </div>
               </div>
@@ -577,7 +576,7 @@ export default function ConfirmacionReservaPage() {
                   onClick={onWhatsApp}
                   className="flex-1 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-4 shadow-sm transition"
                 >
-                  `Enviar por WhatsApp al número: ${celularRaw}`
+                  Enviar por WhatsApp
                 </button>
 
                 <button

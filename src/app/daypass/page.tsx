@@ -75,6 +75,12 @@ export default function DaypassUnicaPage() {
   const [ciudades, setCiudades] = useState<any[]>([]);
   const [daypasses, setDaypasses] = useState<any[]>([]);
 
+
+  // ---------------------------------------------------
+  // Bloque de carga de catalogos y detección por IP
+  // ---------------------------------------------------
+
+  // Se cargan los catalogos de Daypasses, paises, estados y ciudades
   useEffect(() => {
     async function cargarPaises() {
       try {
@@ -149,6 +155,7 @@ export default function DaypassUnicaPage() {
     cargarDaypasses();
   }, []);
 
+  // Funciones para cargar estados segun el pais seleccionado
   const fetchEstadosDePais = async (
     countryId: number,
     estadoParaCargar?: string,
@@ -191,6 +198,7 @@ export default function DaypassUnicaPage() {
     }
   };
 
+  // Funciones para cargar ciudades segun el estado seleccionado
   const fetchCiudadesDeEstado = async (stateId: number) => {
     if (!stateId) return;
 
@@ -214,6 +222,7 @@ export default function DaypassUnicaPage() {
     }
   };
 
+  // Manejadores de cambio para pais, estado y ciudad
   const handlePaisChange = (idx: number, paisNombre: string) => {
     setVisitantes((prev) => {
       const copia = [...prev];
@@ -251,6 +260,11 @@ export default function DaypassUnicaPage() {
       return copia;
     });
   };
+
+
+  // ---------------------------------------------------
+  // Estado principal del componente
+  // ---------------------------------------------------
 
   useEffect(() => {
     localStorage.removeItem("reserva_data");
@@ -311,6 +325,10 @@ export default function DaypassUnicaPage() {
       pais: "",
     })),
   );
+
+  // -------------------------------
+  // Funciones de validación
+  // -------------------------------
 
   function validateNombre(nombre: string) {
     return nombre.trim().length > 0;
@@ -395,6 +413,11 @@ export default function DaypassUnicaPage() {
     return fechaHorario <= hoy;
   }
 
+
+  // -------------------------------
+  // Lógica para avanzar al siguiente paso
+  // -------------------------------
+
   function puedeAvanzarPaso2(): boolean {
     console.log("Debug puedeAvanzarPaso2:", {
       selectedDay,
@@ -421,14 +444,14 @@ export default function DaypassUnicaPage() {
     return !isHorarioPasado(selectedTime);
   }
 
-  const puedeContinuar =
-    visitantes.every(
+  const puedeContinuar = visitantes.every(
       (v, i) =>
         validateNombre(v.nombre) &&
         validateApellido(v.apellido) &&
         validateCelular(v.celular) &&
         validateCorreo(v.correo, i === 0),
-    ) && puedeAvanzarPaso2();
+  ) && puedeAvanzarPaso2();
+
   type Visitante = {
     nombre: string;
     apellido: string;
@@ -533,6 +556,11 @@ export default function DaypassUnicaPage() {
     }
   };
 
+
+  // -------------------------------
+  // Cálculo de totales
+  // -------------------------------
+
   const { dias, primerDia } = getDiasMes(year, mes);
   const fechaSeleccionada = `${year}-${(mes + 1)
     .toString()
@@ -581,6 +609,11 @@ export default function DaypassUnicaPage() {
   }
   const totalAdultosUnicos = cantidadAdultos + cantidadAdultos60;
   const cortesias = calcularCortesias(totalAdultosUnicos);
+
+
+  // -------------------------------
+  // Funciones para preparar datos para el correo
+  // -------------------------------
 
   function prepararDatosParaCorreo() {
     const data = {
@@ -653,6 +686,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         `.trim();
   }
 
+
+  // -------------------------------
+  // Manejador para ir a la siguiente página
+  // -------------------------------
+
   const handleSiguiente = () => {
     localStorage.setItem("visitantes", JSON.stringify(visitantes));
     localStorage.setItem("cantidad", visitantes.length.toString());
@@ -661,7 +699,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     window.location.href = "/daypass/extras";
   };
 
-  // arriba
+
+  // -------------------------------
+  // Estado y funciones para el pago
+  // -------------------------------
+
   const [metodoPago, setMetodoPago] = useState<"openpay" | "efectivo">(
     "openpay",
   );
@@ -748,6 +790,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     pais: "",
   };
 
+  // ✅ Validaciones para poder finalizar la compra
   const puedeFinalizarBase =
     validateNombre(titular.nombre) &&
     validateApellido(titular.apellido) &&
@@ -761,6 +804,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
   // ✅ Efectivo y Openpay: mismo candado (si quieres, lo separas después)
   const puedeFinalizarEfectivo = puedeFinalizarBase;
   const puedeFinalizarOpenpay = puedeFinalizarBase;
+
+
+  // -------------------------------
+  // Efecto para guardar datos en localStorage
+  // -------------------------------
 
   useEffect(() => {
     const data = {
@@ -822,6 +870,9 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
   }
 
+  // -------------------------------
+  // Función para construir el array de visitantes para la API
+  // -------------------------------
   function buildVisitorsForApi() {
     const list: Array<{
       name: string;
@@ -922,6 +973,43 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     return list;
   }
 
+
+  // -------------------------------
+  // Funciones para obtener precios de daypasses
+  // -------------------------------
+  function getDaypassGeneral() {
+    return daypasses.find((dp) => dp.name === "General Online") || null;
+  }
+
+  function getDaypassINAPAM() {
+    return daypasses.find((dp) => dp.name === "INAPAM Online") || null;
+  }
+
+  function getPrecioPorTipo(
+    _fecha: string,
+    tipo: "adulto" | "adulto60" | "nino" | "menor2",
+    _esGrupo: boolean = false,
+  ) {
+    if (tipo === "adulto" || tipo === "nino") {
+      const daypassGeneral = getDaypassGeneral();
+      return daypassGeneral ? daypassGeneral.price : 420;
+    }
+
+    if (tipo === "adulto60") {
+      const daypassINAPAM = getDaypassINAPAM();
+      return daypassINAPAM ? daypassINAPAM.price : 360;
+    }
+
+    if (tipo === "menor2") return 0;
+
+    return 0;
+  }
+
+
+  // -------------------------------
+  // Manejador para continuar con la reservación y pago
+  // -------------------------------
+
   async function handleContinuar() {
     setIsProcessingReservation(true);
     toast.loading("Procesando tu reservación...", {
@@ -929,7 +1017,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     });
 
     try {
-      // Validate that we have a valid date and time
+      // Validamos fecha y horario seleccionados
       if (!selectedDay || !selectedTime || !fechaSeleccionada) {
         toast.dismiss("reservation-processing");
         toast.error("Por favor selecciona una fecha y horario válidos.");
@@ -1058,6 +1146,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
             body: JSON.stringify(body),
           });
 
+          // 3.5) procesar la respuesta
           const json = await resp.json().catch(() => ({}));
 
           if (!resp.ok || !json?.success || !json?.redirect_url) {
@@ -1204,6 +1293,8 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 
       const json = await res.json().catch(() => ({}));
 
+      console.log("Respuesta completa de la API:", json);
+
       if (!res.ok) {
         toast.dismiss("reservation-processing");
 
@@ -1254,34 +1345,10 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     }
   }
 
-  function getDaypassGeneral() {
-    return daypasses.find((dp) => dp.name === "General Online") || null;
-  }
 
-  function getDaypassINAPAM() {
-    return daypasses.find((dp) => dp.name === "INAPAM Online") || null;
-  }
-
-  function getPrecioPorTipo(
-    _fecha: string,
-    tipo: "adulto" | "adulto60" | "nino" | "menor2",
-    _esGrupo: boolean = false,
-  ) {
-    if (tipo === "adulto" || tipo === "nino") {
-      const daypassGeneral = getDaypassGeneral();
-      return daypassGeneral ? daypassGeneral.price : 420;
-    }
-
-    if (tipo === "adulto60") {
-      const daypassINAPAM = getDaypassINAPAM();
-      return daypassINAPAM ? daypassINAPAM.price : 360;
-    }
-
-    if (tipo === "menor2") return 0;
-
-    return 0;
-  }
-
+  // -------------------------------
+  // Render de la pagina
+  // -------------------------------
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       <Toaster position="top-center" />

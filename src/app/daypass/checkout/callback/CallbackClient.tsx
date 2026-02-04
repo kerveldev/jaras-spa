@@ -93,6 +93,8 @@ export function CallbackClient() {
 
           const res = await confirmOpenpay(saleId);
 
+          console.log("Openpay confirm attempt: ", i, res);
+
           // Si backend responde éxito y pagado => guardamos QR y nos vamos al resumen
           if (res?.success && res?.paid) {
             const qrUrl = res?.reservation?.qr_code_url ?? null;
