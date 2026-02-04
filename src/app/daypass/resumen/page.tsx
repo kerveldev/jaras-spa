@@ -566,8 +566,7 @@ export default function ConfirmacionReservaPage() {
                   </p>
 
                   <p className="text-slate-500 text-xs">
-                    Revisa tu bandeja de entrada y, si no lo encuentras,
-                    verifica en spam o promociones.
+                    Revisa tu bandeja de entrada. Si no lo encuentras verifica en spam o promociones.
                   </p>
                 </div>
               </div>
@@ -578,7 +577,7 @@ export default function ConfirmacionReservaPage() {
                   onClick={onWhatsApp}
                   className="flex-1 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-4 shadow-sm transition"
                 >
-                  Enviar por WhatsApp
+                  `Enviar por WhatsApp al número: ${celularRaw}`
                 </button>
 
                 <button
@@ -702,7 +701,7 @@ export default function ConfirmacionReservaPage() {
               Continúa disfrutando la experiencia
             </h3>
             <p className="text-gray-600 text-sm md:text-base">
-              Reserva tu próximo day pass con facilidad
+              Te esperamos en Las Jaras. ¡Nos vemos pronto!
             </p>
           </div>
 
