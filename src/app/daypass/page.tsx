@@ -1160,7 +1160,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
             localStorage.setItem("openpay_sale_id", String(json.sale_id));
           if (json.reservation_id)
             localStorage.setItem(
-              "openpay_reservation_id",
+              "reservation_id",
               String(json.reservation_id),
             );
 
@@ -1293,8 +1293,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
 
       const json = await res.json().catch(() => ({}));
 
-      console.log("Respuesta completa de la API:", json);
-
       if (!res.ok) {
         toast.dismiss("reservation-processing");
 
@@ -1318,10 +1316,10 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       }
 
       // Success case
-      console.log("Respuesta de la API:", json.reservation?.qr_code_url);
+      console.log("Respuesta de la API:", json);
 
-      if (json.reservation?.qr_code_url) {
-        localStorage.setItem("qr_code_url", json.reservation.qr_code_url);
+      if (json.reservation?.id) {
+        localStorage.setItem("reservation_id", json.reservation.id);
       }
 
       toast.dismiss("reservation-processing");
