@@ -361,10 +361,10 @@ export default function ConfirmacionReservaPage() {
     const sale = openpaySaleId || "-";
 
     const qrLine = reservationId
-      ? `🎟️ *QR de acceso*\n${BASE_QR_URL}${encodeURIComponent(
+      ? `*QR de acceso*\n${BASE_QR_URL}${encodeURIComponent(
           `JR-${reservationId}`,
         )}`
-      : "🎟️ *QR de acceso*\nGenerándose, intenta actualizar en unos momentos.";
+      : "*QR de acceso*\nGenerándose, intenta actualizar en unos momentos.";
 
     const APP_CLIENTES_URL = "https://lasjaras-app.kerveldev.com";
 
@@ -372,9 +372,9 @@ export default function ConfirmacionReservaPage() {
       status.code === "failed"
         ? [
             "",
-            "⚠️ *El pago con tarjeta no se completó*",
+            "*El pago con tarjeta no se completó*",
             "No se realizó ningún cobro.",
-            retryUrl ? `👉 Intenta nuevamente aquí:\n${retryUrl}` : null,
+            retryUrl ? `Intenta nuevamente aquí:\n${retryUrl}` : null,
             "Si necesitas ayuda, comparte este folio en recepción.",
           ]
         : [];
@@ -383,36 +383,36 @@ export default function ConfirmacionReservaPage() {
       status.code === "cash_pending"
         ? [
             "",
-            "💵 *Pago en efectivo en taquilla*",
+            "*Pago en efectivo en taquilla*",
             "Tu reserva ya está registrada.",
             "El pago se realiza el día de tu visita.",
           ]
         : status.code === "openpay_pending"
           ? [
               "",
-              "⏳ *Pago en proceso*",
+              "*Pago en proceso*",
               "El QR quedará activo cuando el pago sea aprobado.",
             ]
           : [];
 
     return [
-      `🌿 *${status.waTitle}*`,
+      `*${status.waTitle}*`,
       "",
       "━━━━━━━━━━━━━━",
-      "📌 *DETALLES DE TU RESERVA*",
+      "*DETALLES DE TU RESERVA*",
       "━━━━━━━━━━━━━━",
-      nombrePrincipal ? `👤 Nombre: *${nombrePrincipal}*` : null,
-      correoRaw ? `📧 Email: *${correoRaw}*` : null,
-      `🆔 Folio: *${folio}*`,
-      `📍 Estatus: *${status.label}*`,
-      status.code !== "cash_pending" ? `💳 Pago (sale): *${sale}*` : null,
-      `📅 Fecha: *${fechaTexto}*`,
-      `⏰ Hora de llegada: *${hora || "-"}*`,
-      `👥 Visitantes: *${totalPases}*`,
-      `💰 Total: *${fmtMoney(total)}*`,
+      nombrePrincipal ? `Nombre: *${nombrePrincipal}*` : null,
+      correoRaw ? `Email: *${correoRaw}*` : null,
+      `Folio: *${folio}*`,
+      `Estatus: *${status.label}*`,
+      status.code !== "cash_pending" ? `Pago (sale): *${sale}*` : null,
+      `Fecha: *${fechaTexto}*`,
+      `Hora de llegada: *${hora || "-"}*`,
+      `Visitantes: *${totalPases}*`,
+      `Total: *${fmtMoney(total)}*`,
       usaTransporte
-        ? `🚐 Transporte: *Sí* (${horarioTexto})`
-        : `🚐 Transporte: *No*`,
+        ? `Transporte: *Sí* (${horarioTexto})`
+        : `Transporte: *No*`,
       ...pendingBlock,
       ...failedBlock,
       "",
@@ -420,11 +420,11 @@ export default function ConfirmacionReservaPage() {
       qrLine,
       "",
       "━━━━━━━━━━━━━━",
-      "👤 *MI CUENTA – APP DE CLIENTES*",
+      "*MI CUENTA – APP DE CLIENTES*",
       `${APP_CLIENTES_URL}`,
       "Ingresa con tu correo y la contraseña temporal que te enviamos por email.",
       "",
-      "🌿 *¡Nos vemos pronto en Las Jaras!*",
+      "*¡Nos vemos pronto en Las Jaras!*",
     ]
       .filter(Boolean)
       .join("\n");
