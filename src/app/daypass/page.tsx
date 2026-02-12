@@ -905,7 +905,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       birthdate: string;
       email: string;
       phone: string;
-      visitor_type_id: "1" | "2";
+      visitor_type_id: "1" | "4";
       checkin_time: string;
       daypass_id: number;
     }> = [];
@@ -976,7 +976,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         birthdate: "1950-01-01",
         email: "",
         phone: "",
-        visitor_type_id: "1",
+        visitor_type_id: "4",
         checkin_time: checkin,
         daypass_id: daypassINAPAM?.id || 9,
       });
@@ -989,7 +989,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         birthdate: "2015-01-01",
         email: "",
         phone: "",
-        visitor_type_id: "2",
+        visitor_type_id: "1",
         checkin_time: checkin,
         daypass_id: daypassGeneral?.id || 8,
       });
