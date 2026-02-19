@@ -1047,6 +1047,8 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
   // -------------------------------
 
   async function handleContinuar() {
+    if (isProcessingReservation) return; // guard adicional
+
     setIsProcessingReservation(true);
     toast.loading("Procesando tu reservación...", {
       id: "reservation-processing",
@@ -1225,9 +1227,11 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
           );
 
           // 5) ¡A 3-D Secure!
+          toast.dismiss("reservation-processing");
           window.location.assign(json.redirect_url);
           return; // importante: no continúes con el flujo de crear reservación aquí
         } catch (e: any) {
+          toast.dismiss("reservation-processing");
           toast.error(e?.message || "Error al iniciar pago con Openpay.");
           return;
         }
@@ -1414,7 +1418,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
           "Error al procesar la reservación. Intenta nuevamente.",
       );
     } finally {
-      setIsProcessingReservation(false);
+      setIsProcessingReservation(false);// liberar lock (solo si quieres permitir reintento)
     }
   }
 
@@ -1988,7 +1992,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                   Detalles de la reserva
                 </div>
 
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
                   {(() => {
                     const idx = 0;
                     const vis = visitantes?.[idx] ?? {
@@ -2450,6 +2454,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
                   {/* Boton Continuar */}
                   <div className="flex flex-row gap-4 mt-6">
                     <button
+                      type="button"
                       className={`w-1/2 py-2 rounded font-bold text-white flex items-center justify-center transition-all duration-200 ${
                         (metodoPago === "efectivo"
                           ? puedeFinalizarEfectivo
