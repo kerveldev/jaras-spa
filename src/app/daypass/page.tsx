@@ -934,6 +934,18 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
     // El titular debe ser el primer adulto real de la compra
     const titularEsInapam = adultos === 0 && adultos60 > 0;
 
+    const generalId = daypassGeneral?.id;
+    const inapamId = daypassINAPAM?.id;
+
+    if (!generalId)
+      throw new Error(
+        "No hay daypass GENERAL disponible para la fecha/categoría.",
+      );
+    if (adultos60 > 0 && !inapamId)
+      throw new Error(
+        "No hay daypass INAPAM disponible para la fecha/categoría.",
+      );
+
     list.push({
       name: titular.nombre || "Titular",
       lastname: titular.apellido || "Reserva",
@@ -943,9 +955,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       phone: titular.celular || "",
       visitor_type_id: "1",
       checkin_time: checkin,
-      daypass_id: titularEsInapam
-        ? daypassINAPAM?.id || 9
-        : daypassGeneral?.id || 8,
+      daypass_id: titularEsInapam ? inapamId! : generalId,
     });
 
     let consecutivo = 2;
@@ -965,7 +975,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         phone: "",
         visitor_type_id: "1",
         checkin_time: checkin,
-        daypass_id: daypassGeneral?.id || 8,
+        daypass_id: generalId,
       });
     }
 
@@ -978,7 +988,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         phone: "",
         visitor_type_id: "4",
         checkin_time: checkin,
-        daypass_id: daypassINAPAM?.id || 9,
+        daypass_id: inapamId || 9,
       });
     }
 
@@ -991,7 +1001,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         phone: "",
         visitor_type_id: "1",
         checkin_time: checkin,
-        daypass_id: daypassGeneral?.id || 8,
+        daypass_id: generalId,
       });
     }
 
@@ -1141,6 +1151,8 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
               daypass_id: String(v.daypass_id),
             })),
           };
+
+          console.log("Payload que se enviará al backend para Openpay:", reservation_payload);
 
           // 3.3) body final para el endpoint
           const body = {
@@ -1324,6 +1336,9 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       for (const pair of formData.entries()) {
         console.log(pair[0] + ": ", pair[1]);
       }
+
+
+      console.log("Data de la reservacion:", formData);
 
       const res = await fetch(apiUrl("/api/reservations"), {
         method: "POST",
