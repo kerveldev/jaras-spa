@@ -946,6 +946,9 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         "No hay daypass INAPAM disponible para la fecha/categoría.",
       );
 
+    const titularVisitorTypeId: "1" | "4" = titularEsInapam ? "4" : "1";
+    const titularDaypassId = titularEsInapam ? inapamId! : generalId;
+
     list.push({
       name: titular.nombre || "Titular",
       lastname: titular.apellido || "Reserva",
@@ -953,9 +956,9 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         titular.cumple || (titularEsInapam ? "1950-01-01" : "1990-01-01"),
       email: titular.correo || "",
       phone: titular.celular || "",
-      visitor_type_id: "1",
+      visitor_type_id: titularVisitorTypeId,
       checkin_time: checkin,
-      daypass_id: titularEsInapam ? inapamId! : generalId,
+      daypass_id: titularDaypassId,
     });
 
     let consecutivo = 2;
@@ -999,7 +1002,7 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
         birthdate: "2015-01-01",
         email: "",
         phone: "",
-        visitor_type_id: "1",
+        visitor_type_id: titularEsInapam ? "4" : "1",
         checkin_time: checkin,
         daypass_id: generalId,
       });
@@ -1152,7 +1155,10 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
             })),
           };
 
-          console.log("Payload que se enviará al backend para Openpay:", reservation_payload);
+          console.log(
+            "Payload que se enviará al backend para Openpay:",
+            reservation_payload,
+          );
 
           // 3.3) body final para el endpoint
           const body = {
@@ -1336,7 +1342,6 @@ ${data.codigoPromo ? `Código promocional usado: ${data.codigoPromo}\n` : ""}
       for (const pair of formData.entries()) {
         console.log(pair[0] + ": ", pair[1]);
       }
-
 
       console.log("Data de la reservacion:", formData);
 
